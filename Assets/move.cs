@@ -5,8 +5,8 @@ using System.Collections;
 
 public class move : MonoBehaviour
 {
-	public float geschw = 5.5f;
-	
+	public float speed = 5.5f;
+	public float rotationSpeed = 10.0f;
 
 	
 	
@@ -19,11 +19,8 @@ public class move : MonoBehaviour
 	// Update is called once per frame
 	void Update()
 	{
-		transform.Rotate(  0.0f, 0.0f, -Input.GetAxis ("Horizontal") * geschw);
-		transform.position +=  Input.GetAxis("Vertical") * geschw * transform.up * Time.deltaTime; // vorwärts bewegen
-
-			
-
+		transform.Rotate(  0.0f, 0.0f, -Input.GetAxis ("Horizontal") * rotationSpeed);
+		transform.position +=  Input.GetAxis("Vertical") * speed * transform.up * Time.deltaTime; // vorwärts bewegen
 	}
 
 	void  OnTriggerEnter2D(Collider2D other)

@@ -9,8 +9,6 @@ public class dontrotate : MonoBehaviour {
 	void Start () {
 
 		startrot = transform.rotation;
-
-
 	
 	}
 	
