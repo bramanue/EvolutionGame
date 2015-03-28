@@ -7,19 +7,19 @@ public class enemy : MonoBehaviour {
 	private Vector3 originalPosition;
 
 	// Viewing direction of this enemy (normalized)
-	public Vector3 viewingDirection;
+	private Vector3 viewingDirection;
 
 	// Defines how far this enemy can see
 	public float viewingRange = 5.0f;
 
 	// Defines how wide the angle of the enemy's eyes are 
-	private float cosViewingAngle;
+	public float cosViewingAngle;
 
 	// Stores the original cosViewingAngle for restoring default after escape procedure
 	private float originalCosViewingAngle;
 
 	// The size of this enemy
-	private float size;
+	public float size;
 
 	// The maximum velocity of this enemy
 	public float maxVelocity = 4.0f;
@@ -75,16 +75,19 @@ public class enemy : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		player = GameObject.Find("Blob");
-		isHuntingPlayer = false;
 		size = transform.localScale.x;
-		viewingDirection = new Vector3(0.0f, 1.0f, 0.0f);
-		idleOperationRadius = 10.0f;
+		// Get the theta angle of the current rotation, corresponding to position on the unit circle
+		float theta = (transform.localEulerAngles.z+90.0f)/360.0f*2.0f*Mathf.PI;
+		// Get the viewing direction based on the current rotation (resp. on the previously calculated theta)
+		viewingDirection = new Vector3 (Mathf.Cos (theta), Mathf.Sin (theta), 0.0f);
+	//	idleOperationRadius = 10.0f;
 		originalPosition = transform.position;
-		isHuntingPlayer = false;
 		unsetIdleState();
-		cosViewingAngle = 0.5f;
+		isHuntingPlayer = false;
+		isRunningAwayFromPlayer = false;
+	//	cosViewingAngle = 0.5f;
 		originalCosViewingAngle = cosViewingAngle;
-		viewingRange = 10.0f;
+	//	viewingRange = 10.0f;
 	}
 	
 	// Update is called once per frame
@@ -113,7 +116,7 @@ public class enemy : MonoBehaviour {
 		}
 
 		// Check whether player is in viewing range and viewing angle
-		if (toPlayer.magnitude < viewingRange && Vector3.Dot(toPlayer.normalized, viewingDirection) >= cosViewingAngle) {
+		if (toPlayer.magnitude - 0.5*player.transform.localScale.x < viewingRange && Vector3.Dot(toPlayer.normalized, viewingDirection) >= cosViewingAngle) {
 
 			// TODO: Camouflage, darkness, scene geometry, etc...
 
@@ -258,7 +261,7 @@ public class enemy : MonoBehaviour {
 				// Set animation in progress
 				isIdleRotating = true;
 			
-				Debug.Log("start idle rotation by " + degree + " degrees" );
+			//	Debug.Log("start idle rotation by " + degree + " degrees" );
 			} else if (rndValue > 0.2) {
 				// Rotate and walk towards point
 
@@ -275,14 +278,14 @@ public class enemy : MonoBehaviour {
 				// Set animation in progress
 				isIdleWalking = true;
 
-				Debug.Log("Start idle walking towards " + idleWalkingTarget.x + " " + idleWalkingTarget.y + " " + idleWalkingTarget.z );
+			//	Debug.Log("Start idle walking towards " + idleWalkingTarget.x + " " + idleWalkingTarget.y + " " + idleWalkingTarget.z );
 			} else {
 				// stand still
 
 				idleTimer = Random.Range(1.0f,5.0f);
 				isIdleWaiting = true;
 
-				Debug.Log("Start idle waiting for " + idleTimer + " seconds.");
+			//	Debug.Log("Start idle waiting for " + idleTimer + " seconds.");
 
 			}
 			isIdleAnimationComplete = false;
@@ -293,7 +296,6 @@ public class enemy : MonoBehaviour {
 				// Stop standing still animation after timer runs out.
 				idleTimer -= Time.deltaTime;
 				if(idleTimer <= 0.0f) {
-					Debug.Log("Stop idle waiting");
 					isIdleAnimationComplete = true;
 					isIdleWaiting = false;
 				}
@@ -349,5 +351,12 @@ public class enemy : MonoBehaviour {
 		isIdleWalking = false;
 		isIdleRotating = false;
 		isIdleAnimationComplete = true;
+	}
+
+	public void setRandomParameters()
+	{
+		Debug.Log ("set parameters");
+		size = player.transform.localScale.x + Random.Range(-1.0f,1.0f);
+		transform.localScale = new Vector3 (size, size, size);
 	}
 }
