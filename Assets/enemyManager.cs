@@ -10,95 +10,126 @@ public class enemyManager : MonoBehaviour {
 	// The radius in which enemies can spawn
 	public float radius;
 
-	// The base radius
-	private float baseRadius;
-
 	// The prototype for each enemy
-	private GameObject basicEnemy;
+	public GameObject basicEnemy;
 
 	// Pointer to the player
 	private GameObject player;
 
-	// List<GameObject> enemies = new List<GameObject>();
-	GameObject[] enemyGameObjects = new GameObject[150];
+	// Pointer to the script of the player
+	private player playerScript;
 
-	enemy[] enemyScripts = new enemy[150];
+	// Local timer for update
+	private float timer;
+
+	// List<GameObject> enemies = new List<GameObject>();
+	private GameObject[] enemyGameObjects = new GameObject[100];
+
+	private enemy[] enemyScripts = new enemy[100];
+
+	private GameObject abilityMngr;
+	
+	private abilityManager abilityManagerScript;
+
+	private bool once = true;
+
 
 	// Use this for initialization
 	void Start () 
 	{
-		baseRadius = 50.0f;
-		radius = 50.0f;
-		nofEnemies = 50;
-
 		// Get an instance of the player
-		player = GameObject.Find ("Blob");
-		// Get the enemy prefab
-		basicEnemy = GameObject.Find ("BasicEnemy");
-		// Get the size of the player's blob
-		float playerSize = player.transform.localScale.x;
+		player = GameObject.Find("Blob");
+		// Get the player script
+		playerScript = (player)player.GetComponent (typeof(player));
+		// Get the ability manager
+		abilityMngr = GameObject.Find("AbilityManager");
+		// Get the ability manager script
+		abilityManagerScript = (abilityManager)abilityMngr.GetComponent(typeof(abilityManager));
+
+		radius = 100.0f;
+		nofEnemies = 100;
 
 		// Create the basic amount of enemies
-		for(int i = 0; i < nofEnemies; i++) {
+		for(int i = 0; i < nofEnemies; i++) 
+		{
 			// Calculate a random spawn position
 			Vector3 spawnPoint = calculateSpawnPosition();
 			// Calculate random initial rotation
 			Quaternion q = Quaternion.Euler(new Vector3(0.0f,0.0f,Random.Range(-180,180)));
 			// Create new enemy GameObject
 			enemyGameObjects[i] = ((GameObject)GameObject.Instantiate(basicEnemy,spawnPoint,q));
-			// Define a random size
-			float size = Random.Range(playerSize - 0.8f*playerSize,playerSize + 0.8f*playerSize);
-			// Add GameObject to the array
-			enemyGameObjects[i].transform.localScale = new Vector3(size,size,size);
 			// Add enemy script to the array
 			enemyScripts[i] = (enemy)enemyGameObjects[i].GetComponent(typeof(enemy));
 			// Set values for this script
-			enemyScripts[i].viewingRange = enemyGameObjects[i].transform.localScale.x + Random.Range(2.0f,10.0f);
-			enemyScripts[i].activeOperationRadius = enemyScripts[i].viewingRange + 20.0f;
-			enemyScripts[i].cosViewingAngle = Random.Range(0.2f,0.9f);
-			enemyScripts[i].maxVelocity = Random.Range(4.0f,5.0f);
-			enemyScripts[i].idleOperationRadius = 10.0f;
+			setRandomInitialValues(enemyScripts[i], enemyGameObjects[i]);
+			// Set abilities
+			abilityManagerScript.addAbilityToEnemy(enemyGameObjects[i],EAbilityType.ERamAbility,0,4);
 		}
 	}
 	
 	// Update is called once per frame
 	void Update () {
+
 		// Make sure the radius increases with the player's size
-		radius = baseRadius * player.transform.localScale.x;
+		radius = 8.0f*playerScript.viewingRange + Mathf.Sqrt(8.0f*nofEnemies*player.transform.localScale.x) + 4.0f * playerScript.maxVelocity;
+
+		// Get the current position of the player
+		Vector3 playerPosition = player.transform.position;
+		// Loop over all enemies and check whether they need to be repositioned (out of the radius)
+		for (int it = 0; it < nofEnemies; it++) {
+			float distance = (enemyGameObjects [it].transform.position - playerPosition).magnitude;
+			if (distance > radius)
+			{
+				setRandomInitialValues (enemyScripts [it], enemyGameObjects [it]);
+				distance = (enemyGameObjects [it].transform.position - playerPosition).magnitude;
+			}	
+			// Deactivate enemies if they are too far from the player
+			if(distance > 0.25*radius)
+				enemyGameObjects[it].SetActive(false);
+			else
+				enemyGameObjects[it].SetActive(true);
+		}
+
 	}
 
-	public void repositionEnemy(GameObject enemy) 
+	public void respawnEnemy(GameObject enemy) 
+	{
+		// Get the script of this enemy
+		enemy enemyScript = (enemy)enemy.GetComponent(typeof(enemy));
+		// Set random initial values for this enemy
+		setRandomInitialValues (enemyScript, enemy);
+	}
+
+	private void setRandomInitialValues(enemy enemyScript, GameObject enemyObject)
 	{
 		float playerSize = player.transform.localScale.x;
-		float newEnemySize = Random.Range(playerSize - 0.8f*playerSize,playerSize + 0.8f*playerSize);
-		enemy enemyScript = (enemy)enemy.GetComponent(typeof(enemy));
-		enemyScript.size = newEnemySize;
-
-		enemy.transform.localScale = new Vector3 (newEnemySize, newEnemySize, newEnemySize);
-
+		// Define a random size
+		float size = Random.Range(playerSize - 0.5f*playerSize,playerSize + 0.5f*playerSize);
+		// Set size of GameObject
+		enemyObject.transform.localScale = new Vector3(size,size,size);
+		// Get spawn point...
 		Vector3 spawnPoint = calculateSpawnPosition();
-		enemy.transform.position = spawnPoint;
-	}
+		// ...and put enemy there
+		enemyObject.transform.position = spawnPoint;
 
+		// Set values for this script
+		enemyScript.size = size;
+		enemyScript.viewingRange = (size + Random.Range(7.0f,12.0f));
+		enemyScript.idleOperationRadius = size + 20.0f;
+		enemyScript.activeOperationRadius = size + enemyScript.viewingRange + 40.0f;
+		enemyScript.cosViewingAngle = Random.Range(0.0f,0.7f);
+		enemyScript.maxVelocity = Random.Range(4.0f,6.0f);
+
+		enemyScript.resetStates();
+	}
+	
 	private Vector3 calculateSpawnPosition()
 	{
 		// Find a new place for this enemy object to spawn
-		Vector2 rnd2D = Random.insideUnitCircle;
-		Vector3 offset = new Vector3(rnd2D.x, rnd2D.y, 0.0f)*radius;
-		Vector3 spawnPoint = player.transform.position + offset;
-		while (true) {
-			// TODO: replace < player.transform.localScale.x * 2.0f with viewing range of player
-			if((spawnPoint - player.transform.position).magnitude < player.transform.localScale.x  * 5.0f) {
-				// Find a new spawn point, if the current one is too close to the player
-				rnd2D = Random.insideUnitCircle;
-				offset = new Vector3(rnd2D.x, rnd2D.y, 0.0f)*radius;
-				spawnPoint = player.transform.position + offset;
-			}
-			else
-			{
-				break;
-			}
-		}
-		return spawnPoint;
+		float theta = Random.Range (0.0f, 2.0f * Mathf.PI);
+		float r = Random.Range ((2.0f*(playerScript.viewingRange + playerScript.size)), radius);
+		Vector3 offset = new Vector3(r*Mathf.Cos(theta), r*Mathf.Sin(theta), 0);
+		return player.transform.position + offset;
 	}
+
 }
