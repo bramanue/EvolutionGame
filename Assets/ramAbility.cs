@@ -64,7 +64,7 @@ public class ramAbility : ability {
 					// Get the angle between the target viewing direction and the current viewing direction
 					float angleBetween = Mathf.Sign (Vector3.Cross (parentPlayerScript.viewingDirection, targetDirection).z) * Vector3.Angle (parentPlayerScript.viewingDirection, targetDirection);
 					// Calculate the necessary rotation speed to perform rotation within 0.5s
-					rotationSpeed = Mathf.Abs (angleBetween) * 2.0f * Mathf.Deg2Rad;
+					rotationSpeed = Mathf.Abs(angleBetween) * 2.0f * Mathf.Deg2Rad;
 					// Get the rotation target
 					rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, parentBlob.transform.localEulerAngles.z + angleBetween));
 					// Reset time scale to normal
