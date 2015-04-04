@@ -29,7 +29,7 @@ public class cameraManager : MonoBehaviour {
 	//	float theta = 0.5f * Mathf.Deg2Rad * Camera.main.fieldOfView;
 	//	float cameraHeight = (playerScript.viewingRange + playerTransform.localScale.x) / Mathf.Tan (theta);
 	//	transform.position = playerTransform.position + new Vector3 (0, 0, -cameraHeight);
-		transform.position = playerTransform.position + new Vector3 (0, 0, -33);
+		transform.position = playerTransform.position + new Vector3 (0, 0, -200);
 		Camera.main.orthographicSize = playerScript.viewingRange + playerTransform.localScale.x;
 	}
 }

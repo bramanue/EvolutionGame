@@ -2,9 +2,11 @@
 using System.Collections;
 
 public enum EAbilityType {
+	EEmptyAbility,
 	ERunAbility,
 	ERamAbility,
-	EBiteAbility
+	EBiteAbility,
+	EViewAbility
 }
 
 public class abilityManager : MonoBehaviour {
@@ -12,6 +14,10 @@ public class abilityManager : MonoBehaviour {
 	public GameObject runAbility;
 
 	public GameObject ramAbility;
+
+	public GameObject biteAbility;
+
+	public GameObject viewAbility;
 
 	// Use this for initialization
 	void Start () {
@@ -23,24 +29,27 @@ public class abilityManager : MonoBehaviour {
 	
 	}
 
-	public void addAbilityToPlayer(GameObject parent, EAbilityType abilityType, int slot, int level)
+	private GameObject getPrefab(EAbilityType abilityType)
 	{
-		GameObject abilityObject = null;
 		// Get the correct prefab
 		switch (abilityType) {
 		case EAbilityType.ERunAbility :
-			abilityObject = (GameObject)GameObject.Instantiate(runAbility);
-			break;
+			return (GameObject)GameObject.Instantiate(runAbility);
 		case EAbilityType.ERamAbility :
-			abilityObject = (GameObject)GameObject.Instantiate(ramAbility);
-			break;
+			return (GameObject)GameObject.Instantiate(ramAbility);
 		case EAbilityType.EBiteAbility :
-			abilityObject = (GameObject)GameObject.Instantiate(runAbility);
-			break;
+			return (GameObject)GameObject.Instantiate(biteAbility);
+		case EAbilityType.EViewAbility :
+			return (GameObject)GameObject.Instantiate(viewAbility);
 		default :
-			abilityObject = null;
-			break;
+			return null;
 		}
+	}
+
+	public void addAbilityToPlayer(GameObject parent, EAbilityType abilityType, int slot, int level)
+	{
+		// Get the corresponding prefab
+		GameObject abilityObject = getPrefab(abilityType);
 
 		if (!abilityObject) {
 			Debug.Log ("Could not resolve ability enum : " + abilityType);
@@ -57,21 +66,8 @@ public class abilityManager : MonoBehaviour {
 
 	public void addAbilityToEnemy(GameObject parent, EAbilityType abilityType, int slot, int level)
 	{
-		GameObject abilityObject = null;
-		switch (abilityType) {
-		case EAbilityType.ERunAbility:
-			abilityObject = (GameObject)GameObject.Instantiate(runAbility);
-			break;
-		case EAbilityType.ERamAbility:
-			abilityObject = (GameObject)GameObject.Instantiate(ramAbility);
-			break;
-		case EAbilityType.EBiteAbility:
-			abilityObject = (GameObject)GameObject.Instantiate(runAbility);
-			break;
-		default :
-			abilityObject = null;
-			break;
-		}
+		// Get the corresponding prefab
+		GameObject abilityObject = getPrefab(abilityType);
 
 		if (!abilityObject) {
 			Debug.Log ("Could not resolve ability enum : " + abilityType);

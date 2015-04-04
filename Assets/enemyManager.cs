@@ -47,7 +47,7 @@ public class enemyManager : MonoBehaviour {
 		abilityManagerScript = (abilityManager)abilityMngr.GetComponent(typeof(abilityManager));
 
 		radius = 100.0f;
-		nofEnemies = 100;
+		nofEnemies = 50;
 
 		// Create the basic amount of enemies
 		for(int i = 0; i < nofEnemies; i++) 

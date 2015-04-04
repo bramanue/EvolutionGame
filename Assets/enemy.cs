@@ -28,7 +28,7 @@ public class enemy : MonoBehaviour {
 	public float maxVelocity ;
 
 	// Defines whether this enemy is allowed to walk
-	public bool cannotMove;
+	public bool canMove;
 
 	// Pointer to the player
 	private GameObject player;
@@ -80,6 +80,8 @@ public class enemy : MonoBehaviour {
 	private bool isIdleWalking = false;
 	private bool isIdleWaiting = false;
 
+	private int nofAbilities;
+
 
 	private ability[] abilities = new ability[5];
 	
@@ -110,7 +112,7 @@ public class enemy : MonoBehaviour {
 		// Set the flags to idle
 		isRunningAwayFromPlayer = false;
 		isHuntingPlayer = false;
-		cannotMove = false;
+		canMove = true;
 		unsetIdleState();
 	}
 	
@@ -158,6 +160,7 @@ public class enemy : MonoBehaviour {
 				// Only hunt, if enemy isn't too far from its original position
 				if((transform.position-originalPosition).magnitude <= activeOperationRadius && size < 2.0f*player.transform.localScale.x) 
 				{
+					cosViewingAngle = -1;
 					isHuntingPlayer = true;
 					isAfterEscape = false;
 					isRunningAwayFromPlayer = false;
@@ -186,6 +189,8 @@ public class enemy : MonoBehaviour {
 		if(isHuntingPlayer) {
 			// If the enemy was hunting the player, then wait a few seconds before walking back to the original position
 			if(!isIdleWaiting) {
+				isAfterEscape = true;
+				activeTimer = Random.Range(3.0f,6.0f);
 				idleTimer = Random.Range(2.0f,7.0f);
 				isIdleWaiting = true;
 				isIdleAnimationComplete = false;
@@ -234,6 +239,11 @@ public class enemy : MonoBehaviour {
 		}
 		else
 		{
+			// In case that setAlertstate() was called but player was not spotted
+			if(cosViewingAngle < originalCosViewingAngle && activeTimer < 0) {
+				isAfterEscape = true;
+				activeTimer = Random.Range(3.0f,6.0f);
+			}
 			performIdleBehaviour();
 		}
 
@@ -248,7 +258,7 @@ public class enemy : MonoBehaviour {
 	private void huntPlayer() 
 	{
 		abilities[0].useAbility();
-		if (!cannotMove) 
+		if (canMove) 
 		{
 			// Calculate rotation target (the target viewing direction, i.e. look towards player)
 			Vector3 rotationTarget = toPlayer.normalized;
@@ -265,7 +275,7 @@ public class enemy : MonoBehaviour {
 
 	private void runAwayFromPlayer() 
 	{
-		if (!cannotMove) 
+		if (canMove) 
 		{
 			// Calculate rotation target (the target viewing direction, i.e. look away from player)
 			Vector3 rotationTarget = -toPlayer.normalized;
@@ -368,30 +378,30 @@ public class enemy : MonoBehaviour {
 
 	void OnTriggerEnter2D(Collider2D other)
 	{
+		// This is handled in the player script
 		if (other.gameObject == player)
 			return;
 
+		// If 2 enemies collide during idle action, let them search a new idle target
 		if (!isIdleAnimationComplete) {
-			// If 2 enemies collide during idle action, let them search a new idle target
 			unsetIdleState();
 			return;
 		}
+		// If the enemy is hunting the player and collides with a different enemy, then the smaller enemy
+		// gets eaten
 		if (isHuntingPlayer) {
-			if(transform.localScale.x < other.transform.localScale.x) {
-				// Reposition enemy
-				enemyMngr.respawnEnemy(other.gameObject);
+			if(transform.localScale.x > other.transform.localScale.x) {
 				// Define by how much the player's blob grows
 				float growFactor = other.gameObject.transform.localScale.x / transform.localScale.x;
 				// Set scaling of the blob
 				transform.localScale += new Vector3(0.1f,0.1f,0.1f)*growFactor*growFactor;
-			}
-			else 	// If the player's creature is smaller than the enemy, then reduce player's size
-			{
-				transform.localScale -= new Vector3(0.1f,0.1f,0.1f);
+				// Reposition enemy
+				enemyMngr.respawnEnemy(other.gameObject);
 			}
 		}
 	}
 
+	// Sets a random walking target for this enemy
 	private void findIdleWalkingTarget()
 	{
 		// Get random point in unit circle
@@ -410,6 +420,7 @@ public class enemy : MonoBehaviour {
 		isIdleWalking = true;
 	}
 
+	// Sets a random rotation target for this enemy
 	private void findIdleRotationTarget()
 	{
 		// Get random rotation angle
@@ -424,6 +435,7 @@ public class enemy : MonoBehaviour {
 		isIdleRotating = true;
 	}
 
+	// Resets all idle states of this enemy to default
 	private void unsetIdleState() {
 		isIdleWaiting = false;
 		isIdleWalking = false;
@@ -431,6 +443,7 @@ public class enemy : MonoBehaviour {
 		isIdleAnimationComplete = true;
 	}
 
+	// Resets all states of this enemy to default
 	public void resetStates() {
 		isIdleWaiting = false;
 		isIdleWalking = false;
@@ -441,11 +454,31 @@ public class enemy : MonoBehaviour {
 		isAfterEscape = false;
 	}
 
+	// Adds an ability into index 'slot' of the ability array of this enemy
 	public void addAbility(GameObject ability, int slot)
 	{
+		nofAbilities++;
 		abilityObjects[slot] = ability;
 		abilities[slot] = (ability)abilityObjects[slot].GetComponent(typeof(ability));
 	}
 
+	// Returns a bool indicating whether this enemy has any abilities
+	public bool hasAbilities()
+	{
+		return nofAbilities != 0;
+	}
+
+	// Returns a random ability of this enemy (for the case when the player eats this enemy)
+	public ability getRandomAbility()
+	{
+		if (nofAbilities > 0) {
+			return abilities [Random.Range (0, nofAbilities - 1)];
+		} else
+			return null;
+	}
+
+	public void setAlertState() {
+		cosViewingAngle = -1;
+	}
 	
 }

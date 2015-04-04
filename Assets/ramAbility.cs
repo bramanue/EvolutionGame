@@ -3,6 +3,7 @@ using System.Collections;
 
 public class ramAbility : ability {
 
+	// Defines whether the useAbility() function has just been called
 	public bool inUse;
 
 	public bool inTargetMode;
@@ -19,7 +20,13 @@ public class ramAbility : ability {
 
 	private float ramSpeed;
 
+	public float damage;
+
+	public float baseDamage;
+
 	private float range;
+
+	public float baseRange;
 
 	private float attackTimer = 0.0f;
 
@@ -29,10 +36,11 @@ public class ramAbility : ability {
 		inChargeMode = false;
 		inAttackMode = false;
 		inUse = false;
-		isActiveAbility = true;
 		maxLevel = 20;
-		range = 5.0f;
-		name = "RamAbility";
+		baseRange = 5.0f;
+		baseDamage = 1.0f;
+		range = baseRange;
+		abilityName = "RamAbility";
 		cooldownTime = 4.0f;
 		cooldownTimer = 0.0f;
 		// Get the game object which has this ram ability
@@ -64,7 +72,7 @@ public class ramAbility : ability {
 					// Get the angle between the target viewing direction and the current viewing direction
 					float angleBetween = Mathf.Sign (Vector3.Cross (parentPlayerScript.viewingDirection, targetDirection).z) * Vector3.Angle (parentPlayerScript.viewingDirection, targetDirection);
 					// Calculate the necessary rotation speed to perform rotation within 0.5s
-					rotationSpeed = Mathf.Abs(angleBetween) * 2.0f * Mathf.Deg2Rad;
+					rotationSpeed = Mathf.Abs(angleBetween) * 8.0f * Mathf.Deg2Rad;
 					// Get the rotation target
 					rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, parentBlob.transform.localEulerAngles.z + angleBetween));
 					// Reset time scale to normal
@@ -92,7 +100,7 @@ public class ramAbility : ability {
 					// Ram into current viewing direction
 					parentBlob.transform.position += parentPlayerScript.viewingDirection * ramSpeed * Time.deltaTime;
 					
-					// TODO Collision
+					// TODO Collision with environment
 					
 					// Once the timer is complete, the ram attack has ended and normal gameplay starts again
 					if(attackTimer <= 0)
@@ -112,7 +120,7 @@ public class ramAbility : ability {
 			{
 				// If the ability is not used, then reset the nonmoving state of the executing blob
 				if (!inUse) {
-					parentPlayerScript.cannotMove = false;
+					parentPlayerScript.canMove = true;
 					Time.timeScale = 1.0f;
 				}
 			}
@@ -164,7 +172,7 @@ public class ramAbility : ability {
 			else
 				// If the ability is not in use, then let the enemy move normally
 				if(!inUse)
-					parentEnemyScript.cannotMove = false;
+					parentEnemyScript.canMove = true;
 		}
 
 		inUse = false;
@@ -178,7 +186,7 @@ public class ramAbility : ability {
 			if (isPlayer) {
 				if (!inUse) {
 					// During targeting, the player cannot move
-					parentPlayerScript.cannotMove = true;
+					parentPlayerScript.canMove = false;
 				}
 
 				if (inTargetMode) {
@@ -193,7 +201,7 @@ public class ramAbility : ability {
 				if(inTargetMode)
 				{
 					// During targeting, the enemy cannot move
-					parentEnemyScript.cannotMove = true;
+					parentEnemyScript.canMove = false;
 					// Enemy attacks current player position
 					targetDirection = parentEnemyScript.toPlayer.normalized;
 					// Skip targetMode in the update function. Do necessary calculation already here
@@ -205,7 +213,7 @@ public class ramAbility : ability {
 					// Get the angle between the target viewing direction and the current viewing direction
 					float angleBetween = Mathf.Sign (Vector3.Cross (parentEnemyScript.viewingDirection, targetDirection).z) * Vector3.Angle (parentEnemyScript.viewingDirection, targetDirection);
 					// Calculate the necessary rotation speed to perform rotation within 0.5s
-					rotationSpeed = Mathf.Abs(angleBetween) * 2.0f * Mathf.Deg2Rad;
+					rotationSpeed = Mathf.Abs(angleBetween) * 8.0f * Mathf.Deg2Rad;
 					// Get the rotation target
 					rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, parentBlob.transform.localEulerAngles.z + angleBetween));
 				}
@@ -214,6 +222,22 @@ public class ramAbility : ability {
 			return true;
 		} else
 			return false;
+	}
+
+	public override int increaseLevel(int x)
+	{
+		int previousLevel = level;
+		level = Mathf.Max (0, Mathf.Min(level + x, maxLevel));
+		damage = 0.5f * level;
+		range = baseRange + level;
+		return level - previousLevel;
+		
+		// TODO Change appearance of ability sprite
+	}
+
+	public override EAbilityType getAbilityEnum()
+	{
+		return EAbilityType.ERamAbility;
 	}
 
 }

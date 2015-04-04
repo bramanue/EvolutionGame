@@ -9,6 +9,8 @@ public class runAbility : ability {
 
 	public float timeToTopSpeed;
 
+	public float baseSpeed;
+
 	private bool inUse;
 
 
@@ -21,9 +23,11 @@ public class runAbility : ability {
 		// Decide whether this ability is attached to the player or to an enemy
 		isPlayer = (parentPlayerScript != null);
 		// The lowest speed
-		currentSpeed = 4.0f;
+		baseSpeed = 4.0f;
+		// The current speed
+		currentSpeed = baseSpeed;
 		// The maximally auireable speed at the current ability level
-		maxSpeed = 4.0f + level;
+		maxSpeed = baseSpeed + level;
 		// Blob needs 3 seconds to get to max speed
 		timeToTopSpeed = 3.0f;
 		// This ability is currently not used
@@ -31,13 +35,13 @@ public class runAbility : ability {
 		
 		cooldownTime = 0;
 		maxLevel = 20;
-		name = "RunAbility";
+		abilityName = "RunAbility";
 	}
 	
 	void Update () {
 		// Set current speed back to default value if it is not used for some time
 		if (!inUse) {
-			currentSpeed = Mathf.Max(4.0f, currentSpeed - (maxSpeed - 4.0f) / timeToTopSpeed * 2.0f * Time.deltaTime);
+			currentSpeed = Mathf.Max(baseSpeed, currentSpeed - (maxSpeed - baseSpeed) / timeToTopSpeed * Time.deltaTime);
 			if (isPlayer) 
 				parentPlayerScript.maxVelocity = currentSpeed;
 			else
@@ -50,8 +54,9 @@ public class runAbility : ability {
 	public override int increaseLevel(int x)
 	{
 		int previousLevel = level;
-		level = Mathf.Min(level + x, maxLevel);
-		maxSpeed = 4.0f + level;
+		level = Mathf.Max (0, Mathf.Min(level + x, maxLevel));
+		maxSpeed = baseSpeed + level;
+		Debug.Log (x + " to run ability");
 		return level - previousLevel;
 	}
 
@@ -59,12 +64,17 @@ public class runAbility : ability {
 	{
 		inUse = true;
 		// Current speed is either maxSpeed or the accelerated min speed
-		currentSpeed = Mathf.Min(maxSpeed, currentSpeed + (maxSpeed - 4.0f) / timeToTopSpeed * Time.deltaTime);
+		currentSpeed = Mathf.Min(maxSpeed, currentSpeed + (maxSpeed - baseSpeed) / timeToTopSpeed * Time.deltaTime);
 		if (isPlayer) 
 			parentPlayerScript.maxVelocity = currentSpeed;
 		else
 			parentEnemyScript.maxVelocity = currentSpeed;
 		return true;
+	}
+
+	public override EAbilityType getAbilityEnum()
+	{
+		return EAbilityType.ERunAbility;
 	}
 
 }

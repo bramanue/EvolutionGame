@@ -6,21 +6,17 @@ public class ability : MonoBehaviour {
 	// Defines how strong the ability is
 	public int level;
 
+	// Sets the maximally achievable level
 	public int maxLevel;
 
-	// Defines whether this is an active or passive ability
-	public bool isActiveAbility;
-
 	// The name of the ability
-	public string name;
+	public string abilityName;
 
 	// Cooldowntimer for active abilities
 	public float cooldownTimer;
 
 	// The cooldown time after each use
 	public float cooldownTime;
-	
-	public float damage;
 
 	public GameObject parentBlob;
 
@@ -30,12 +26,13 @@ public class ability : MonoBehaviour {
 
 	public bool isPlayer;
 
+
 	void Start () {
 
 	}
 
 	void Update () {
-		cooldownTimer -= Time.deltaTime;
+
 	}
 
 	// Activate effect of ability
@@ -52,10 +49,21 @@ public class ability : MonoBehaviour {
 	public virtual int increaseLevel(int x)
 	{
 		int previousLevel = level;
-		level = Mathf.Min(level + x, maxLevel);
+		level = Mathf.Max (0, Mathf.Min(level + x, maxLevel));
 		return level - previousLevel;
 
 		// TODO Change appearance of ability sprite
 	}
 
+	// Returns whether this ability is ready to execute (i.e. cooldown timer below 0)
+	public bool isReady()
+	{
+		return cooldownTimer <= 0;
+	}
+
+	// Returns the enum of this ability
+	public virtual EAbilityType getAbilityEnum()
+	{
+		return EAbilityType.EEmptyAbility;
+	}
 }
