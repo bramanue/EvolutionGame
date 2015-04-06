@@ -30,6 +30,9 @@ public class ramAbility : ability {
 
 	private float attackTimer = 0.0f;
 
+	private Collider2D collider;
+
+
 	void Start() 
 	{
 		inTargetMode = true;
@@ -49,11 +52,16 @@ public class ramAbility : ability {
 		parentEnemyScript = (enemy)parentBlob.GetComponent(typeof(enemy));
 		parentPlayerScript = (player)parentBlob.GetComponent(typeof(player));
 		isPlayer = (bool)parentPlayerScript;
+
+		collider = (Collider2D)GetComponent (typeof(Collider2D));
 	}
 
 	void Update()
 	{
 		cooldownTimer -= Time.deltaTime;
+		// Put ability on player
+		transform.localPosition = new Vector3 (0, 0, 0);
+		collider.transform.localScale = new Vector3(parentBlob.transform.localScale.x, parentBlob.transform.localScale.y, parentBlob.transform.localScale.z);
 
 		// Player behaviour
 		if (isPlayer) 
@@ -222,6 +230,34 @@ public class ramAbility : ability {
 			return true;
 		} else
 			return false;
+	}
+
+	// If the ram ability touches an object perform the following
+	void OnTriggerEnter2D(Collider2D other)
+	{
+		// If collision with own blob, do nothing
+		if (other.gameObject == parentBlob)
+			return;
+		
+		// Check whether the teeth of the blob collided with another blob
+		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
+		player playerScript = (player)other.gameObject.GetComponent (typeof(player));
+
+		// If we are in attack mode and hit an enemy/player, then put damage to that blob
+		if (inAttackMode && isPlayer && enemyScript != null || !isPlayer && playerScript != null)
+		{
+			if(isPlayer) {
+				enemyScript.size -= damage;
+				if(enemyScript.size <= 0)
+				enemyScript.transform.localScale = new Vector3(enemyScript.size, enemyScript.size, enemyScript.size);
+			}
+			else
+			{
+				playerScript.size -= damage;
+				playerScript.transform.localScale = new Vector3(enemyScript.size, enemyScript.size, enemyScript.size);
+			}
+
+		}
 	}
 
 	public override int increaseLevel(int x)

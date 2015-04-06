@@ -2,11 +2,23 @@
 using System.Collections;
 
 public enum EAbilityType {
+	// Default ability
 	EEmptyAbility,
+	// Passive abilities
 	ERunAbility,
+	EViewAbility,
+	// Active abilities
 	ERamAbility,
 	EBiteAbility,
-	EViewAbility
+	EJumpAbility,
+	// Shield abilities
+	EIceShieldAbility,
+	ELavaShieldAbility,
+	EDustShieldAbility,
+	EThornShieldAbility,
+	EWaterShieldAbility,
+	EGlowingShieldAbility,
+	EElectricityShieldAbility
 }
 
 public class abilityManager : MonoBehaviour {

@@ -21,10 +21,18 @@ public class viewAbility : ability {
 		isPlayer = (parentPlayerScript != null);
 		// Set the minimal viewing range
 		minViewingRange = 5.0f;
+		// Calculate the initial viewing range
+		viewingRange = minViewingRange + level;
 
 		cooldownTime = 0;
 		maxLevel = 45;
 		abilityName = "ViewAbility";
+
+		if (isPlayer) {
+			parentPlayerScript.viewingRange = viewingRange;
+		} else {
+			parentEnemyScript.originalViewingRange = viewingRange;
+		}
 	}
 	
 	// Update is called once per frame
@@ -43,9 +51,9 @@ public class viewAbility : ability {
 		if (isPlayer) {
 			parentPlayerScript.viewingRange = viewingRange;
 		} else {
-			parentEnemyScript.viewingRange = viewingRange;
+			parentEnemyScript.originalViewingRange = viewingRange;
 		}
-		Debug.Log (x + " to view ability");
+		Debug.Log ((level - previousLevel) + " to view ability");
 		return level - previousLevel;
 	}
 
@@ -55,7 +63,7 @@ public class viewAbility : ability {
 		if (isPlayer) {
 			parentPlayerScript.viewingRange = viewingRange;
 		} else {
-			parentEnemyScript.viewingRange = viewingRange;
+			parentEnemyScript.originalViewingRange = viewingRange;
 		}
 		return true;
 	}

@@ -31,8 +31,6 @@ public class enemyManager : MonoBehaviour {
 	
 	private abilityManager abilityManagerScript;
 
-	private bool once = true;
-
 
 	// Use this for initialization
 	void Start () 
@@ -71,7 +69,7 @@ public class enemyManager : MonoBehaviour {
 	void Update () {
 
 		// Make sure the radius increases with the player's size
-		radius = 8.0f*playerScript.viewingRange + Mathf.Sqrt(8.0f*nofEnemies*player.transform.localScale.x) + 4.0f * playerScript.maxVelocity;
+		radius = 5.0f*playerScript.viewingRange + Mathf.Sqrt(8.0f*nofEnemies*player.transform.localScale.x) + 4.0f * playerScript.maxVelocity;
 
 		// Get the current position of the player
 		Vector3 playerPosition = player.transform.position;
@@ -84,7 +82,7 @@ public class enemyManager : MonoBehaviour {
 				distance = (enemyGameObjects [it].transform.position - playerPosition).magnitude;
 			}	
 			// Deactivate enemies if they are too far from the player
-			if(distance > 0.25*radius)
+			if(distance > 0.3*radius)
 				enemyGameObjects[it].SetActive(false);
 			else
 				enemyGameObjects[it].SetActive(true);

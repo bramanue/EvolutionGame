@@ -20,7 +20,7 @@ public class biteAbility : ability {
 		parentPlayerScript = (player)parentBlob.GetComponent(typeof(player));
 		isPlayer = (bool)parentPlayerScript;
 
-		maxLevel = 20;
+		maxLevel = 10;
 		baseDamage = 0.1f;
 		damage = baseDamage + level * 0.1f;
 		abilityName = "BiteAbility";

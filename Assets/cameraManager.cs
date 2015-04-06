@@ -9,17 +9,15 @@ public class cameraManager : MonoBehaviour {
 
 	private player playerScript;
 
-	private float heightVsRange;
-
 
 	// Use this for initialization
 	void Start () {
 		originalRotation = transform.rotation;
 		playerTransform = GameObject.Find("Blob").transform;
 		playerScript = (player)GameObject.Find ("Blob").GetComponent (typeof(player));
-		Camera.main.fieldOfView = 90;
-		// Camera.main.orthographic = false;
-		heightVsRange = 1.0f / Mathf.Tan(Camera.main.fieldOfView*Mathf.Deg2Rad);
+		Camera.main.fieldOfView = 60;
+	//	Camera.main.orthographic = false;
+
 	}
 	
 	// Update is called once per frame
@@ -29,6 +27,7 @@ public class cameraManager : MonoBehaviour {
 	//	float theta = 0.5f * Mathf.Deg2Rad * Camera.main.fieldOfView;
 	//	float cameraHeight = (playerScript.viewingRange + playerTransform.localScale.x) / Mathf.Tan (theta);
 	//	transform.position = playerTransform.position + new Vector3 (0, 0, -cameraHeight);
+
 		transform.position = playerTransform.position + new Vector3 (0, 0, -200);
 		Camera.main.orthographicSize = playerScript.viewingRange + playerTransform.localScale.x;
 	}

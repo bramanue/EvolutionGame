@@ -30,8 +30,21 @@ public class enemy : MonoBehaviour {
 	// Defines whether this enemy is allowed to walk
 	public bool canMove;
 
+	// Defines whether this enemy can act at all
+	public bool stunned;
+	
+	// Defines whether this enemy is currently blinded
+	public bool blinded;
+
+	private float blindedTimer;
+
+	public float originalViewingRange;
+
 	// Pointer to the player
 	private GameObject player;
+
+	// The player script
+	private player playerScript;
 
 	// Defines whether this enemy is at idle or is hunting the player
 	private bool isHuntingPlayer;
@@ -99,6 +112,8 @@ public class enemy : MonoBehaviour {
 		enemyMngr = (enemyManager)GameObject.Find ("EnemyManager").GetComponent (typeof(enemyManager));
 		// Get pointer to the player GameObject
 		player = GameObject.Find("Blob");
+		// Get access to the player script
+		playerScript = (player)player.GetComponent(typeof(player));
 		// Size should already be set by the enemyManager. Fetch it!
 		size = transform.localScale.x;
 		// Get the theta angle of the current rotation, corresponding to position on the unit circle
@@ -109,6 +124,8 @@ public class enemy : MonoBehaviour {
 		originalCosViewingAngle = cosViewingAngle;
 		// Store the starting position of this enemy
 		originalPosition = transform.position;
+
+		originalViewingRange = viewingRange;
 		// Set the flags to idle
 		isRunningAwayFromPlayer = false;
 		isHuntingPlayer = false;
@@ -126,6 +143,8 @@ public class enemy : MonoBehaviour {
 		// Calculate vector pointing to the player
 		toPlayer = player.transform.position - transform.position;
 
+		transform.localScale = new Vector3 (size, size, size);
+
 		// Reduce active timer
 		activeTimer -= Time.deltaTime;
 		if (isAfterEscape && activeTimer > 0) {
@@ -141,6 +160,17 @@ public class enemy : MonoBehaviour {
 			}
 		}
 
+		// If blinded, then slowly restore viewing range
+		if (blinded && blindedTimer > 0) {
+			float diff = originalViewingRange - viewingRange;
+			viewingRange += 0.5f*diff/(blindedTimer/Time.deltaTime);	// Restore only until have original viewing range
+			blindedTimer -= Time.deltaTime;
+		}
+		else {
+			viewingRange = originalViewingRange;	// Restore viewing range
+			blinded = false;
+		}
+
 		// Check whether the player could be seen by this enemy
 		bool isPlayerInViewingRange = isInViewingRange (player);
 
@@ -150,7 +180,7 @@ public class enemy : MonoBehaviour {
 
 			// Enemy can see player
 
-			if (size >= player.transform.localScale.x) {
+			if (size > playerScript.size) {
 				// Enemy is bigger than player (but not too big) -> attack player
 				if(!isHuntingPlayer)
 				{
@@ -158,7 +188,7 @@ public class enemy : MonoBehaviour {
 					originalPosition = transform.position;
 				}
 				// Only hunt, if enemy isn't too far from its original position
-				if((transform.position-originalPosition).magnitude <= activeOperationRadius && size < 2.0f*player.transform.localScale.x) 
+				if((transform.position-originalPosition).magnitude <= activeOperationRadius && size < 2.0f*playerScript.size) 
 				{
 					cosViewingAngle = -1;
 					isHuntingPlayer = true;
@@ -390,11 +420,13 @@ public class enemy : MonoBehaviour {
 		// If the enemy is hunting the player and collides with a different enemy, then the smaller enemy
 		// gets eaten
 		if (isHuntingPlayer) {
-			if(transform.localScale.x > other.transform.localScale.x) {
+			enemy enemyScript = (enemy)other.gameObject.GetComponent(typeof(enemy));
+			if(enemyScript && size > enemyScript.size) {
 				// Define by how much the player's blob grows
-				float growFactor = other.gameObject.transform.localScale.x / transform.localScale.x;
+				float growFactor = enemyScript.size / size;
 				// Set scaling of the blob
-				transform.localScale += new Vector3(0.1f,0.1f,0.1f)*growFactor*growFactor;
+				size += 0.1f*growFactor*growFactor;
+			//	transform.localScale += new Vector3(0.1f,0.1f,0.1f)*growFactor*growFactor;
 				// Reposition enemy
 				enemyMngr.respawnEnemy(other.gameObject);
 			}
@@ -477,8 +509,27 @@ public class enemy : MonoBehaviour {
 			return null;
 	}
 
+	// Returns -1 when the player does not have this ability and otherwise the index to where this ability resides in the ability array
+	public int hasAbility(EAbilityType abilityType)
+	{
+		for (int i = 0; i < 6; i++) {
+			if(abilities[i] != null && abilities[i].getAbilityEnum() == abilityType)
+				return i;
+		}
+		return -1;
+	}
+
 	public void setAlertState() {
 		cosViewingAngle = -1;
+	}
+
+	public void setBlinded(float time) {
+		if (!blinded) 
+		{
+			viewingRange = 0;
+			blindedTimer = time;
+			blinded = true;
+		}
 	}
 	
 }

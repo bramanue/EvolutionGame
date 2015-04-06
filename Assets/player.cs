@@ -25,6 +25,10 @@ public class player : MonoBehaviour
 	// Defines whether player is stunned (not allowed to do anything)
 	public bool stunned;
 
+	// Defines whether player is currently blinded
+	public bool blinded;
+	private float blindedTimer;
+
 	// Enemy manager for performing eating, etc operations
 	private enemyManager enemyMngr;
 
@@ -47,15 +51,28 @@ public class player : MonoBehaviour
 		size = transform.localScale.x;
 		// Player is allowed to move
 		canMove = true;
+		// Get the initial viewing range
+		abilities [5].useAbility ();
+
+
 	}
 	
 	// Update is called once per frame
 	void Update()
 	{
+		// Change appearance according to current size
+		transform.localScale = new Vector3 (size, size, size);
 		// Get the theta angle of the current rotation, corresponding to position on the unit circle
 		float theta = (transform.localEulerAngles.z + 90.0f) * Mathf.Deg2Rad;
 		// Get the viewing direction based on the current rotation (resp. on the previously calculated theta)
 		viewingDirection = new Vector3 (Mathf.Cos (theta), Mathf.Sin (theta), 0.0f);
+
+		if (blinded && blindedTimer > 0) {
+			// TODO make screen less bright (exponentially)
+			blindedTimer -= Time.deltaTime;
+		} else {
+			blinded = false;
+		}
 
 		if (!stunned) {
 
@@ -104,14 +121,14 @@ public class player : MonoBehaviour
 		if (enemyScript != null)
 		{
 			// If we are bigger than the enemy, then eat it
-			if (other.transform.localScale.x <= transform.localScale.x) 
+			if (enemyScript.size < size) 
 			{
 				if(enemyScript.hasAbilities())
 				{
 					// Get a random ability from the defeated enemy
 					ability newAbility = enemyScript.getRandomAbility();
 					// Check whether player already has this ability
-					int abilityIndex = hasPlayerAbility(newAbility.getAbilityEnum());
+					int abilityIndex = hasAbility(newAbility.getAbilityEnum());
 					// If player already has this ability, then increase its level by a certain amount
 					if(abilityIndex >= 0) {
 						// The increase in ability is half the difference between enemie's level and player's level but at least 1
@@ -124,22 +141,23 @@ public class player : MonoBehaviour
 				// Define by how much the player's blob grows
 				float growFactor = other.gameObject.transform.localScale.x / transform.localScale.x;
 				// Set scaling of the blob
-				transform.localScale += new Vector3 (0.1f, 0.1f, 0.1f) * growFactor * growFactor;
-				size = transform.localScale.x;
+				size += 0.1f*growFactor*growFactor;
+			//	transform.localScale += new Vector3 (0.1f, 0.1f, 0.1f) * growFactor * growFactor;
+			//	size = transform.localScale.x;
 				// Reposition enemy
 				enemyMngr.respawnEnemy (other.gameObject);
 			} 
 			else 
 			{ 	// If the player's creature is smaller than the enemy, then reduce player's size
-				transform.localScale -= new Vector3 (0.1f, 0.1f, 0.1f);
-				size = transform.localScale.x;
-				print ("Game Over");
+				size -= 0.1f;
+			//	transform.localScale -= new Vector3 (0.1f, 0.1f, 0.1f);
+			//	size = transform.localScale.x;
 			}
 		}
 	}
 
 	// Returns -1 when the player does not have this ability and otherwise the index to where this ability resides in the ability array
-	private int hasPlayerAbility(EAbilityType abilityType)
+	public int hasAbility(EAbilityType abilityType)
 	{
 		for (int i = 0; i < 6; i++) {
 			if(abilities[i] != null && abilities[i].getAbilityEnum() == abilityType)
@@ -152,6 +170,15 @@ public class player : MonoBehaviour
 	{
 		abilityObjects [slot] = ability;
 		abilities[slot] = (ability)abilityObjects [slot].GetComponent (typeof(ability));
+	}
+
+	public void setBlinded(float time) {
+		if (!blinded) 
+		{
+			// TODO make screen insanely bright
+			blindedTimer = time;
+			blinded = true;
+		}
 	}
 	
 }
