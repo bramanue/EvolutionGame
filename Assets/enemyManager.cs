@@ -45,7 +45,7 @@ public class enemyManager : MonoBehaviour {
 		abilityManagerScript = (abilityManager)abilityMngr.GetComponent(typeof(abilityManager));
 
 		radius = 100.0f;
-		nofEnemies = 50;
+		nofEnemies = 60;
 
 		// Create the basic amount of enemies
 		for(int i = 0; i < nofEnemies; i++) 
@@ -74,13 +74,21 @@ public class enemyManager : MonoBehaviour {
 		// Get the current position of the player
 		Vector3 playerPosition = player.transform.position;
 		// Loop over all enemies and check whether they need to be repositioned (out of the radius)
-		for (int it = 0; it < nofEnemies; it++) {
+		for (int it = 0; it < nofEnemies; it++) 
+		{
 			float distance = (enemyGameObjects [it].transform.position - playerPosition).magnitude;
 			if (distance > radius)
 			{
 				setRandomInitialValues (enemyScripts [it], enemyGameObjects [it]);
 				distance = (enemyGameObjects [it].transform.position - playerPosition).magnitude;
 			}	
+
+			if(enemyScripts[it].size <= 0) 
+			{
+				setRandomInitialValues (enemyScripts [it], enemyGameObjects [it]);
+				distance = (enemyGameObjects [it].transform.position - playerPosition).magnitude;
+			}
+
 			// Deactivate enemies if they are too far from the player
 			if(distance > 0.3*radius)
 				enemyGameObjects[it].SetActive(false);

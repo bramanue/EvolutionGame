@@ -10,6 +10,8 @@ public class player : MonoBehaviour
 	// Max rotation speed of the player (depends on ability "Speed")
 	public float rotationSpeed = 10.0f;
 
+	public float currentSpeed;
+
 	// Viewing Range of the player (depends on ability "Eyes")
 	public float viewingRange = 0.0f;
 
@@ -19,11 +21,18 @@ public class player : MonoBehaviour
 	// Size of the player's blob
 	public float size;
 
+	// Defines how much the blob can grow per second (for grow animation)
+	public float growSpeed = 0.1f;
+
+	public float shrinkSpeed = 1.0f;
+
 	// Defines whether player is allowed to move
 	public bool canMove;
 
 	// Defines whether player is stunned (not allowed to do anything)
 	public bool stunned;
+
+	public float stunnedTimer;
 
 	// Defines whether player is currently blinded
 	public bool blinded;
@@ -51,17 +60,16 @@ public class player : MonoBehaviour
 		size = transform.localScale.x;
 		// Player is allowed to move
 		canMove = true;
-		// Get the initial viewing range
-		abilities [5].useAbility ();
-
-
 	}
 	
 	// Update is called once per frame
 	void Update()
 	{
+		// Get the viewing range
+		abilities[5].useAbility();
 		// Change appearance according to current size
-		transform.localScale = new Vector3 (size, size, size);
+		grow();
+		// transform.localScale = new Vector3 (size, size, size);
 		// Get the theta angle of the current rotation, corresponding to position on the unit circle
 		float theta = (transform.localEulerAngles.z + 90.0f) * Mathf.Deg2Rad;
 		// Get the viewing direction based on the current rotation (resp. on the previously calculated theta)
@@ -99,67 +107,92 @@ public class player : MonoBehaviour
 			}
 
 
-
 			if (canMove) {
 				// Use runAbility if the player is moving
 				if (Input.GetAxis ("Vertical") != 0 || Input.GetAxis ("Horizontal") != 0) {
 					abilities [4].useAbility ();
 				}
-
+				currentSpeed = maxVelocity;
 				// Move blob according to joystick input
 				transform.Rotate (0.0f, 0.0f, -Input.GetAxis ("Horizontal") * rotationSpeed);
 				transform.position += Input.GetAxis ("Vertical") * maxVelocity * transform.up * Time.deltaTime; // vorwärts bewegen
 			}
+		} else {
+			stunnedTimer -= Time.deltaTime;
+			if(stunnedTimer <= 0)
+				stunned = false;
 		}
 
 	}
 
-	void  OnTriggerEnter2D(Collider2D other)
+	void OnTriggerEnter2D(Collider2D other)
 	{
+		Debug.Log ("Collision detected");
 		// Check whether the player collided with an enemy or with something else
 		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
 		if (enemyScript != null)
 		{
-			// If we are bigger than the enemy, then eat it
+			// If player is bigger than enemy, then eat it
 			if (enemyScript.size < size) 
 			{
-				if(enemyScript.hasAbilities())
-				{
-					// Get a random ability from the defeated enemy
-					ability newAbility = enemyScript.getRandomAbility();
-					// Check whether player already has this ability
-					int abilityIndex = hasAbility(newAbility.getAbilityEnum());
-					// If player already has this ability, then increase its level by a certain amount
-					if(abilityIndex >= 0) {
-						// The increase in ability is half the difference between enemie's level and player's level but at least 1
-						int increase = abilities[abilityIndex].increaseLevel((int)Mathf.Max (1, Mathf.Floor((newAbility.level - abilities[abilityIndex].level) * 0.5f)) );
-						// TODO Make a nice GUI print on screen
-						Debug.Log("Your ability " + abilities[abilityIndex].name + " increased its level by " + increase);
-					}
-
-				}
-				// Define by how much the player's blob grows
-				float growFactor = other.gameObject.transform.localScale.x / transform.localScale.x;
-				// Set scaling of the blob
-				size += 0.1f*growFactor*growFactor;
-			//	transform.localScale += new Vector3 (0.1f, 0.1f, 0.1f) * growFactor * growFactor;
-			//	size = transform.localScale.x;
-				// Reposition enemy
-				enemyMngr.respawnEnemy (other.gameObject);
+				eatBlob (enemyScript, other.gameObject);
 			} 
 			else 
 			{ 	// If the player's creature is smaller than the enemy, then reduce player's size
 				size -= 0.1f;
-			//	transform.localScale -= new Vector3 (0.1f, 0.1f, 0.1f);
-			//	size = transform.localScale.x;
 			}
 		}
+	}
+
+	// Makes the blob grow smoothly
+	private void grow()
+	{
+		float currentSize = transform.localScale.x;
+		float diff = size - currentSize;
+		if (diff < 0) 
+		{
+			// Shrinking
+			float nextSize = Mathf.Max(size,currentSize - Time.deltaTime*shrinkSpeed*Mathf.Max (1.0f,-diff));
+			transform.localScale = new Vector3(nextSize, nextSize, nextSize);
+		}
+		else
+		{
+			// Growing
+			float nextSize = Mathf.Min(size,currentSize + Time.deltaTime*growSpeed);
+			transform.localScale = new Vector3(nextSize, nextSize, nextSize);
+		}
+	}
+
+	private void eatBlob(enemy enemyScript, GameObject enemyObject)
+	{
+		if(enemyScript.hasAbilities())
+		{
+			// Get a random ability from the defeated enemy
+			ability newAbility = enemyScript.getRandomAbility();
+			// Check whether player already has this ability
+			int abilityIndex = hasAbility(newAbility.getAbilityEnum());
+			// If player already has this ability, then increase its level by a certain amount
+			if(abilityIndex >= 0) {
+				// The increase in ability is half the difference between enemie's level and player's level but at least 1
+				int increase = abilities[abilityIndex].increaseLevel((int)Mathf.Max (1, Mathf.Floor((newAbility.level - abilities[abilityIndex].level) * 0.5f)) );
+				// TODO Make a nice GUI print on screen
+				Debug.Log("Your ability " + abilities[abilityIndex].name + " increased its level by " + increase);
+			}
+			
+		}
+		
+		// Define by how much the player's blob grows
+		float growFactor = enemyObject.transform.localScale.x / transform.localScale.x;
+		// Set scaling of the blob (transform will be changed during next Update())
+		size += 0.1f*growFactor*growFactor;
+		// Reposition enemy
+		enemyMngr.respawnEnemy(enemyObject);
 	}
 
 	// Returns -1 when the player does not have this ability and otherwise the index to where this ability resides in the ability array
 	public int hasAbility(EAbilityType abilityType)
 	{
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < abilities.Length; i++) {
 			if(abilities[i] != null && abilities[i].getAbilityEnum() == abilityType)
 				return i;
 		}
@@ -179,6 +212,12 @@ public class player : MonoBehaviour
 			blindedTimer = time;
 			blinded = true;
 		}
+	}
+
+	public void setStunned(float time) {
+		// TODO make stun visible
+		stunned = true;
+		stunnedTimer = time;
 	}
 	
 }

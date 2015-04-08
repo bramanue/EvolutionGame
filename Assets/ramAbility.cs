@@ -20,7 +20,7 @@ public class ramAbility : ability {
 
 	private float ramSpeed;
 
-	public float damage;
+	private float damage;
 
 	public float baseDamage;
 
@@ -41,10 +41,10 @@ public class ramAbility : ability {
 		inUse = false;
 		maxLevel = 20;
 		baseRange = 5.0f;
-		baseDamage = 1.0f;
+		baseDamage = 0.5f;
+		damage = baseDamage + level * 0.5f;
 		range = baseRange;
 		abilityName = "RamAbility";
-		cooldownTime = 4.0f;
 		cooldownTimer = 0.0f;
 		// Get the game object which has this ram ability
 		parentBlob = transform.parent.gameObject;
@@ -161,7 +161,7 @@ public class ramAbility : ability {
 					// Ram into current viewing direction
 					parentBlob.transform.position += parentEnemyScript.viewingDirection * ramSpeed * Time.deltaTime;
 
-					// TODO Collision
+					// TODO Collision with other objects
 
 					// Once the timer is complete, the ram attack has ended and normal gameplay starts again
 					if(attackTimer <= 0)
@@ -243,28 +243,35 @@ public class ramAbility : ability {
 		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
 		player playerScript = (player)other.gameObject.GetComponent (typeof(player));
 
-		// If we are in attack mode and hit an enemy/player, then put damage to that blob
-		if (inAttackMode && isPlayer && enemyScript != null || !isPlayer && playerScript != null)
-		{
-			if(isPlayer) {
-				enemyScript.size -= damage;
-				if(enemyScript.size <= 0)
-				enemyScript.transform.localScale = new Vector3(enemyScript.size, enemyScript.size, enemyScript.size);
-			}
-			else
-			{
-				playerScript.size -= damage;
-				playerScript.transform.localScale = new Vector3(enemyScript.size, enemyScript.size, enemyScript.size);
-			}
+		int a = 1;
+		if(playerScript)
+			a = 0;
 
-		}
+		// If we are in attack mode and hit an enemy/player, then put damage to that blob
+		if (inAttackMode)
+			// TODO let damage depend on blob size
+			// TODO play sound
+			if(enemyScript != null || playerScript != null)
+			{
+				if(isPlayer) {
+					enemyScript.size -= damage;
+				}
+				else
+				{
+					if(playerScript)
+						playerScript.size -= damage;
+					else
+						enemyScript.size -= damage;
+				}
+
+			}
 	}
 
 	public override int increaseLevel(int x)
 	{
 		int previousLevel = level;
 		level = Mathf.Max (0, Mathf.Min(level + x, maxLevel));
-		damage = 0.5f * level;
+		damage = baseDamage + 0.5f * level;
 		range = baseRange + level;
 		return level - previousLevel;
 		

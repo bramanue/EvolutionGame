@@ -21,6 +21,7 @@ public class gameManager : MonoBehaviour {
 		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.ERunAbility,4,4);
 		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.ERamAbility,0,4);
 		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EBiteAbility,1,1);
+		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EThornShieldAbility,2,1);
 		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EViewAbility,5,5);
 	}
 	

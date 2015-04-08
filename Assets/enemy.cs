@@ -15,6 +15,8 @@ public class enemy : MonoBehaviour {
 	// Defines how far this enemy can see
 	public float viewingRange;
 
+	public float currentSpeed;
+
 	// Defines how wide the angle of the enemy's eyes are 
 	public float cosViewingAngle;
 
@@ -24,6 +26,12 @@ public class enemy : MonoBehaviour {
 	// The size of this enemy
 	public float size;
 
+	// Defines by how much this blob can grow per second
+	public float growSpeed = 0.1f;
+
+	// Defines by how much this blob can shrink per second
+	public float shrinkSpeed = 1.0f;
+
 	// The maximum velocity of this enemy
 	public float maxVelocity ;
 
@@ -32,6 +40,8 @@ public class enemy : MonoBehaviour {
 
 	// Defines whether this enemy can act at all
 	public bool stunned;
+
+	public float stunnedTimer;
 	
 	// Defines whether this enemy is currently blinded
 	public bool blinded;
@@ -47,7 +57,7 @@ public class enemy : MonoBehaviour {
 	private player playerScript;
 
 	// Defines whether this enemy is at idle or is hunting the player
-	private bool isHuntingPlayer;
+	public bool isHuntingPlayer;
 
 	// Defines whether this enely is running away from the player
 	private bool isRunningAwayFromPlayer;
@@ -142,8 +152,10 @@ public class enemy : MonoBehaviour {
 		viewingDirection = new Vector3 (Mathf.Cos (theta), Mathf.Sin (theta), 0.0f);
 		// Calculate vector pointing to the player
 		toPlayer = player.transform.position - transform.position;
+		// Adapt visuals to the actual size
+		grow ();
 
-		transform.localScale = new Vector3 (size, size, size);
+		currentSpeed = maxVelocity;
 
 		// Reduce active timer
 		activeTimer -= Time.deltaTime;
@@ -171,110 +183,105 @@ public class enemy : MonoBehaviour {
 			blinded = false;
 		}
 
-		// Check whether the player could be seen by this enemy
-		bool isPlayerInViewingRange = isInViewingRange (player);
+		if (!stunned) {
 
-		if (isPlayerInViewingRange) 
-		{
-			// TODO: Camouflage, darkness, scene geometry, etc...
+			// Check whether the player could be seen by this enemy
+			bool isPlayerInViewingRange = isInViewingRange (player);
 
-			// Enemy can see player
+			if (isPlayerInViewingRange) {
+				// TODO: Camouflage, darkness, scene geometry, etc...
 
-			if (size > playerScript.size) {
-				// Enemy is bigger than player (but not too big) -> attack player
-				if(!isHuntingPlayer)
-				{
-					// When the hunt begins, mark the starting position as originalPosition
-					originalPosition = transform.position;
-				}
-				// Only hunt, if enemy isn't too far from its original position
-				if((transform.position-originalPosition).magnitude <= activeOperationRadius && size < 2.0f*playerScript.size) 
-				{
-					cosViewingAngle = -1;
-					isHuntingPlayer = true;
+				// Enemy can see player
+
+				if (size > playerScript.size) {
+					// Enemy is bigger than player (but not too big) -> attack player
+					if (!isHuntingPlayer) {
+						// When the hunt begins, mark the starting position as originalPosition
+						originalPosition = transform.position;
+					}
+					// Only hunt, if enemy isn't too far from its original position
+					if ((transform.position - originalPosition).magnitude <= activeOperationRadius && size < 2.0f * playerScript.size) {
+						cosViewingAngle = -1;
+						isHuntingPlayer = true;
+						isAfterEscape = false;
+						isRunningAwayFromPlayer = false;
+						unsetIdleState ();
+						huntPlayer ();
+						return;
+					}
+					if(size < 2.0f * playerScript.size) {
+						isHuntingPlayer = false;
+						isAfterEscape = false;
+						isRunningAwayFromPlayer = false;
+						unsetIdleState ();
+						// Proceed with idle behaviour
+					}
+					// Stop pursuit if too far away
+				} else {
+					// Enemy is smaller than player -> run away (forever? or get slower by exhaustion?)
+					isRunningAwayFromPlayer = true;
 					isAfterEscape = false;
-					isRunningAwayFromPlayer = false;
-					unsetIdleState();
-					huntPlayer();
+					isHuntingPlayer = false;
+					// Set viewing angle to 360° for the duration of the escape
+					cosViewingAngle = -1;
+					unsetIdleState ();
+					// TODO look for hiding spots near location
+					runAwayFromPlayer ();
 					return;
 				}
-				// Stop pursuit if too far away
-			} 
-			else  
-			{
-				// Enemy is smaller than player -> run away (forever? or get slower by exhaustion?)
-				isRunningAwayFromPlayer = true;
-				isAfterEscape = false;
-				isHuntingPlayer = false;
-				// Set viewing angle to 360° for the duration of the escape
-				cosViewingAngle = -1;
-				unsetIdleState();
-				// TODO look for hiding spots near location
-				runAwayFromPlayer();
-				return;
 			}
-		}
 
-		// Enemy cannot see player
-		if(isHuntingPlayer) {
-			// If the enemy was hunting the player, then wait a few seconds before walking back to the original position
-			if(!isIdleWaiting) {
-				isAfterEscape = true;
-				activeTimer = Random.Range(3.0f,6.0f);
-				idleTimer = Random.Range(2.0f,7.0f);
-				isIdleWaiting = true;
-				isIdleAnimationComplete = false;
-				return;
-			} else {
-				performIdleBehaviour();
-				if(idleTimer <= 0.0f) {
-					// Idle wait is over. Walk back to original position
-					isHuntingPlayer = false;
-					// Set walking target to iriginal position of enemy
-					idleWalkingTarget = originalPosition;
-					// Calculate target viewing direction
-					idleRotationTarget = (idleWalkingTarget - transform.position).normalized;
-					// Calculate angle between current viewing direction and target viewing direction
-					float angleBetween = Mathf.Sign (Vector3.Cross(viewingDirection, idleRotationTarget).z)*Vector3.Angle(viewingDirection, idleRotationTarget);
-					// Calculate rotation target quaternion
-					idleRotationTargetQuaternion = Quaternion.Euler(new Vector3(0.0f,0.0f,transform.localEulerAngles.z + angleBetween));
-					// Set animation in progress
-					isIdleWalking = true;
-					// Set animation to incomplete
+			// Enemy cannot see player
+			if (isHuntingPlayer) {
+				// If the enemy was hunting the player, then wait a few seconds before walking back to the original position
+				if (!isIdleWaiting) {
+					isAfterEscape = true;
+					activeTimer = Random.Range (3.0f, 6.0f);
+					idleTimer = Random.Range (2.0f, 7.0f);
+					isIdleWaiting = true;
 					isIdleAnimationComplete = false;
+					return;
+				} else {
+					performIdleBehaviour ();
+					if (idleTimer <= 0.0f) {
+						// Idle wait is over. Walk back to original position
+						isHuntingPlayer = false;
+						// Set walking target to iriginal position of enemy
+						idleWalkingTarget = originalPosition;
+						// Calculate target viewing direction
+						idleRotationTarget = (idleWalkingTarget - transform.position).normalized;
+						// Calculate angle between current viewing direction and target viewing direction
+						float angleBetween = Mathf.Sign (Vector3.Cross (viewingDirection, idleRotationTarget).z) * Vector3.Angle (viewingDirection, idleRotationTarget);
+						// Calculate rotation target quaternion
+						idleRotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
+						// Set animation in progress
+						isIdleWalking = true;
+						// Set animation to incomplete
+						isIdleAnimationComplete = false;
+					}
 				}
-			}
-		}
-		else if(isRunningAwayFromPlayer) {
-			// Enemy can no longer see player hunting him - return to original position
-			isRunningAwayFromPlayer = false;
-			// Set timer until when the viewing angle is back to normal
-			activeTimer = Random.Range(3.0f,6.0f);
-			originalActiveTimer = activeTimer;
-			originalPosition = transform.position;
-		/*	// Set the walking target
-			idleWalkingTarget = originalPosition;
-			// Calculate target viewing direction
-			idleRotationTarget = (idleWalkingTarget - transform.position).normalized;
-			// Calculate angle between current viewing direction and target viewing direction
-			float angleBetween = Mathf.Sign (Vector3.Cross(viewingDirection, idleRotationTarget).z)*Vector3.Angle(viewingDirection, idleRotationTarget);
-			// Calculate rotation target quaternion
-			idleRotationTargetQuaternion = Quaternion.Euler(new Vector3(0.0f,0.0f,transform.localEulerAngles.z + angleBetween));
-			// Set animation in progress
-			isIdleWalking = true;
-			// Set animation to incomplete
-			isIdleAnimationComplete = false; */
-			// Set alarm state of enemy higher
-			isAfterEscape = true;
-		}
-		else
-		{
-			// In case that setAlertstate() was called but player was not spotted
-			if(cosViewingAngle < originalCosViewingAngle && activeTimer < 0) {
+			} else if (isRunningAwayFromPlayer) {
+				// Enemy can no longer see player hunting him - return to original position
+				isRunningAwayFromPlayer = false;
+				// Set timer until when the viewing angle is back to normal
+				activeTimer = Random.Range (3.0f, 6.0f);
+				originalActiveTimer = activeTimer;
+				originalPosition = transform.position;
+				// Set alarm state of enemy higher
 				isAfterEscape = true;
-				activeTimer = Random.Range(3.0f,6.0f);
+			} else {
+				// In case that setAlertstate() was called but player was not spotted
+				if (cosViewingAngle < originalCosViewingAngle && activeTimer < 0) {
+					isAfterEscape = true;
+					activeTimer = Random.Range (3.0f, 6.0f);
+				}
+				performIdleBehaviour ();
 			}
-			performIdleBehaviour();
+
+		} else {
+			stunnedTimer -= Time.deltaTime;
+			if(stunnedTimer <= 0.0f)
+				stunned = false;
 		}
 
 	}
@@ -419,14 +426,14 @@ public class enemy : MonoBehaviour {
 		}
 		// If the enemy is hunting the player and collides with a different enemy, then the smaller enemy
 		// gets eaten
-		if (isHuntingPlayer) {
+		if (isHuntingPlayer) 
+		{
 			enemy enemyScript = (enemy)other.gameObject.GetComponent(typeof(enemy));
 			if(enemyScript && size > enemyScript.size) {
 				// Define by how much the player's blob grows
 				float growFactor = enemyScript.size / size;
 				// Set scaling of the blob
 				size += 0.1f*growFactor*growFactor;
-			//	transform.localScale += new Vector3(0.1f,0.1f,0.1f)*growFactor*growFactor;
 				// Reposition enemy
 				enemyMngr.respawnEnemy(other.gameObject);
 			}
@@ -512,7 +519,7 @@ public class enemy : MonoBehaviour {
 	// Returns -1 when the player does not have this ability and otherwise the index to where this ability resides in the ability array
 	public int hasAbility(EAbilityType abilityType)
 	{
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < abilities.Length; i++) {
 			if(abilities[i] != null && abilities[i].getAbilityEnum() == abilityType)
 				return i;
 		}
@@ -530,6 +537,36 @@ public class enemy : MonoBehaviour {
 			blindedTimer = time;
 			blinded = true;
 		}
+	}
+
+	public void setStunned(float time) {
+		// TODO make stun visible
+		stunned = true;
+		stunnedTimer = time;
+	}
+
+	// Makes the blob grow smoothly
+	private void grow()
+	{
+		float currentSize = transform.localScale.x;
+		float diff = size - currentSize;
+		if (diff < 0) 
+		{
+			// Shrinking
+			float nextSize = Mathf.Max(size,currentSize - Time.deltaTime*shrinkSpeed*Mathf.Max (1.0f,-diff));
+			transform.localScale = new Vector3(nextSize, nextSize, nextSize);
+		}
+		else
+		{
+			// Growing
+			float nextSize = Mathf.Min(size,currentSize + Time.deltaTime*growSpeed);
+			transform.localScale = new Vector3(nextSize, nextSize, nextSize);
+		}
+	}
+
+	public void activateAbility(int abilityIndex) 
+	{
+		abilities [abilityIndex].useAbility ();
 	}
 	
 }

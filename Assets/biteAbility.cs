@@ -45,11 +45,9 @@ public class biteAbility : ability {
 					enemy enemyScript = (enemy)otherBlob.GetComponent (typeof(enemy));
 					float oldSize = enemyScript.size;
 					enemyScript.size -= damage;
-					otherBlob.transform.localScale = new Vector3(enemyScript.size,enemyScript.size,enemyScript.size);
-					// Half of the inflicted damage is added to the player's size
-					parentPlayerScript.size += 0.5f*Mathf.Min (damage, oldSize);
-					Debug.Log (0.5f*Mathf.Min (damage, oldSize));
-					parentBlob.transform.localScale = new Vector3(parentPlayerScript.size,parentPlayerScript.size,parentPlayerScript.size);
+					// A quarter of the inflicted damage is added to the player's size
+					parentPlayerScript.size += 0.25f*Mathf.Min (damage, oldSize);
+					Debug.Log (0.25f*Mathf.Min (damage, oldSize));
 					// Put enemy into alert state
 					enemyScript.setAlertState();
 					// Restart cooldown timer
@@ -60,10 +58,8 @@ public class biteAbility : ability {
 					player playerScript = (player)otherBlob.GetComponent (typeof(player));
 					float oldSize = playerScript.size;
 					playerScript.size -= damage;
-					otherBlob.transform.localScale = new Vector3(playerScript.size,playerScript.size,playerScript.size);
 					// Half of the inflicted damage is added to the enemy's size
-					parentPlayerScript.size += 0.5f*Mathf.Min (damage, oldSize);
-					parentBlob.transform.localScale = new Vector3(parentEnemyScript.size,parentEnemyScript.size,parentEnemyScript.size);
+					parentPlayerScript.size += 0.25f*Mathf.Min (damage, oldSize);
 					// Restart cooldown timer
 					cooldownTimer = cooldownTime;
 				}
@@ -103,6 +99,9 @@ public class biteAbility : ability {
 		{
 			blobInReach = true;
 			otherBlob = other.gameObject;
+			if(!isPlayer) {
+				parentEnemyScript.activateAbility(parentEnemyScript.hasAbility(EAbilityType.EBiteAbility));
+			}
 		}
 	}
 

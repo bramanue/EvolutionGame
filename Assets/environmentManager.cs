@@ -152,7 +152,7 @@ public class environmentManager : MonoBehaviour {
 		// Calculate 3D terrain
 		calculateTerrainMap ();
 
-		Debug.Log ("Total time for environment update on CPU : " + (System.DateTime.Now.Millisecond - t0) + "ms");
+	//	Debug.Log ("Total time for environment update on CPU : " + (System.DateTime.Now.Millisecond - t0) + "ms");
 
 	}
 
@@ -181,7 +181,7 @@ public class environmentManager : MonoBehaviour {
 		for (int threadIndex = 0; threadIndex < nofThreads-1; threadIndex++)
 		{
 			int startRow = threadIndex*rowsPerThread;
-			Debug.Log (startRow);
+		//	Debug.Log (startRow);
 			// Give the thread the function it needs to work on
 			threads[threadIndex] = new System.Threading.Thread(() => parallelCalculation(startRow, startRow + rowsPerThread, xOffset, yOffset, distancePerPixel, currentTime));
 			// Start the working thread
@@ -203,14 +203,14 @@ public class environmentManager : MonoBehaviour {
 		environmentTexture.SetPixels (mainTextureColor);
 		environmentTexture.Apply();
 
-		Debug.Log ("Total time for tex calculation " + (System.DateTime.Now.Millisecond - t0) + "ms");
+	//	Debug.Log ("Total time for tex calculation " + (System.DateTime.Now.Millisecond - t0) + "ms");
 		return;
 
 	}
 
 	private void parallelCalculation(int startRow, int endRow, float xOffset, float yOffset, Vector2 distancePerPixel, float currentTime)
 	{
-		Debug.Log (System.Threading.Thread.CurrentThread.ManagedThreadId + " From " + startRow + " to " + endRow);
+	//	Debug.Log (System.Threading.Thread.CurrentThread.ManagedThreadId + " From " + startRow + " to " + endRow);
 		for (int y = startRow; y < endRow; y++) 
 		{
 			for(int x = 0; x < mainTextureResolution.x; x++) 
@@ -274,5 +274,12 @@ public class environmentManager : MonoBehaviour {
 		}
 
 		return sampleValue;
+	}
+
+	// Cross product for the case, when a has x-value of 0 and b has y-value of 0
+	// Used for normal calculation
+	private Vector3 simplyfiedCrossProduct(Vector3 a, Vector3 b) 
+	{
+		return new Vector3 (a.y*b.z, a.z*b.x, -b.x*a.y);
 	}
 }

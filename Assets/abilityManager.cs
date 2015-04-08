@@ -31,6 +31,20 @@ public class abilityManager : MonoBehaviour {
 
 	public GameObject viewAbility;
 
+	public GameObject iceShieldAbility;
+
+	public GameObject lavaShieldAbility;
+
+	public GameObject dustShieldAbility;
+
+	public GameObject thornShieldAbility;
+
+	public GameObject waterShieldAbility;
+
+	public GameObject glowingShieldAbility;
+
+	public GameObject electricityShieldAbility;
+
 	// Use this for initialization
 	void Start () {
 	
@@ -45,14 +59,31 @@ public class abilityManager : MonoBehaviour {
 	{
 		// Get the correct prefab
 		switch (abilityType) {
+		// Passive abilities
 		case EAbilityType.ERunAbility :
 			return (GameObject)GameObject.Instantiate(runAbility);
+		case EAbilityType.EViewAbility :
+			return (GameObject)GameObject.Instantiate(viewAbility);
+		// Active abilities
 		case EAbilityType.ERamAbility :
 			return (GameObject)GameObject.Instantiate(ramAbility);
 		case EAbilityType.EBiteAbility :
 			return (GameObject)GameObject.Instantiate(biteAbility);
-		case EAbilityType.EViewAbility :
-			return (GameObject)GameObject.Instantiate(viewAbility);
+		// Shield abilities
+		case EAbilityType.EIceShieldAbility :
+			return (GameObject)GameObject.Instantiate(iceShieldAbility);
+		case EAbilityType.ELavaShieldAbility :
+			return (GameObject)GameObject.Instantiate(lavaShieldAbility);
+		case EAbilityType.EDustShieldAbility :
+			return (GameObject)GameObject.Instantiate(dustShieldAbility);
+		case EAbilityType.EThornShieldAbility :
+			return (GameObject)GameObject.Instantiate(thornShieldAbility);
+		case EAbilityType.EWaterShieldAbility :
+			return (GameObject)GameObject.Instantiate(waterShieldAbility);
+		case EAbilityType.EGlowingShieldAbility :
+			return (GameObject)GameObject.Instantiate(glowingShieldAbility);
+		case EAbilityType.EElectricityShieldAbility :
+			return (GameObject)GameObject.Instantiate(electricityShieldAbility);
 		default :
 			return null;
 		}
