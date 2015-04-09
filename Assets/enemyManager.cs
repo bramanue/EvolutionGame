@@ -44,9 +44,6 @@ public class enemyManager : MonoBehaviour {
 		// Get the ability manager script
 		abilityManagerScript = (abilityManager)abilityMngr.GetComponent(typeof(abilityManager));
 
-		radius = 100.0f;
-		nofEnemies = 50;
-
 		// Create the basic amount of enemies
 		for(int i = 0; i < nofEnemies; i++) 
 		{
@@ -110,7 +107,7 @@ public class enemyManager : MonoBehaviour {
 	{
 		float playerSize = player.transform.localScale.x;
 		// Define a random size
-		float size = Random.Range(playerSize - 0.5f*playerSize,playerSize + 0.5f*playerSize);
+		float size = Random.Range(playerSize - 0.5f*playerSize, playerSize + 0.5f*playerSize);
 		// Set size of GameObject
 		enemyObject.transform.localScale = new Vector3(size,size,size);
 		// Get spawn point...
@@ -126,7 +123,7 @@ public class enemyManager : MonoBehaviour {
 		enemyScript.cosViewingAngle = Random.Range(0.0f,0.7f);
 		enemyScript.maxVelocity = Random.Range(4.0f,6.0f);
 
-		enemyScript.resetStates();
+		enemyScript.resetAllStates();
 	}
 	
 	private Vector3 calculateSpawnPosition()

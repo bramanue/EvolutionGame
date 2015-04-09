@@ -5,30 +5,51 @@ public class enemy : MonoBehaviour {
 
 	// Start position of this enemy. Do not move away too far from this point.
 	private Vector3 originalPosition;
+	
+	// Vector that points to the player
+	public Vector3 toPlayer;
+
+	// Pointer to the player
+	private GameObject player;
+	
+	// The player script
+	private player playerScript;
+
+	// Enemy manager for performing eating, etc operations
+	private enemyManager enemyMngr;
+
 
 	// Viewing direction of this enemy (normalized)
 	public Vector3 viewingDirection;
 
-	// Vector that points to the player
-	public Vector3 toPlayer;
-
 	// Defines how far this enemy can see
 	public float viewingRange;
+
+	// Stores the original viewing range
+	public float originalViewingRange;
+
+	// Defines how wide the angle of the enemy's eyes are 
+	public float cosViewingAngle;
+	
+	// Stores the original cosViewingAngle for restoring default after escape procedure
+	private float originalCosViewingAngle;
+
+
+	// The base velocity of this blob (without any running ability)
+	public float baseVelocity = 5.0f;
 
 	// Max velocity of the player (depends on ability "Speed")
 	public float runVelocityBoost;
 
 	// The current pace of movement
 	public float currentSpeed;
+
+	// The maximum velocity of this enemy
+	public float maxVelocity ;
 	
-	// The base velocity of this blob (without any running ability)
-	public float baseVelocity = 5.0f;
+	// Defines whether this enemy is allowed to walk
+	public bool canMove;
 
-	// Defines how wide the angle of the enemy's eyes are 
-	public float cosViewingAngle;
-
-	// Stores the original cosViewingAngle for restoring default after escape procedure
-	private float originalCosViewingAngle;
 
 	// The size of this enemy
 	public float size;
@@ -38,53 +59,51 @@ public class enemy : MonoBehaviour {
 
 	// Defines by how much this blob can shrink per second
 	public float shrinkSpeed = 1.0f;
-
-	// The maximum velocity of this enemy
-	public float maxVelocity ;
-
-	// Defines whether this enemy is allowed to walk
-	public bool canMove;
+	
 
 	// Defines whether this enemy can act at all
 	public bool stunned;
 
+	// Timer which starts running, when this enemy blob gets stunned
 	public float stunnedTimer;
 
-	private float environmentalDamage;
-
-	private Vector3 environmentalPushBack;
-
-	private Vector3 environmentalCourseCorrection;
-
-	public dangerProximity danger;
-	
 	// Defines whether this enemy is currently blinded
 	public bool blinded;
-
+	
+	// Timer that starts when this blob is blinded
 	private float blindedTimer;
-
-	public float originalViewingRange;
-
-	// Pointer to the player
-	private GameObject player;
-
-	// The player script
-	private player playerScript;
 
 	// Defines whether this enemy is at idle or is hunting the player
 	public bool isHuntingPlayer;
-
+	
 	// Defines whether this enely is running away from the player
 	private bool isRunningAwayFromPlayer;
+
+	// Defines whether enemy is still in alarmed state
+	private bool isAfterEscape;
+
+	// Timer used to keep awareness of enemy blob up
+	private float isInAlertStateTimer = 0.0f;
 	
-	// Timer used for idle waiting 
-	private float idleTimer = 0.0f;
-
-	// Timer used for hunting, running away, etc
-	private float activeTimer = 0.0f;
-
 	// Original timer value for interpolation
 	private float originalActiveTimer = 0.0f;
+
+
+	// Damage inflicted by touching or residing inside a certain environment
+	private float environmentalDamage;
+
+	// Force induced by touching or residing inside a certain environment
+	private Vector3 environmentalPushBack;
+
+	// Course correction induced by nearby hazardous environments TODO remove
+	private Vector3 environmentalCourseCorrection;
+
+	// Data, that tells this blob about nearby hazardous environments
+	public dangerProximity environmentProximityData;
+	
+
+	// Timer used for idle waiting 
+	private float idleTimer = 0.0f;
 
 	// The radius in which the enemy operates during idle animations
 	public float idleOperationRadius;
@@ -93,10 +112,8 @@ public class enemy : MonoBehaviour {
 	public float activeOperationRadius;
 
 	// Defines by which factor velocity should be removed for idle walking actions
-	private float idleWalkingSpeedReduction = 0.4f;
+	private float idleSpeedReduction = 0.4f;
 
-	// Defines by which factor velocity should be removed for idle walking actions
-	private float idleRotationSpeedReduction = 0.3f;
 
 	// The location, this enemy wants to walk to.
 	private Vector3 idleWalkingTarget;
@@ -106,10 +123,7 @@ public class enemy : MonoBehaviour {
 
 	// The quaternion to which we want to rotate
 	private Quaternion idleRotationTargetQuaternion;
-
-	// Defines whether enemy is still in alarmed state
-	private bool isAfterEscape = false;
-
+	
 	// Defines whether the current animation is complete
 	private bool isIdleAnimationComplete = true;
 
@@ -118,16 +132,19 @@ public class enemy : MonoBehaviour {
 	private bool isIdleWalking = false;
 	private bool isIdleWaiting = false;
 
+
+	// The number of abilities of this enemy
 	private int nofAbilities;
 
+	// Stores all abilitiy scripts
+	private ability[] abilities = new ability[8];
 
-	private ability[] abilities = new ability[5];
-	
-	private GameObject[] abilityObjects = new GameObject[5];
+	// Stores the ability GameObjects
+	private GameObject[] abilityObjects = new GameObject[8];
 
+	// Stores a reference to the currently active shield
+	public ability shieldInUse;
 
-	// Enemy manager for performing eating, etc operations
-	private enemyManager enemyMngr;
 
 
 	// Use this for initialization
@@ -139,42 +156,34 @@ public class enemy : MonoBehaviour {
 		player = GameObject.Find("Blob");
 		// Get access to the player script
 		playerScript = (player)player.GetComponent(typeof(player));
-		// Size should already be set by the enemyManager. Fetch it!
-		size = transform.localScale.x;
-		// Get the theta angle of the current rotation, corresponding to position on the unit circle
-		float theta = (transform.localEulerAngles.z+90.0f)/360.0f*2.0f*Mathf.PI;
-		// Get the viewing direction based on the current rotation (resp. on the previously calculated theta)
-		viewingDirection = new Vector3 (Mathf.Cos (theta), Mathf.Sin (theta), 0.0f);
+		// Get the current viewing direction
+		viewingDirection = transform.up;
 		// Set the idle viewing angle of this enemy
 		originalCosViewingAngle = cosViewingAngle;
 		// Store the starting position of this enemy
 		originalPosition = transform.position;
-
+		// Store the original viewing range
 		originalViewingRange = viewingRange;
 		// Set the flags to idle
-		isRunningAwayFromPlayer = false;
-		isHuntingPlayer = false;
-		canMove = true;
-		unsetIdleState();
+		resetAllStates ();
 	}
 	
 	// Update is called once per frame
 	void Update() 
 	{
-		// Get the theta angle of the current rotation, corresponding to position on the unit circle
-		float theta = (transform.localEulerAngles.z + 90.0f) * Mathf.Deg2Rad;
-		// Get the viewing direction based on the current rotation (resp. on the previously calculated theta)
-		viewingDirection = new Vector3 (Mathf.Cos (theta), Mathf.Sin (theta), 0.0f);
+		// Get the viewing direction
+		viewingDirection = transform.up;
+
 		// Calculate vector pointing to the player
 		toPlayer = player.transform.position - transform.position;
 
 		// Reduce active timer
-		activeTimer -= Time.deltaTime;
-		if (isAfterEscape && activeTimer > 0) {
+		isInAlertStateTimer -= Time.deltaTime;
+		if (isAfterEscape && isInAlertStateTimer > 0) {
 			// After escape from player reduce awareness(viewing angle) only with time
 			cosViewingAngle += (originalCosViewingAngle + 1) * (Time.deltaTime/originalActiveTimer);
 		}
-		if (activeTimer <= 0) {
+		if (isInAlertStateTimer <= 0) {
 			if(isAfterEscape) {
 				// Reset viewing angle to original state
 				cosViewingAngle = originalCosViewingAngle;
@@ -194,14 +203,15 @@ public class enemy : MonoBehaviour {
 			blinded = false;
 		}
 
+		// Move and use abilities if not stunned
 		if (!stunned) {
 
 			// Use running
-			if(abilities[4])
-				abilities[4].useAbility();
+			if(abilities[6] != null)
+				abilities[6].useAbility();
 
+			// Calculate the current speed
 			currentSpeed = baseVelocity + runVelocityBoost;
-
 
 			// Check whether the player could be seen by this enemy
 			bool isPlayerInViewingRange = isInViewingRange (player);
@@ -223,7 +233,7 @@ public class enemy : MonoBehaviour {
 						isHuntingPlayer = true;
 						isAfterEscape = false;
 						isRunningAwayFromPlayer = false;
-						unsetIdleState ();
+						resetIdleStates ();
 						huntPlayer ();
 						return;
 					}
@@ -231,7 +241,7 @@ public class enemy : MonoBehaviour {
 						isHuntingPlayer = false;
 						isAfterEscape = false;
 						isRunningAwayFromPlayer = false;
-						unsetIdleState ();
+						resetIdleStates ();
 						// Proceed with idle behaviour
 					}
 					// Stop pursuit if too far away
@@ -242,7 +252,7 @@ public class enemy : MonoBehaviour {
 					isHuntingPlayer = false;
 					// Set viewing angle to 360° for the duration of the escape
 					cosViewingAngle = -1;
-					unsetIdleState ();
+					resetIdleStates ();
 					// TODO look for hiding spots near location
 					runAwayFromPlayer ();
 					return;
@@ -250,18 +260,20 @@ public class enemy : MonoBehaviour {
 			}
 
 			// Enemy cannot see player
+
+			// Reduce the blob's speed for idle behaviour
+			currentSpeed *= idleSpeedReduction;
+
+			// If the enemy was hunting the player, then wait a few seconds before walking back to the original position
 			if (isHuntingPlayer) {
-				// If the enemy was hunting the player, then wait a few seconds before walking back to the original position
-				if (!isIdleWaiting) {
+				if (!isAfterEscape) {
 					isAfterEscape = true;
-					activeTimer = Random.Range (3.0f, 6.0f);
-					idleTimer = Random.Range (2.0f, 7.0f);
-					isIdleWaiting = true;
-					isIdleAnimationComplete = false;
+					// Define for how long the awareness of the blob remains sharpend
+					isInAlertStateTimer = Random.Range (3.0f, 6.0f);
 					return;
 				} else {
 					performIdleBehaviour ();
-					if (idleTimer <= 0.0f) {
+					if (isInAlertStateTimer <= 0.0f) {
 						// Idle wait is over. Walk back to original position
 						isHuntingPlayer = false;
 						// Set walking target to iriginal position of enemy
@@ -279,19 +291,19 @@ public class enemy : MonoBehaviour {
 					}
 				}
 			} else if (isRunningAwayFromPlayer) {
-				// Enemy can no longer see player hunting him - return to original position
+				// Enemy can no longer see player hunting him - go back to idle but remain alert for a certain time
 				isRunningAwayFromPlayer = false;
 				// Set timer until when the viewing angle is back to normal
-				activeTimer = Random.Range (3.0f, 6.0f);
-				originalActiveTimer = activeTimer;
+				isInAlertStateTimer = Random.Range (3.0f, 6.0f);
+				originalActiveTimer = isInAlertStateTimer;
 				originalPosition = transform.position;
 				// Set alarm state of enemy higher
 				isAfterEscape = true;
 			} else {
 				// In case that setAlertstate() was called but player was not spotted
-				if (cosViewingAngle < originalCosViewingAngle && activeTimer < 0) {
+				if (cosViewingAngle < originalCosViewingAngle && isInAlertStateTimer <= 0) {
 					isAfterEscape = true;
-					activeTimer = Random.Range (3.0f, 6.0f);
+					isInAlertStateTimer = Random.Range (3.0f, 6.0f);
 				}
 				performIdleBehaviour ();
 			}
@@ -303,7 +315,7 @@ public class enemy : MonoBehaviour {
 		}
 
 
-		danger = null;
+		environmentProximityData = null;
 
 		// Apply environmental factors
 		transform.position += environmentalPushBack;
@@ -316,74 +328,86 @@ public class enemy : MonoBehaviour {
 		environmentalDamage = 0.0f;
 		// Adapt visuals to the actual size
 		grow ();
-
-
 	}
 
+	// Calculates whether player blob can be seen by this enemy or not
 	private bool isInViewingRange(GameObject gameObject) {
 		Vector3 toGameObject = gameObject.transform.position - transform.position;
 		bool result = ((toGameObject.magnitude - gameObject.transform.localScale.x) < viewingRange) && (Vector3.Dot (toGameObject.normalized, viewingDirection) >= cosViewingAngle);
 		return result;
 	}
 
+	// Function called, when the blob is hunting the player
 	private void huntPlayer() 
 	{
 		abilities[0].useAbility();
 		if (canMove) 
 		{
-			// Calculate rotation target (the target viewing direction, i.e. look towards player)
+			// Calculate rotation target (the viewing direction this enemy strives for, i.e. towards player)
 			Vector3 rotationTarget = toPlayer.normalized;
-			// Get the angle between the target viewing direction and the current viewing direction
-			float angleBetween = Mathf.Sign (Vector3.Cross (viewingDirection, rotationTarget).z) * Vector3.Angle (viewingDirection, rotationTarget);
-			// Target rotation Quaternion
-			Quaternion rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
-			// Interpolate rotation for the current time step and apply it to the model
-			transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed);
+			// Perform rotation towards player
+			performRotation(rotationTarget);
 			// Run towards player
 			transform.position += viewingDirection * currentSpeed * Time.deltaTime;
 		}
 	}
 
+	// Function called when this blob is running away from the player
 	private void runAwayFromPlayer() 
 	{
-		if (canMove) 
+		if (canMove)
 		{
-			// Calculate rotation target (the target viewing direction, i.e. look away from player)
-			Vector3 rotationTarget = -toPlayer.normalized;
-			// Get the angle between the target viewing direction and the current viewing direction
-			float angleBetween = Mathf.Sign (Vector3.Cross (viewingDirection, rotationTarget).z) * Vector3.Angle (viewingDirection, rotationTarget);
-			// Target rotation Quaternion
-			Quaternion rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
-			// Interpolate rotation for the current time step
-			Quaternion rotationMatrix = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed);
-			// Apply rotation to the model
-			transform.rotation = rotationMatrix;
+			if (environmentProximityData != null) {
+				avoidEnvironmentalHazard();
+			}
+			else
+			{
+				// Calculate rotation target (the target viewing direction, i.e. look away from player)
+				Vector3 rotationTarget = -toPlayer.normalized;
+				// Perform rotation away from the player
+				performRotation(rotationTarget);
+			}
 			// Run away from player
 			transform.position += viewingDirection * currentSpeed * Time.deltaTime;
 		}
 	}
 
-	// This function is called when the player is not in reach and simply lets the enemy move randomly around
+	// Function called to evade environmental hazards
+	private void avoidEnvironmentalHazard()
+	{
+		// Get a vector that points away from the dangerous object
+		Vector3 rotationTarget = environmentProximityData.getSafestDirection();
+		Debug.Log ("Towards" + rotationTarget);
+
+		// If the safest direction is along the viewingDirection, then no special rotation is required - simply walk on
+		if(1.0f - Vector3.Dot (rotationTarget, viewingDirection) <= 0.01f) {
+			transform.position += Time.deltaTime*currentSpeed*viewingDirection;
+			return;
+		}
+		// Perform the rotation
+		performRotation (rotationTarget);
+		return;
+	}
+
+	// Performs a rotation around the z-axis, such that the blob will eventually look into 'targetViewingDirection'
+	private void performRotation(Vector3 targetViewingDirection)
+	{
+		// Get the angle between the current viewing direction and the target viewing direction
+		float angleBetween = Mathf.Sign (Vector3.Cross (viewingDirection, targetViewingDirection).z) * Vector3.Angle (viewingDirection, targetViewingDirection);
+		// Target rotation Quaternion
+		Quaternion rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
+		// Interpolate rotation for the current time step
+		transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed);
+	}
+
+
+	// This function is called when the player is not in reach and lets the enemy move around randomly
 	private void performIdleBehaviour()
 	{
-		// If enemy has walked/turned close to a dangerous object, then turn away from this object
-		if (danger != null) {
-			unsetIdleState();
-			// Get a vector that points away from the dangerous object
-			Vector3 rotationTarget = danger.getSafestDirection();
-			Debug.Log ("Towards" + rotationTarget);
-			// If the safest direction is along the viewingDirection, then walk on
-			if(1.0f - Vector3.Dot (rotationTarget, viewingDirection) <= 0.01f) {
-				transform.position += Time.deltaTime*currentSpeed*idleWalkingSpeedReduction*viewingDirection;
-				return;
-			}
-
-			// Otherwise rotate into the safer direction
-			float angleBetween = Mathf.Sign (Vector3.Cross (viewingDirection, rotationTarget).z) * Vector3.Angle (viewingDirection, rotationTarget);
-			// Target rotation Quaternion
-			Quaternion rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
-			// Interpolate rotation for the current time step
-			transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed*idleRotationSpeedReduction);
+		// If enemy has walked/turned close to a dangerous environment, then turn away from this object
+		if (environmentProximityData != null) {
+			resetIdleStates();
+			avoidEnvironmentalHazard();
 			return;
 		}
 
@@ -396,20 +420,17 @@ public class enemy : MonoBehaviour {
 			{
 				// Rotate at position
 				findIdleRotationTarget();		
-			//	Debug.Log("start idle rotation by " + degree + " degrees" );
 			} 
 			else if (rndValue > 0.2) 
 			{
 				// Rotate and walk towards point
 				findIdleWalkingTarget();
-			//	Debug.Log("Start idle walking towards " + idleWalkingTarget.x + " " + idleWalkingTarget.y + " " + idleWalkingTarget.z );
 			} 
 			else 
 			{
 				// Stand still
-				idleTimer = Random.Range(1.0f,5.0f);
+				idleTimer = Random.Range(0.5f,3.5f);
 				isIdleWaiting = true;
-			//	Debug.Log("Start idle waiting for " + idleTimer + " seconds.");
 
 			}
 			isIdleAnimationComplete = false;
@@ -436,7 +457,7 @@ public class enemy : MonoBehaviour {
 				else 	// Continue rotation animation
 				{
 					// Calculate the rotation matrix for current timestep and apply it to the model
-					transform.rotation = Quaternion.Lerp(transform.rotation, idleRotationTargetQuaternion, Time.deltaTime * currentSpeed*idleRotationSpeedReduction);
+					transform.rotation = Quaternion.Slerp(transform.rotation, idleRotationTargetQuaternion, Time.deltaTime * currentSpeed);
 					return;
 				}
 
@@ -453,32 +474,30 @@ public class enemy : MonoBehaviour {
 				} else {
 					// Calculate rotation target (the target viewing direction, s.t. enemy looks towards target location)
 					Vector3 rotationTarget = toTargetLocation.normalized;
-					// Get the angle between the target viewing direction and the current viewing direction
-					float angleBetween = Mathf.Sign (Vector3.Cross(viewingDirection, rotationTarget).z)*Vector3.Angle(viewingDirection, rotationTarget);
-					// Target rotation Quaternion
-					Quaternion rotationTargetQuaternion = Quaternion.Euler(new Vector3(0.0f,0.0f,transform.localEulerAngles.z+angleBetween));
-					// Interpolate rotation for the current time step and apply it to the model
-					transform.rotation = Quaternion.Slerp(transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed * idleRotationSpeedReduction);
+					// Perform the rotation
+					performRotation(rotationTarget);
 					// Walk along viewing direction (and eventually towards target location)
-					transform.position += viewingDirection * currentSpeed * idleWalkingSpeedReduction * Time.deltaTime;
-
+					transform.position += viewingDirection * currentSpeed * Time.deltaTime;
 				}
-
 			}
 		}
 	}
 
+	// Decide what happens when this blob collides with another structure
 	void OnTriggerEnter(Collider other)
 	{
 		// This is handled in the player script
-		if (other.gameObject == player)
+		if (other.gameObject == player) { 
+			// TODO Maybe set alerted state if player bounces in with force
 			return;
+		}
 
 		// If 2 enemies collide during idle action, let them search a new idle target
 		if (!isIdleAnimationComplete) {
-			unsetIdleState();
+			resetIdleStates();
 			return;
 		}
+
 		// If the enemy is hunting the player and collides with a different enemy, then the smaller enemy
 		// gets eaten
 		if (isHuntingPlayer) 
@@ -520,7 +539,7 @@ public class enemy : MonoBehaviour {
 		// Get random rotation angle
 		float degree = Random.Range(30.0f,179.0f)*Mathf.Sign (Random.Range(-1,1));
 		// Calculate target theta on unit circle (+90 since unit circe starts at (1,0) and Unity at (0,1))
-		float targetTheta = (transform.localEulerAngles.z + 90.0f + degree)/360.0f*2.0f*Mathf.PI;
+		float targetTheta = (transform.localEulerAngles.z + 90.0f + degree)*Mathf.Deg2Rad;
 		// Calculate target viewing direction (there where the rotation will end)
 		idleRotationTarget = new Vector3(Mathf.Cos(targetTheta), Mathf.Sin(targetTheta),0.0f);
 		// Calculate target quaternion configuration (for Slerp)
@@ -530,7 +549,7 @@ public class enemy : MonoBehaviour {
 	}
 
 	// Resets all idle states of this enemy to default
-	private void unsetIdleState() {
+	private void resetIdleStates() {
 		isIdleWaiting = false;
 		isIdleWalking = false;
 		isIdleRotating = false;
@@ -538,7 +557,7 @@ public class enemy : MonoBehaviour {
 	}
 
 	// Resets all states of this enemy to default
-	public void resetStates() {
+	public void resetAllStates() {
 		isIdleWaiting = false;
 		isIdleWalking = false;
 		isIdleRotating = false;
@@ -546,6 +565,7 @@ public class enemy : MonoBehaviour {
 		isHuntingPlayer = false;
 		isRunningAwayFromPlayer = false;
 		isAfterEscape = false;
+		canMove = true;
 	}
 
 	// Adds an ability into index 'slot' of the ability array of this enemy
@@ -581,10 +601,13 @@ public class enemy : MonoBehaviour {
 		return -1;
 	}
 
+	// Sets this enemy into alerted state
 	public void setAlertState() {
 		cosViewingAngle = -1;
+		isInAlertStateTimer = Random.Range (3.0f, 8.0f);
 	}
 
+	// Sets this enemy to blinded, which reduces the enemy's viewing range considerably
 	public void setBlinded(float time) {
 		if (!blinded) 
 		{
@@ -594,6 +617,7 @@ public class enemy : MonoBehaviour {
 		}
 	}
 
+	// Makes this enemy blob unable to act for the specified time
 	public void setStunned(float time) {
 		// TODO make stun visible
 		stunned = true;
@@ -619,22 +643,26 @@ public class enemy : MonoBehaviour {
 		}
 	}
 
+	// Forces this blob, to use this ability
 	public void activateAbility(int abilityIndex) 
 	{
 		abilities [abilityIndex].useAbility ();
 	}
 
+	// Inflict damage induced by the current environment
 	public void inflictEnvironmentalDamage(float damage)
 	{
 		environmentalDamage = Mathf.Max (environmentalDamage,damage);
 	}
 
+	// Add force induced by hazardous environment
 	public void addEnvironmentPushBackForce(Vector3 force)
 	{
 		if (force.magnitude > environmentalPushBack.magnitude)
 			environmentalPushBack = force;
 	}
 
+	// Add an external force to the enemy position
 	public void addCourseCorrection(Vector3 correction)
 	{
 		environmentalCourseCorrection += correction;

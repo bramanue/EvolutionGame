@@ -14,15 +14,16 @@ public class iceShieldAbility : ability {
 	// Use this for initialization
 	void Start () {
 		maxLevel = 10;
-		timer = maxTimeInIce;
 		damage = 0.1f + level * 0.1f;
-		
+		maxTimeInIce = 30.0f + 30.0f * level;
+		timer = maxTimeInIce;
 		abilityName = "IceShieldAbility";
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if (inUse) {
+			// TODO change visuals
 			// Make sure ability is not able to be used forever unless the ability is at its max level
 			if(level < maxLevel)
 				timer -= Time.deltaTime;
@@ -57,9 +58,7 @@ public class iceShieldAbility : ability {
 			if(playerScript.hasAbility(EAbilityType.ELavaShieldAbility) == -1 && playerScript.hasAbility(EAbilityType.EDustShieldAbility) == -1 && playerScript.hasAbility(EAbilityType.EThornShieldAbility) == -1  )
 				playerScript.size -= damage;
 		}
-		
-		// TODO If collision with ice/cold (maybe put into collider function of blob)
-		
+
 	}
 	
 	// Increases the level of this ability by x and returns the effective change in levels
@@ -67,17 +66,19 @@ public class iceShieldAbility : ability {
 	{
 		int previousLevel = level;
 		level = Mathf.Max (0, Mathf.Min(level + x, maxLevel));
+		int increase = previousLevel - level;
+		timer += increase*30.0f;
 		damage = 0.1f + level * 0.1f;
 		maxTimeInIce = 30.0f + 30.0f * level;
-		return level - previousLevel;
+		return increase;
 	}
 	
 	public override bool useAbility() 
 	{
-		if (inUse) {
+	/*	if (inUse) {
 			inUse = false;
 			return true;
-		}
+		}*/
 		if (timer > 0) {
 			// TODO change visuals
 			inUse = true;

@@ -2,9 +2,7 @@
 using System.Collections;
 
 public class water : hazardousEnvironment {
-	
-	private float throwBackTimer;
-	
+
 	// Use this for initialization
 	void Start () {
 		requiredAbility = EAbilityType.EWaterShieldAbility;
@@ -30,10 +28,8 @@ public class water : hazardousEnvironment {
 			{
 				// Throw back approacher
 				Vector3 repulsionNormal = getRepulsionNormal(other.gameObject, null, playerScript);
-				// TODO Does not work for many colliders at the same place -> blob cannot penetrate as repulsion forces of all colliders sum up
 				repulsionNormal = -playerScript.viewingDirection;
 				playerScript.addEnvironmentPushBackForce(Time.deltaTime*playerScript.currentSpeed*slowDownFactor*repulsionNormal);
-				// other.gameObject.transform.position += Time.deltaTime*playerScript.currentSpeed*slowDownFactor*repulsionNormal;
 			}
 			
 		}
@@ -48,7 +44,6 @@ public class water : hazardousEnvironment {
 				// Throw back approacher
 				Vector3 repulsionNormal = getRepulsionNormal(other.gameObject, enemyScript, null);
 				enemyScript.addEnvironmentPushBackForce(Time.deltaTime*enemyScript.currentSpeed*slowDownFactor*repulsionNormal);
-				//other.gameObject.transform.position += Time.deltaTime*enemyScript.currentSpeed*slowDownFactor*repulsionNormal;
 			}
 		}
 	}
@@ -69,7 +64,6 @@ public class water : hazardousEnvironment {
 				Vector3 repulsionNormal = getRepulsionNormal(other.gameObject, null, playerScript);
 				repulsionNormal = -playerScript.viewingDirection;
 				playerScript.addEnvironmentPushBackForce(Time.deltaTime*playerScript.currentSpeed*slowDownFactor*repulsionNormal);
-				//other.gameObject.transform.position += Time.deltaTime*playerScript.currentSpeed*slowDownFactor*repulsionNormal;
 				// Start drowning (damage dependent on frames per second)
 				playerScript.inflictEnvironmentalDamage(Time.deltaTime*damagePerSecond);
 			}
@@ -86,7 +80,6 @@ public class water : hazardousEnvironment {
 				// Throw back approacher
 				Vector3 repulsionNormal = getRepulsionNormal(other.gameObject, enemyScript, null);
 				enemyScript.addEnvironmentPushBackForce(Time.deltaTime*enemyScript.currentSpeed*slowDownFactor*repulsionNormal);
-				//other.gameObject.transform.position += Time.deltaTime*enemyScript.currentSpeed*slowDownFactor*repulsionNormal;
 				// Start drowning (damage dependent on frames per second)
 				enemyScript.inflictEnvironmentalDamage(Time.deltaTime*damagePerSecond);
 			}

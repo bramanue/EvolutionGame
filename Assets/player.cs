@@ -53,14 +53,17 @@ public class player : MonoBehaviour
 
 	// Stores all ability scripts
 	// 0 to 3 are user chosen abilities
-	// 4 is the running ability
-	// 5 is the viewing ability
-	private ability[] abilities = new ability[6];
+	// 4 to 5 for shield abilities
+	// 6 is the running ability
+	// 7 is the viewing ability
+	private ability[] abilities = new ability[8];
 
 	// Stores all ability game objects
-	private GameObject[] abilityObjects = new GameObject[6];
+	private GameObject[] abilityObjects = new GameObject[8];
 
 	public bool dead;
+
+	public ability shieldInUse;
 
 
 	// Use this for initialization
@@ -79,12 +82,9 @@ public class player : MonoBehaviour
 	{
 		if (!dead) {
 			// Get the viewing range
-			abilities [5].useAbility ();
-			// transform.localScale = new Vector3 (size, size, size);
-			// Get the theta angle of the current rotation, corresponding to position on the unit circle
-			float theta = (transform.localEulerAngles.z + 90.0f) * Mathf.Deg2Rad;
-			// Get the viewing direction based on the current rotation (resp. on the previously calculated theta)
-			viewingDirection = new Vector3 (Mathf.Cos (theta), Mathf.Sin (theta), 0.0f);
+			abilities [7].useAbility ();
+			// Get the viewing direction
+			viewingDirection = transform.up;
 
 			if (blinded && blindedTimer > 0) {
 				// TODO make screen less bright (exponentially)
@@ -97,54 +97,151 @@ public class player : MonoBehaviour
 
 				// Capture player input
 				if (Input.GetButton ("Ability0")) {
-					//	Debug.Log ("Fire1");
 					if (abilities [0] != null && abilities [0].isReady ())
 						abilities [0].useAbility ();
 				}
 				if (Input.GetButton ("Ability1")) {
-					//	Debug.Log ("Fire2");
 					if (abilities [1] != null && abilities [1].isReady ())
 						abilities [1].useAbility ();
 				}
 				if (Input.GetButton ("Ability2")) {
-					//	Debug.Log ("Fire3");
 					if (abilities [2] != null && abilities [2].isReady ())
 						abilities [2].useAbility ();
 				}
 				if (Input.GetButton ("Ability3")) {
-					//	Debug.Log ("Jump");
 					if (abilities [3] != null && abilities [3].isReady ())
 						abilities [3].useAbility ();
 				}
 
-
-				if (canMove) {
-					// Use runAbility if the player is moving
-					if (Input.GetAxis ("Vertical") != 0 || Input.GetAxis ("Horizontal") != 0) {
-						abilities [4].useAbility ();
+				// Capture player input concerning shields (XBOX360 only)
+				float shield0 = Input.GetAxis("Shield0");
+				float shield1 = Input.GetAxis("Shield1");
+				if(shield0 > shield1) {
+					if (abilities [4] != null && abilities [4].isReady ()) {
+						if(abilities [4].useAbility ()) {
+							// If the other shield is still active, then deactivate that one first.
+						/*	if(shieldInUse != abilities [4])
+								abilities[5].useAbility ();*/
+							// Set Shield1 as the currently active one
+							shieldInUse = abilities[4];
+						}
 					}
-					currentSpeed = baseVelocity + runVelocityBoost;
-
-					Vector3 targetDirection = new Vector3 (Input.GetAxis ("Horizontal"), Input.GetAxis ("Vertical"), 0.0f);
-					if(targetDirection.magnitude > 0)
+					else if(shield1 > 0) {
+						if (abilities [5] != null && abilities [5].isReady ()) {
+							if(abilities [5].useAbility ()) {
+								// If the other shield is still active, then deactivate that one first.
+							/*	if(shieldInUse != abilities [5])
+									abilities[4].useAbility ();*/
+								// Set Shield1 as the currently active one
+								shieldInUse = abilities[5];
+							}
+						}
+					}
+				}
+				else if (shield1 > shield0)
+				{
+					if (abilities [5] != null && abilities [5].isReady ()) {
+						if(abilities [5].useAbility ()) {
+							// If the other shield is still active, then deactivate that one first.
+						/*	if(shieldInUse != abilities [5])
+								abilities[4].useAbility ();*/
+							// Set Shield1 as the currently active one
+							shieldInUse = abilities[5];
+						}
+					}
+					else if(shield0 > 0) {
+						if (abilities [4] != null && abilities [4].isReady ()) {
+							if(abilities [4].useAbility ()) {
+								// If the other shield is still active, then deactivate that one first.
+							/*	if(shieldInUse != abilities [4])
+									abilities[5].useAbility ();*/
+								// Set Shield1 as the currently active one
+								shieldInUse = abilities[4];
+							}
+						}
+					}
+				}
+				// If both triggers are fully pressed stay with the ability that was used before
+				else if (shield0 == 1.0f && shield1 == 1.0f) {
+					if(shieldInUse != null) {
+						// Try to keep the previously active ability
+						if (shieldInUse.isReady () && shieldInUse.useAbility ()) {
+							// Everything OK
+						}
+						else 
+						{
+							shieldInUse = null;
+							// Evaluate which one the other shield ability is
+							if(abilities [4] != shieldInUse && abilities [4] != null && abilities [4].isReady()) {
+								if(abilities [4].useAbility ()) {
+									shieldInUse = abilities[4];
+								}
+							}
+							else if(abilities [5] != shieldInUse && abilities [5] != null && abilities [5].isReady ()) {
+								if(abilities [5].useAbility ()) {
+									shieldInUse = abilities[5];
+								}
+							}
+						}
+					}
+					else 	// Favour the first ability
 					{
+						if (abilities [4] != null && abilities [4].isReady ()) {
+							if(abilities [4].useAbility ()) {
+								// If the other shield is still active, then deactivate that one first.
+							/*	if(shieldInUse != abilities [4])
+									abilities[5].useAbility ();*/
+								// Set Shield1 as the currently active one
+								shieldInUse = abilities[4];
+							}
+						}
+						else if (abilities [5] != null && abilities [5].isReady ()) {
+							if(abilities [5].useAbility ()) {
+								// If the other shield is still active, then deactivate that one first.
+							/*	if(shieldInUse != abilities [5])
+									abilities[4].useAbility ();*/
+								// Set Shield1 as the currently active one
+								shieldInUse = abilities[5];
+							}
+						}
+					}
+				}
+				else if (shield0 == 0.0f && shield1 == 0.0f) {
+					shieldInUse = null;
+				}
+
+
+				if (canMove) 
+				{
+					// Get the target direction from user input
+					Vector3 targetDirection = new Vector3 (Input.GetAxis ("Horizontal"), Input.GetAxis ("Vertical"), 0.0f);
+					// Calculate the current maximally achievable speed
+					currentSpeed = baseVelocity + runVelocityBoost;
+					// Get the desired speed fraction
+					float speedFraction =  targetDirection.magnitude;
+
+					// If the player is moving
+					if (speedFraction > 0) {
+						// Use the run ability to become faster
+						abilities [6].useAbility ();
+						// Calculate the angle to rotate about
 						float angleBetween = Mathf.Sign (Vector3.Cross (viewingDirection, targetDirection).z) * Vector3.Angle (viewingDirection, targetDirection);
-						// Calculate the necessary rotation speed to perform rotation within 0.5s
 						// Get the rotation target
 						Quaternion rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
 						// Reset time scale to normal
 						transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed);
+						// Move blob according to joystick input
+						transform.position += viewingDirection*Time.deltaTime*speedFraction*currentSpeed;
 					}
-					// Move blob according to joystick input
-					//transform.Rotate (0.0f, 0.0f, -Input.GetAxis ("Horizontal") * currentSpeed);
-					transform.position += viewingDirection*Time.deltaTime*targetDirection.magnitude*currentSpeed;
-					//transform.position += Input.GetAxis ("Vertical") * currentSpeed * transform.up * Time.deltaTime; // vorwärts bewegen
 				}
-			} else {
+			} 
+			else 
+			{
 				stunnedTimer -= Time.deltaTime;
 				if (stunnedTimer <= 0)
 					stunned = false;
 			}
+
 			// Apply environmental push back force
 			transform.position += environmentalPushBack;
 			environmentalPushBack = new Vector3 (0, 0, 0);
@@ -224,7 +321,17 @@ public class player : MonoBehaviour
 				// The increase in ability is half the difference between enemie's level and player's level but at least 1
 				int increase = abilities[abilityIndex].increaseLevel((int)Mathf.Max (1, Mathf.Floor((newAbility.level - abilities[abilityIndex].level) * 0.5f)) );
 				// TODO Make a nice GUI print on screen
-				Debug.Log("Your ability " + abilities[abilityIndex].name + " increased its level by " + increase);
+				Debug.Log("Your ability " + abilities[abilityIndex].abilityName + " increased its level by " + increase);
+			}
+			else
+			{
+				// TODO show GUI to map the new ability to some key
+				int slotIndex = 0;
+				// Transfer ability from enemy to player
+				enemyScript.gameObject.transform.parent = this.gameObject.transform;
+				// Reduce the level (maybe set it 1 ?)
+				newAbility.level /= 2;
+				addAbility(enemyScript.gameObject, slotIndex);
 			}
 			
 		}
@@ -236,6 +343,7 @@ public class player : MonoBehaviour
 		// Reposition enemy
 		enemyMngr.respawnEnemy(enemyObject);
 	}
+
 
 	// Returns -1 when the player does not have this ability and otherwise the index to where this ability resides in the ability array
 	public int hasAbility(EAbilityType abilityType)

@@ -20,11 +20,14 @@ public class gameManager : MonoBehaviour {
 		playerScript = (player)player.GetComponent(typeof(player));
 		abilityMngr = GameObject.Find("AbilityManager");
 		abilityManagerScript = (abilityManager)abilityMngr.GetComponent (typeof(abilityManager));
-		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.ERunAbility,4,4);
+		// Acive Abilities
 		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.ERamAbility,0,4);
 		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EBiteAbility,1,1);
+		// Shield abilities
 		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EThornShieldAbility,2,1);
-		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EViewAbility,5,5);
+		// Passive abilities
+		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.ERunAbility,6,4);
+		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EViewAbility,7,5);
 	}
 	
 	// Update is called once per frame
