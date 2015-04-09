@@ -38,7 +38,7 @@ public class biteAbility : ability {
 	
 	public override bool useAbility() 
 	{
-		// TODO Cast effects
+		// TODO Cast effects / sounds
 		if (cooldownTimer <= 0.0f) {
 			if(blobInReach) {
 				if(isPlayer) {
@@ -86,7 +86,7 @@ public class biteAbility : ability {
 	}
 
 	// If the teeths enter an object, store that object for the useAbility() function (in case it is an enemy/player)
-	void OnTriggerEnter2D(Collider2D other)
+	void OnTriggerEnter(Collider other)
 	{
 		if (other.gameObject == parentBlob)
 			return;
@@ -106,7 +106,7 @@ public class biteAbility : ability {
 	}
 
 	// If the teeths leave the object again, remove the object from the local storage (useAbility() will no longer have any effect)
-	void OnTriggerExit2D(Collider2D other)
+	void OnTriggerExit(Collider other)
 	{
 		// Check whether the teeth of the blob collided with another blob
 		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));

@@ -45,7 +45,7 @@ public class enemyManager : MonoBehaviour {
 		abilityManagerScript = (abilityManager)abilityMngr.GetComponent(typeof(abilityManager));
 
 		radius = 100.0f;
-		nofEnemies = 60;
+		nofEnemies = 50;
 
 		// Create the basic amount of enemies
 		for(int i = 0; i < nofEnemies; i++) 
@@ -61,7 +61,7 @@ public class enemyManager : MonoBehaviour {
 			// Set values for this script
 			setRandomInitialValues(enemyScripts[i], enemyGameObjects[i]);
 			// Set abilities
-		//	abilityManagerScript.addAbilityToEnemy(enemyGameObjects[i],EAbilityType.ERamAbility,0,4);
+			abilityManagerScript.addAbilityToEnemy(enemyGameObjects[i],EAbilityType.ERamAbility,0,4);
 		}
 	}
 	
@@ -90,7 +90,7 @@ public class enemyManager : MonoBehaviour {
 			}
 
 			// Deactivate enemies if they are too far from the player
-			if(distance > 0.3*radius)
+			if(distance > 3.0f*(playerScript.viewingRange + playerScript.size))
 				enemyGameObjects[it].SetActive(false);
 			else
 				enemyGameObjects[it].SetActive(true);

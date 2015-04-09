@@ -136,7 +136,7 @@ public class environmentManager : MonoBehaviour {
 		float t0 = System.DateTime.Now.Millisecond;
 
 		// Scale the mesh according to the player's viewing range
-		environmentPlanes [planeIndex].transform.localScale = new Vector3((playerScript.size + playerScript.viewingRange)*2.0f, 1, (playerScript.size + playerScript.viewingRange)*1.1f);
+		environmentPlanes [planeIndex].transform.localScale = new Vector3((playerScript.size + playerScript.viewingRange)*2.5f, 1, (playerScript.size + playerScript.viewingRange)*1.1f);
 
 		// Get the current size of the mesh (we need to take it from the renderer in order to get world coordinates - the mesh has bounds in untransformed coordinates)
 		meshSize = environmentPlaneRenderers[planeIndex].bounds.max - environmentPlaneRenderers[planeIndex].bounds.min;

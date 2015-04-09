@@ -55,6 +55,8 @@ public class enemy : MonoBehaviour {
 	private Vector3 environmentalPushBack;
 
 	private Vector3 environmentalCourseCorrection;
+
+	public dangerProximity danger;
 	
 	// Defines whether this enemy is currently blinded
 	public bool blinded;
@@ -299,6 +301,10 @@ public class enemy : MonoBehaviour {
 			if(stunnedTimer <= 0.0f)
 				stunned = false;
 		}
+
+
+		danger = null;
+
 		// Apply environmental factors
 		transform.position += environmentalPushBack;
 		environmentalPushBack = new Vector3 (0, 0, 0);
@@ -322,7 +328,7 @@ public class enemy : MonoBehaviour {
 
 	private void huntPlayer() 
 	{
-//		abilities[0].useAbility();
+		abilities[0].useAbility();
 		if (canMove) 
 		{
 			// Calculate rotation target (the target viewing direction, i.e. look towards player)
@@ -352,7 +358,7 @@ public class enemy : MonoBehaviour {
 			Quaternion rotationMatrix = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed);
 			// Apply rotation to the model
 			transform.rotation = rotationMatrix;
-			// Walk away player
+			// Run away from player
 			transform.position += viewingDirection * currentSpeed * Time.deltaTime;
 		}
 	}
@@ -360,6 +366,27 @@ public class enemy : MonoBehaviour {
 	// This function is called when the player is not in reach and simply lets the enemy move randomly around
 	private void performIdleBehaviour()
 	{
+		// If enemy has walked/turned close to a dangerous object, then turn away from this object
+		if (danger != null) {
+			unsetIdleState();
+			// Get a vector that points away from the dangerous object
+			Vector3 rotationTarget = danger.getSafestDirection();
+			Debug.Log ("Towards" + rotationTarget);
+			// If the safest direction is along the viewingDirection, then walk on
+			if(1.0f - Vector3.Dot (rotationTarget, viewingDirection) <= 0.01f) {
+				transform.position += Time.deltaTime*currentSpeed*idleWalkingSpeedReduction*viewingDirection;
+				return;
+			}
+
+			// Otherwise rotate into the safer direction
+			float angleBetween = Mathf.Sign (Vector3.Cross (viewingDirection, rotationTarget).z) * Vector3.Angle (viewingDirection, rotationTarget);
+			// Target rotation Quaternion
+			Quaternion rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
+			// Interpolate rotation for the current time step
+			transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed*idleRotationSpeedReduction);
+			return;
+		}
+
 		if (isIdleAnimationComplete) {
 			// If the idle animation is complete, then define the next random move or rotation
 			float rndValue = Random.value;
@@ -441,7 +468,7 @@ public class enemy : MonoBehaviour {
 		}
 	}
 
-	void OnTriggerEnter2D(Collider2D other)
+	void OnTriggerEnter(Collider other)
 	{
 		// This is handled in the player script
 		if (other.gameObject == player)
@@ -612,5 +639,7 @@ public class enemy : MonoBehaviour {
 	{
 		environmentalCourseCorrection += correction;
 	}
+
+
 	
 }

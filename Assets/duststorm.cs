@@ -3,8 +3,6 @@ using System.Collections;
 
 public class dustStorm : hazardousEnvironment {
 	
-	private float throwBackTimer;
-	
 	// Use this for initialization
 	void Start () {
 		requiredAbility = EAbilityType.EDustShieldAbility;
@@ -15,7 +13,7 @@ public class dustStorm : hazardousEnvironment {
 		
 	}
 	
-	void OnTriggerEnter2D(Collider2D other)
+	void OnTriggerEnter(Collider other)
 	{
 		Debug.Log ("Collision detected");
 		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
@@ -29,14 +27,14 @@ public class dustStorm : hazardousEnvironment {
 			}
 			else
 			{
-				Debug.Log ("Player has no thorn shield!");
+				Debug.Log ("Player has no dust shield!");
 				// Player takes damager
-				playerScript.size -= 0.1f;
+				playerScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
 				other.gameObject.transform.position -= playerScript.viewingDirection;
 				// Disable player for a short time
-				playerScript.setStunned(0.3f);
+			//	playerScript.setStunned(0.3f);
 			}
 			
 		}
@@ -48,14 +46,14 @@ public class dustStorm : hazardousEnvironment {
 			}
 			else
 			{
-				Debug.Log ("Enemy has no thorn shield!");
+				Debug.Log ("Enemy has no dust shield!");
 				// Enemy takes damager
-				enemyScript.size -= 0.1f;
+				enemyScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
 				other.gameObject.transform.position -= enemyScript.viewingDirection;
 				// Disable enemy for a short time
-				enemyScript.setStunned(0.3f);
+				// enemyScript.setStunned(0.3f);
 			}
 		}
 	}

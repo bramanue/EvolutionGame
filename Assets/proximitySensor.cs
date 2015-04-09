@@ -19,10 +19,10 @@ public class proximitySensor : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		// Do not change length of the collider
-		transform.localScale = new Vector3(parentEnemyScript.transform.localScale.x, 1.0f, parentEnemyScript.transform.localScale.z);	
+		transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);	
 	}
 
-	void OnTriggerEnter(Collider other) 
+void OnTriggerEnter(Collider other) 
 	{
 		hazardousEnvironment hazardousObject = (hazardousEnvironment)other.gameObject.GetComponent (typeof(hazardousEnvironment));
 		if (!hazardousObject)
@@ -38,7 +38,7 @@ public class proximitySensor : MonoBehaviour {
 		} else {
 			if(parentEnemyScript.isHuntingPlayer)
 			{
-				RaycastHit hit;
+			/*	RaycastHit hit;
 				Vector3 right = parentBlob.transform.right;
 				float minDistanceToHazardousObject = 8.0f*parentEnemyScript.size;
 				Vector3 minDistanceObjectNormal = new Vector3(0,0,0);
@@ -48,7 +48,7 @@ public class proximitySensor : MonoBehaviour {
 				{
 					Vector3 rayDirection = ((1-Mathf.Abs (i))*parentEnemyScript.viewingDirection + i*right);
 					if (Physics.Raycast(parentBlob.transform.position, rayDirection, out hit, parentEnemyScript.size + 2.0f*parentEnemyScript.currentSpeed))
-					{ 
+					{
 						// Get the point on the bounding box of the hazardous environment)
 						if(hit.collider.gameObject.GetComponent(typeof(hazardousEnvironment)))
 						{
@@ -76,7 +76,7 @@ public class proximitySensor : MonoBehaviour {
 				// Correction at most by half speed in opposite direction of running
 				Debug.Log ("Correcting course by " + Time.deltaTime*minDistanceObjectNormal*correctionFactor*parentEnemyScript.currentSpeed*0.8f);
 				parentEnemyScript.addCourseCorrection(Time.deltaTime*minDistanceObjectNormal*correctionFactor*parentEnemyScript.currentSpeed*0.8f);
-
+*/
 			}
 			else
 			{
@@ -84,11 +84,13 @@ public class proximitySensor : MonoBehaviour {
 				Vector3 right = parentBlob.transform.right;
 				float minDistanceToHazardousObject = 8.0f*parentEnemyScript.size;
 				Vector3 minDistanceObjectNormal = new Vector3(0,0,0);
+				dangerProximity danger = new dangerProximity();
 				// Shoot 3 rays: one along the viewing direction, one 45° to the left and one 45° to the right
 				// Check for proximity of environmental hazards
 				for(int i = -1; i <= 1; i++)
 				{
 					Vector3 rayDirection = ((1-Mathf.Abs (i))*parentEnemyScript.viewingDirection + i*right);
+					danger.directions[i+1] = rayDirection.normalized;
 					if (Physics.Raycast(parentBlob.transform.position, rayDirection, out hit, parentEnemyScript.size + 2.0f*parentEnemyScript.currentSpeed))
 					{ 
 						// Get the point on the bounding box of the hazardous environment)
@@ -96,6 +98,8 @@ public class proximitySensor : MonoBehaviour {
 						{
 							Vector3 posNormal = hit.normal;
 							float distance = hit.distance;
+							danger.distances[i+1] = distance;
+							danger.normals[i+1] = posNormal;
 							if(distance - parentEnemyScript.size < 0.25f*parentEnemyScript.size) {
 								parentEnemyScript.isHuntingPlayer = false;
 								// TODO stop hunting after player
@@ -111,14 +115,20 @@ public class proximitySensor : MonoBehaviour {
 							}
 						}
 					}
+					else
+					{
+						danger.normals[i+1] = new Vector3(0,0,0);
+						danger.distances[i+1] = parentEnemyScript.size + 2.0f*parentEnemyScript.currentSpeed;
+					}
 				}
 				
-				float correctionFactor = Vector3.Dot (-parentEnemyScript.viewingDirection,minDistanceObjectNormal);
+			/*	float correctionFactor = Vector3.Dot (-parentEnemyScript.viewingDirection,minDistanceObjectNormal);
 				// Apply running direction correction depending on the angle between the hazardous object and the current running direction
 				// Correction at most by half speed in opposite direction of running
 				Debug.Log ("Correcting course by " + Time.deltaTime*minDistanceObjectNormal*correctionFactor*parentEnemyScript.currentSpeed*0.8f);
 				parentEnemyScript.addCourseCorrection(Time.deltaTime*minDistanceObjectNormal*correctionFactor*parentEnemyScript.currentSpeed*0.8f);
-
+*/
+				parentEnemyScript.danger = danger;
 			}
 		}
 	}
@@ -140,7 +150,7 @@ public class proximitySensor : MonoBehaviour {
 		} else {
 			if(parentEnemyScript.isHuntingPlayer)
 			{
-				RaycastHit hit;
+			/*	RaycastHit hit;
 				Vector3 right = parentBlob.transform.right;
 				float minDistanceToHazardousObject = 8.0f*parentEnemyScript.size;
 				Vector3 minDistanceObjectNormal = new Vector3(0,0,0);
@@ -178,7 +188,7 @@ public class proximitySensor : MonoBehaviour {
 				// Correction at most by half speed in opposite direction of running
 				Debug.Log ("Correcting course by " + Time.deltaTime*minDistanceObjectNormal*correctionFactor*parentEnemyScript.currentSpeed*0.5f);
 				parentEnemyScript.addCourseCorrection(Time.deltaTime*minDistanceObjectNormal*correctionFactor*parentEnemyScript.currentSpeed*0.5f);
-				
+				*/
 			}
 			else
 			{
@@ -186,11 +196,13 @@ public class proximitySensor : MonoBehaviour {
 				Vector3 right = parentBlob.transform.right;
 				float minDistanceToHazardousObject = 8.0f*parentEnemyScript.size;
 				Vector3 minDistanceObjectNormal = new Vector3(0,0,0);
+				dangerProximity danger = new dangerProximity();
 				// Shoot 3 rays: one along the viewing direction, one 45° to the left and one 45° to the right
 				// Check for proximity of environmental hazards
 				for(int i = -1; i <= 1; i++)
 				{
 					Vector3 rayDirection = ((1-Mathf.Abs (i))*parentEnemyScript.viewingDirection + i*right);
+					danger.directions[i+1] = rayDirection.normalized;
 					if (Physics.Raycast(parentBlob.transform.position, rayDirection, out hit, parentEnemyScript.size + 2.0f*parentEnemyScript.currentSpeed))
 					{ 
 						// Get the point on the bounding box of the hazardous environment)
@@ -198,6 +210,8 @@ public class proximitySensor : MonoBehaviour {
 						{
 							Vector3 posNormal = hit.normal;
 							float distance = hit.distance;
+							danger.distances[i+1] = distance;
+							danger.normals[i+1] = posNormal;
 							if(distance - parentEnemyScript.size < 0.25f*parentEnemyScript.size) {
 								parentEnemyScript.isHuntingPlayer = false;
 								// TODO stop hunting after player
@@ -209,21 +223,36 @@ public class proximitySensor : MonoBehaviour {
 									minDistanceObjectNormal = posNormal;
 									minDistanceToHazardousObject = distance;
 								}
-								
 							}
 						}
 					}
+					else
+					{
+						danger.normals[i+1] = new Vector3(0,0,0);
+						danger.distances[i+1] = parentEnemyScript.size + 2.0f*parentEnemyScript.currentSpeed;
+					}
 				}
 				
-				float correctionFactor = Vector3.Dot (-parentEnemyScript.viewingDirection,minDistanceObjectNormal);
+			/*	float correctionFactor = Vector3.Dot (-parentEnemyScript.viewingDirection,minDistanceObjectNormal);
 				// Apply running direction correction depending on the angle between the hazardous object and the current running direction
 				// Correction at most by half speed in opposite direction of running
 				Debug.Log ("Correcting course by " + Time.deltaTime*minDistanceObjectNormal*correctionFactor*parentEnemyScript.currentSpeed*0.5f);
 				parentEnemyScript.addCourseCorrection(Time.deltaTime*minDistanceObjectNormal*correctionFactor*parentEnemyScript.currentSpeed*0.5f);
-				
+*/
+
+				parentEnemyScript.danger = danger;
 			}
 		}
 	}
+
+	void OnCollisionEnter(Collision collision) {
+
+		for(int i = 0; i < collision.contacts.Length; i++)
+		{
+			Debug.Log(collision.contacts[i].point);
+		} 
+	}
+
 
 
 }

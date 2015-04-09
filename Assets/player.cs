@@ -96,22 +96,22 @@ public class player : MonoBehaviour
 			if (!stunned) {
 
 				// Capture player input
-				if (Input.GetButton ("Fire1")) {
+				if (Input.GetButton ("Ability0")) {
 					//	Debug.Log ("Fire1");
 					if (abilities [0] != null && abilities [0].isReady ())
 						abilities [0].useAbility ();
 				}
-				if (Input.GetButton ("Fire2")) {
+				if (Input.GetButton ("Ability1")) {
 					//	Debug.Log ("Fire2");
 					if (abilities [1] != null && abilities [1].isReady ())
 						abilities [1].useAbility ();
 				}
-				if (Input.GetButton ("Fire3")) {
+				if (Input.GetButton ("Ability2")) {
 					//	Debug.Log ("Fire3");
 					if (abilities [2] != null && abilities [2].isReady ())
 						abilities [2].useAbility ();
 				}
-				if (Input.GetButton ("Jump")) {
+				if (Input.GetButton ("Ability3")) {
 					//	Debug.Log ("Jump");
 					if (abilities [3] != null && abilities [3].isReady ())
 						abilities [3].useAbility ();
@@ -124,9 +124,21 @@ public class player : MonoBehaviour
 						abilities [4].useAbility ();
 					}
 					currentSpeed = baseVelocity + runVelocityBoost;
+
+					Vector3 targetDirection = new Vector3 (Input.GetAxis ("Horizontal"), Input.GetAxis ("Vertical"), 0.0f);
+					if(targetDirection.magnitude > 0)
+					{
+						float angleBetween = Mathf.Sign (Vector3.Cross (viewingDirection, targetDirection).z) * Vector3.Angle (viewingDirection, targetDirection);
+						// Calculate the necessary rotation speed to perform rotation within 0.5s
+						// Get the rotation target
+						Quaternion rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
+						// Reset time scale to normal
+						transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed);
+					}
 					// Move blob according to joystick input
-					transform.Rotate (0.0f, 0.0f, -Input.GetAxis ("Horizontal") * currentSpeed);
-					transform.position += Input.GetAxis ("Vertical") * currentSpeed * transform.up * Time.deltaTime; // vorwärts bewegen
+					//transform.Rotate (0.0f, 0.0f, -Input.GetAxis ("Horizontal") * currentSpeed);
+					transform.position += viewingDirection*Time.deltaTime*targetDirection.magnitude*currentSpeed;
+					//transform.position += Input.GetAxis ("Vertical") * currentSpeed * transform.up * Time.deltaTime; // vorwärts bewegen
 				}
 			} else {
 				stunnedTimer -= Time.deltaTime;
@@ -153,10 +165,8 @@ public class player : MonoBehaviour
 
 		// Change appearance according to current size
 		grow();
-
-
-
 	}
+
 
 	void LateUpdate() {
 		if (size <= 0)

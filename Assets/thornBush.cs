@@ -29,7 +29,7 @@ public class thornBush : hazardousEnvironment {
 			}
 			else
 			{
-				Debug.Log ("Player has no thron shield!");
+				Debug.Log ("Player has no thorn shield!");
 				// Player takes damager
 				playerScript.size -= 0.1f;
 				// Throw back approacher
@@ -48,7 +48,7 @@ public class thornBush : hazardousEnvironment {
 			}
 			else
 			{
-				Debug.Log ("Enemy has no thron shield!");
+				Debug.Log ("Enemy has no thorn shield!");
 				// Enemy takes damager
 				enemyScript.size -= 0.1f;
 				// Throw back approacher

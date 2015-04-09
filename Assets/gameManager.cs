@@ -31,12 +31,11 @@ public class gameManager : MonoBehaviour {
 	void Update () {
 		if (player && playerScript.size <= 0) 
 		{
-		//	GameObject.Destroy(player);
-			Debug.Log ("Game Over");
+			print ("Game Over");
 			Time.timeScale = 0.1f;
 		}
 
-		if (Input.GetButtonDown ("Cancel"))
+		if (Input.GetButtonDown ("Pause"))
 		{ 
 			if (paused) {
 				playerScript.setStunned(0.0f);
@@ -46,7 +45,6 @@ public class gameManager : MonoBehaviour {
 			else
 			{
 				playerScript.setStunned(9999999999999.0f);
-				Debug.Log ("Start button pressed");
 				Time.timeScale = 0.0f;
 				paused = true;
 			}
