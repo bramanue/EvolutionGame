@@ -10,6 +10,8 @@ public class gameManager : MonoBehaviour {
 	private GameObject abilityMngr;
 
 	private abilityManager abilityManagerScript;
+
+	private bool paused;
 	
 	// Use this for initialization
 	void Start () 
@@ -27,11 +29,34 @@ public class gameManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		if (playerScript.size <= 0)
+		if (player && playerScript.size <= 0) 
+		{
+		//	GameObject.Destroy(player);
 			Debug.Log ("Game Over");
-
-		if (Input.GetButtonDown ("Cancel")) {
-			Debug.Log ("Start button pressed");
+			Time.timeScale = 0.1f;
 		}
+
+		if (Input.GetButtonDown ("Cancel"))
+		{ 
+			if (paused) {
+				playerScript.setStunned(0.0f);
+				Time.timeScale = 1.0f;
+				paused = false;
+			}
+			else
+			{
+				playerScript.setStunned(9999999999999.0f);
+				Debug.Log ("Start button pressed");
+				Time.timeScale = 0.0f;
+				paused = true;
+			}
+		}
+
+		if (paused) {
+			Time.timeScale = 0.0f;
+			playerScript.setStunned (9999999999999.0f);
+		}
+
 	}
+
 }

@@ -61,7 +61,7 @@ public class enemyManager : MonoBehaviour {
 			// Set values for this script
 			setRandomInitialValues(enemyScripts[i], enemyGameObjects[i]);
 			// Set abilities
-			abilityManagerScript.addAbilityToEnemy(enemyGameObjects[i],EAbilityType.ERamAbility,0,4);
+		//	abilityManagerScript.addAbilityToEnemy(enemyGameObjects[i],EAbilityType.ERamAbility,0,4);
 		}
 	}
 	

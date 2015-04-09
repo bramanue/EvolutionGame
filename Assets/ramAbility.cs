@@ -6,6 +6,8 @@ public class ramAbility : ability {
 	// Defines whether the useAbility() function has just been called
 	public bool inUse;
 
+	private bool slowed;
+
 	public bool inTargetMode;
 
 	public bool inChargeMode;
@@ -30,7 +32,7 @@ public class ramAbility : ability {
 
 	private float attackTimer = 0.0f;
 
-	private Collider2D collider;
+	private Collider collider;
 
 
 	void Start() 
@@ -53,7 +55,9 @@ public class ramAbility : ability {
 		parentPlayerScript = (player)parentBlob.GetComponent(typeof(player));
 		isPlayer = (bool)parentPlayerScript;
 
-		collider = (Collider2D)GetComponent (typeof(Collider2D));
+		collider = (Collider)GetComponent (typeof(Collider));
+
+		increaseLevel (0);
 	}
 
 	void Update()
@@ -61,7 +65,7 @@ public class ramAbility : ability {
 		cooldownTimer -= Time.deltaTime;
 		// Put ability on player
 		transform.localPosition = new Vector3 (0, 0, 0);
-		collider.transform.localScale = new Vector3(parentBlob.transform.localScale.x, parentBlob.transform.localScale.y, parentBlob.transform.localScale.z);
+	//	collider.transform.localScale = new Vector3(parentBlob.transform.localScale.x, parentBlob.transform.localScale.y, parentBlob.transform.localScale.z);
 
 		// Player behaviour
 		if (isPlayer) 
@@ -70,7 +74,7 @@ public class ramAbility : ability {
 			if (targetDirection != new Vector3 (0, 0, 0)) 
 			{
 				Debug.Log (targetDirection);
-				// If the player has released the button (i.e. not inUse)
+				// If the player has released the button (i.e. not inUse), then initialize rotation
 				if (!inUse && inTargetMode)
 				{
 					inTargetMode = false;
@@ -85,6 +89,7 @@ public class ramAbility : ability {
 					rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, parentBlob.transform.localEulerAngles.z + angleBetween));
 					// Reset time scale to normal
 					Time.timeScale = 1.0f;
+					Debug.Log (Time.timeScale);
 				}
 				else if (inChargeMode)
 				{
@@ -123,13 +128,31 @@ public class ramAbility : ability {
 						inTargetMode = true;
 					}
 				}
+				else
+				{
+					// Reset states if game was paused
+					if(Time.timeScale == 0.0f)
+					{
+						// Reset target direction
+						targetDirection = new Vector3(0,0,0);
+						// Reset states to idle
+						inAttackMode = false;
+						inChargeMode = false;
+						inTargetMode = true;
+					}
+				}
 			}
 			else 
 			{
 				// If the ability is not used, then reset the nonmoving state of the executing blob
 				if (!inUse) {
 					parentPlayerScript.canMove = true;
-					Time.timeScale = 1.0f;
+					targetDirection = new Vector3(0,0,0);
+					// Make sure time normalization is only called once and not all the time (could not pause game otherwise)
+					if(slowed) {
+						Time.timeScale = 1.0f;
+						slowed = false;
+					}
 				}
 			}
 			
@@ -199,6 +222,7 @@ public class ramAbility : ability {
 
 				if (inTargetMode) {
 					// Slow down time while targeting
+					slowed = true;
 					Time.timeScale = 0.1f;
 					targetDirection = new Vector3 (Input.GetAxis ("Horizontal"), Input.GetAxis ("Vertical"), 0.0f);
 				}
@@ -233,7 +257,7 @@ public class ramAbility : ability {
 	}
 
 	// If the ram ability touches an object perform the following
-	void OnTriggerEnter2D(Collider2D other)
+	void OnTriggerEnter(Collider other)
 	{
 		// If collision with own blob, do nothing
 		if (other.gameObject == parentBlob)

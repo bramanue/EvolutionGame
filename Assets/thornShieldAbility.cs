@@ -35,7 +35,7 @@ public class thornShieldAbility : ability {
 		}
 	}
 
-	void OnTriggerEnter2D(Collider2D other)
+	void OnTriggerEnter(Collider other)
 	{
 		// If collision with own blob, do nothing
 		if (other.gameObject == parentBlob)

@@ -15,7 +15,7 @@ public class thornBush : hazardousEnvironment {
 		
 	}
 
-	void OnTriggerEnter2D(Collider2D other)
+	void OnTriggerEnter(Collider other)
 	{
 		Debug.Log ("Collision detected");
 		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));

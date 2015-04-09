@@ -3,14 +3,16 @@ using System.Collections;
 
 public class runAbility : ability {
 
+	// The current speed boos tinduced by this ability
 	private float currentSpeed;
 
+	// The maximum speed boost achievable with this ability
 	private float maxSpeed;
 
-	public float timeToTopSpeed;
+	// How long it takes to reach max speed
+	public float timeToTopSpeed = 3.0f;
 
-	public float baseSpeed;
-
+	// Indicates whether player/enemy is currently running or not
 	private bool inUse;
 
 
@@ -22,16 +24,18 @@ public class runAbility : ability {
 		parentPlayerScript = (player)parentBlob.GetComponent (typeof(player));
 		// Decide whether this ability is attached to the player or to an enemy
 		isPlayer = (parentPlayerScript != null);
-		// The lowest speed
-		baseSpeed = 4.0f;
 		// The current speed
-		currentSpeed = baseSpeed;
+		currentSpeed = 0.0f;
 		// The maximally auireable speed at the current ability level
-		maxSpeed = baseSpeed + level;
-		// Blob needs 3 seconds to get to max speed
-		timeToTopSpeed = 3.0f;
+		maxSpeed = level;
 		// This ability is currently not used
 		inUse = false;
+
+		
+		if (isPlayer) 
+			parentPlayerScript.maxVelocity = parentPlayerScript.baseVelocity + maxSpeed;
+		else
+			parentEnemyScript.maxVelocity = parentEnemyScript.baseVelocity + maxSpeed;
 		
 		cooldownTime = 0;
 		maxLevel = 20;
@@ -41,13 +45,14 @@ public class runAbility : ability {
 	void Update () {
 		// Set current speed back to default value if it is not used for some time
 		if (!inUse) {
-			currentSpeed = Mathf.Max(baseSpeed, currentSpeed - (maxSpeed - baseSpeed) / timeToTopSpeed * Time.deltaTime);
+			currentSpeed = Mathf.Max(0.0f, currentSpeed - maxSpeed / timeToTopSpeed * Time.deltaTime);
 			if (isPlayer) 
 				parentPlayerScript.maxVelocity = currentSpeed;
 			else
 				parentEnemyScript.maxVelocity = currentSpeed;
 		}
 		inUse = false;
+
 	}
 
 	// Increases the level of this ability by x and returns the effective change in levels
@@ -55,8 +60,15 @@ public class runAbility : ability {
 	{
 		int previousLevel = level;
 		level = Mathf.Max (0, Mathf.Min(level + x, maxLevel));
-		maxSpeed = baseSpeed + level;
+		maxSpeed = level;
 		Debug.Log (x + " to run ability");
+
+		
+		if (isPlayer) 
+			parentPlayerScript.maxVelocity = parentPlayerScript.baseVelocity + maxSpeed;
+		else
+			parentEnemyScript.maxVelocity = parentEnemyScript.baseVelocity + maxSpeed;
+
 		return level - previousLevel;
 	}
 
@@ -64,11 +76,11 @@ public class runAbility : ability {
 	{
 		inUse = true;
 		// Current speed is either maxSpeed or the accelerated min speed
-		currentSpeed = Mathf.Min(maxSpeed, currentSpeed + (maxSpeed - baseSpeed) / timeToTopSpeed * Time.deltaTime);
+		currentSpeed = Mathf.Min(maxSpeed, currentSpeed + maxSpeed / timeToTopSpeed * Time.deltaTime);
 		if (isPlayer) 
-			parentPlayerScript.maxVelocity = currentSpeed;
+			parentPlayerScript.runVelocityBoost = currentSpeed;
 		else
-			parentEnemyScript.maxVelocity = currentSpeed;
+			parentEnemyScript.runVelocityBoost = currentSpeed;
 		return true;
 	}
 

@@ -15,12 +15,11 @@ public class water : hazardousEnvironment {
 		
 	}
 	
-	void OnTriggerEnter2D(Collider2D other)
+	void OnTriggerEnter(Collider other)
 	{
-		Debug.Log ("Collision detected");
 		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
 		player playerScript = (player)other.gameObject.GetComponent(typeof(player));
-		
+
 		if (playerScript) 
 		{
 			if( playerScript.hasAbility(EAbilityType.EWaterShieldAbility) != -1 ) {
@@ -29,12 +28,12 @@ public class water : hazardousEnvironment {
 			}
 			else
 			{
-				Debug.Log ("Player cannot swim!");
 				// Throw back approacher
-				// TODO throw back in normal direction of the water
-				other.gameObject.transform.position -= Time.deltaTime*playerScript.currentSpeed*playerScript.viewingDirection;
-				// Disable player for a short time
-				playerScript.setStunned(0.1f);
+				Vector3 repulsionNormal = getRepulsionNormal(other.gameObject, null, playerScript);
+				// TODO Does not work for many colliders at the same place -> blob cannot penetrate as repulsion forces of all colliders sum up
+				repulsionNormal = -playerScript.viewingDirection;
+				playerScript.addEnvironmentPushBackForce(Time.deltaTime*playerScript.currentSpeed*slowDownFactor*repulsionNormal);
+				// other.gameObject.transform.position += Time.deltaTime*playerScript.currentSpeed*slowDownFactor*repulsionNormal;
 			}
 			
 		}
@@ -46,17 +45,15 @@ public class water : hazardousEnvironment {
 			}
 			else
 			{
-				Debug.Log ("Enemy cannot swim!");
 				// Throw back approacher
-				// TODO throw back in normal direction of the water
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
-				// Disable enemy for a short time
-				enemyScript.setStunned(0.2f);
+				Vector3 repulsionNormal = getRepulsionNormal(other.gameObject, enemyScript, null);
+				enemyScript.addEnvironmentPushBackForce(Time.deltaTime*enemyScript.currentSpeed*slowDownFactor*repulsionNormal);
+				//other.gameObject.transform.position += Time.deltaTime*enemyScript.currentSpeed*slowDownFactor*repulsionNormal;
 			}
 		}
 	}
 
-	void OnTriggerStay2D(Collider2D other) {
+	void OnTriggerStay(Collider other) {
 		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
 		player playerScript = (player)other.gameObject.GetComponent(typeof(player));
 		
@@ -68,11 +65,13 @@ public class water : hazardousEnvironment {
 			}
 			else
 			{
-				Debug.Log ("Player cannot swim!");
 				// Throw back approacher
-				// TODO throw back in normal direction of the water
-				other.gameObject.transform.position -= Time.deltaTime*playerScript.currentSpeed*playerScript.viewingDirection;
-				// Disable player for a short time
+				Vector3 repulsionNormal = getRepulsionNormal(other.gameObject, null, playerScript);
+				repulsionNormal = -playerScript.viewingDirection;
+				playerScript.addEnvironmentPushBackForce(Time.deltaTime*playerScript.currentSpeed*slowDownFactor*repulsionNormal);
+				//other.gameObject.transform.position += Time.deltaTime*playerScript.currentSpeed*slowDownFactor*repulsionNormal;
+				// Start drowning (damage dependent on frames per second)
+				playerScript.inflictEnvironmentalDamage(Time.deltaTime*damagePerSecond);
 			}
 			
 		}
@@ -84,13 +83,61 @@ public class water : hazardousEnvironment {
 			}
 			else
 			{
-				Debug.Log ("Enemy cannot swim!");
 				// Throw back approacher
-				// TODO throw back in normal direction of the water
-				other.gameObject.transform.position -= Time.deltaTime*enemyScript.currentSpeed*playerScript.viewingDirection;
-				// Disable enemy for a short time
+				Vector3 repulsionNormal = getRepulsionNormal(other.gameObject, enemyScript, null);
+				enemyScript.addEnvironmentPushBackForce(Time.deltaTime*enemyScript.currentSpeed*slowDownFactor*repulsionNormal);
+				//other.gameObject.transform.position += Time.deltaTime*enemyScript.currentSpeed*slowDownFactor*repulsionNormal;
+				// Start drowning (damage dependent on frames per second)
+				enemyScript.inflictEnvironmentalDamage(Time.deltaTime*damagePerSecond);
 			}
 		}
+	}
+
+	private Vector3 getRepulsionNormal(GameObject blob, enemy enemyScript, player playerScript)
+	{
+		RaycastHit hit;
+		Vector3 right = blob.gameObject.transform.right;
+
+		if (enemyScript) 
+		{
+			float closestColliderDistance = enemyScript.size + 10000.0f;
+			Vector3 repulsionNormal = -enemyScript.viewingDirection;
+			// Shoot 3 rays: one along the viewing direction, one 45° to the left and one 45° to the right
+			for (int i = -1; i <= 1; i++) {
+				Vector3 rayDirection = (enemyScript.viewingDirection + i * right);
+				// Search close proximity for collider object
+				if (Physics.Raycast (blob.gameObject.transform.position, rayDirection, out hit, enemyScript.size + 1.0f)) { 
+					// Get the point on the bounding box of the hazardous environment)
+					if (hit.collider.gameObject.GetComponent(typeof(hazardousEnvironment))) {
+						// If this is the closest obstacle, then take the normal of this object for repulsion
+						if (hit.distance < closestColliderDistance)
+							repulsionNormal = hit.normal;
+					}
+				}
+			}
+			return repulsionNormal;
+		} 
+		else 
+		{
+			float closestColliderDistance = playerScript.size + 10000.0f;
+			Vector3 repulsionNormal = -playerScript.viewingDirection;
+			// Shoot 3 rays: one along the viewing direction, one 90° to the left and one 90° to the right
+			for (int i = -1; i <= 1; i++) {
+				Vector3 rayDirection = ((1-Mathf.Abs(i))*playerScript.viewingDirection + i * right).normalized;
+				// Search close proximity for collider object
+				if (Physics.Raycast (blob.gameObject.transform.position, rayDirection, out hit, playerScript.size*2.0f)) { 
+					// Get the point on the bounding box of the hazardous environment)
+					if (hit.collider.gameObject.GetComponent(typeof(hazardousEnvironment))) {
+						// If this is the closest obstacle, then take the normal of this object for repulsion
+						if (hit.distance < closestColliderDistance)
+							repulsionNormal = hit.normal;
+					}
+				}
+			}
+
+			return repulsionNormal;
+		}
+		return new Vector3(0,0,0);
 	}
 	
 }

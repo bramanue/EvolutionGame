@@ -15,7 +15,14 @@ public class enemy : MonoBehaviour {
 	// Defines how far this enemy can see
 	public float viewingRange;
 
+	// Max velocity of the player (depends on ability "Speed")
+	public float runVelocityBoost;
+
+	// The current pace of movement
 	public float currentSpeed;
+	
+	// The base velocity of this blob (without any running ability)
+	public float baseVelocity = 5.0f;
 
 	// Defines how wide the angle of the enemy's eyes are 
 	public float cosViewingAngle;
@@ -42,6 +49,12 @@ public class enemy : MonoBehaviour {
 	public bool stunned;
 
 	public float stunnedTimer;
+
+	private float environmentalDamage;
+
+	private Vector3 environmentalPushBack;
+
+	private Vector3 environmentalCourseCorrection;
 	
 	// Defines whether this enemy is currently blinded
 	public bool blinded;
@@ -152,10 +165,6 @@ public class enemy : MonoBehaviour {
 		viewingDirection = new Vector3 (Mathf.Cos (theta), Mathf.Sin (theta), 0.0f);
 		// Calculate vector pointing to the player
 		toPlayer = player.transform.position - transform.position;
-		// Adapt visuals to the actual size
-		grow ();
-
-		currentSpeed = maxVelocity;
 
 		// Reduce active timer
 		activeTimer -= Time.deltaTime;
@@ -184,6 +193,13 @@ public class enemy : MonoBehaviour {
 		}
 
 		if (!stunned) {
+
+			// Use running
+			if(abilities[4])
+				abilities[4].useAbility();
+
+			currentSpeed = baseVelocity + runVelocityBoost;
+
 
 			// Check whether the player could be seen by this enemy
 			bool isPlayerInViewingRange = isInViewingRange (player);
@@ -283,6 +299,18 @@ public class enemy : MonoBehaviour {
 			if(stunnedTimer <= 0.0f)
 				stunned = false;
 		}
+		// Apply environmental factors
+		transform.position += environmentalPushBack;
+		environmentalPushBack = new Vector3 (0, 0, 0);
+
+		transform.position += environmentalCourseCorrection;
+		environmentalCourseCorrection = new Vector3 (0, 0, 0);
+
+		size -= environmentalDamage;
+		environmentalDamage = 0.0f;
+		// Adapt visuals to the actual size
+		grow ();
+
 
 	}
 
@@ -294,7 +322,7 @@ public class enemy : MonoBehaviour {
 
 	private void huntPlayer() 
 	{
-		abilities[0].useAbility();
+//		abilities[0].useAbility();
 		if (canMove) 
 		{
 			// Calculate rotation target (the target viewing direction, i.e. look towards player)
@@ -304,9 +332,9 @@ public class enemy : MonoBehaviour {
 			// Target rotation Quaternion
 			Quaternion rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
 			// Interpolate rotation for the current time step and apply it to the model
-			transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * maxVelocity);
+			transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed);
 			// Run towards player
-			transform.position += viewingDirection * maxVelocity * Time.deltaTime;
+			transform.position += viewingDirection * currentSpeed * Time.deltaTime;
 		}
 	}
 
@@ -321,11 +349,11 @@ public class enemy : MonoBehaviour {
 			// Target rotation Quaternion
 			Quaternion rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
 			// Interpolate rotation for the current time step
-			Quaternion rotationMatrix = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * maxVelocity);
+			Quaternion rotationMatrix = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed);
 			// Apply rotation to the model
 			transform.rotation = rotationMatrix;
 			// Walk away player
-			transform.position += viewingDirection * maxVelocity * Time.deltaTime;
+			transform.position += viewingDirection * currentSpeed * Time.deltaTime;
 		}
 	}
 
@@ -381,7 +409,7 @@ public class enemy : MonoBehaviour {
 				else 	// Continue rotation animation
 				{
 					// Calculate the rotation matrix for current timestep and apply it to the model
-					transform.rotation = Quaternion.Lerp(transform.rotation, idleRotationTargetQuaternion, Time.deltaTime * maxVelocity*idleRotationSpeedReduction);
+					transform.rotation = Quaternion.Lerp(transform.rotation, idleRotationTargetQuaternion, Time.deltaTime * currentSpeed*idleRotationSpeedReduction);
 					return;
 				}
 
@@ -403,9 +431,9 @@ public class enemy : MonoBehaviour {
 					// Target rotation Quaternion
 					Quaternion rotationTargetQuaternion = Quaternion.Euler(new Vector3(0.0f,0.0f,transform.localEulerAngles.z+angleBetween));
 					// Interpolate rotation for the current time step and apply it to the model
-					transform.rotation = Quaternion.Slerp(transform.rotation, rotationTargetQuaternion, Time.deltaTime * maxVelocity * idleRotationSpeedReduction);
+					transform.rotation = Quaternion.Slerp(transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed * idleRotationSpeedReduction);
 					// Walk along viewing direction (and eventually towards target location)
-					transform.position += viewingDirection * maxVelocity * idleWalkingSpeedReduction * Time.deltaTime;
+					transform.position += viewingDirection * currentSpeed * idleWalkingSpeedReduction * Time.deltaTime;
 
 				}
 
@@ -567,6 +595,22 @@ public class enemy : MonoBehaviour {
 	public void activateAbility(int abilityIndex) 
 	{
 		abilities [abilityIndex].useAbility ();
+	}
+
+	public void inflictEnvironmentalDamage(float damage)
+	{
+		environmentalDamage = Mathf.Max (environmentalDamage,damage);
+	}
+
+	public void addEnvironmentPushBackForce(Vector3 force)
+	{
+		if (force.magnitude > environmentalPushBack.magnitude)
+			environmentalPushBack = force;
+	}
+
+	public void addCourseCorrection(Vector3 correction)
+	{
+		environmentalCourseCorrection += correction;
 	}
 	
 }

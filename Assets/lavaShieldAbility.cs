@@ -16,7 +16,6 @@ public class lavaShieldAbility : ability {
 		maxLevel = 10;
 		timer = maxTimeInLava;
 		damage = 0.1f + level * 0.1f;
-
 		abilityName = "LavaShieldAbility";
 	}
 	
@@ -35,7 +34,7 @@ public class lavaShieldAbility : ability {
 		}
 	}
 	
-	void OnTriggerEnter2D(Collider2D other)
+	void OnTriggerEnter(Collider other)
 	{
 		// If collision with own blob, do nothing
 		if (other.gameObject == parentBlob)

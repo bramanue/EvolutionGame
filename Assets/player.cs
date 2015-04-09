@@ -5,12 +5,16 @@ using System.Collections;
 public class player : MonoBehaviour
 {
 	// Max velocity of the player (depends on ability "Speed")
-	public float maxVelocity = 7.0f;
+	public float runVelocityBoost;
 
-	// Max rotation speed of the player (depends on ability "Speed")
-	public float rotationSpeed = 10.0f;
-
+	// The current pace of movement
 	public float currentSpeed;
+
+	// The base velocity of this blob (without any running ability)
+	public float baseVelocity = 5.0f;
+
+	// The maximally achievable velocity
+	public float maxVelocity;
 
 	// Viewing Range of the player (depends on ability "Eyes")
 	public float viewingRange = 0.0f;
@@ -25,6 +29,12 @@ public class player : MonoBehaviour
 	public float growSpeed = 0.1f;
 
 	public float shrinkSpeed = 1.0f;
+
+	private float environmentalDamage;
+
+	private float abilityDamage;
+
+	private Vector3 environmentalPushBack;
 
 	// Defines whether player is allowed to move
 	public bool canMove;
@@ -50,6 +60,8 @@ public class player : MonoBehaviour
 	// Stores all ability game objects
 	private GameObject[] abilityObjects = new GameObject[6];
 
+	public bool dead;
+
 
 	// Use this for initialization
 	void Start()
@@ -65,67 +77,93 @@ public class player : MonoBehaviour
 	// Update is called once per frame
 	void Update()
 	{
-		// Get the viewing range
-		abilities[5].useAbility();
+		if (!dead) {
+			// Get the viewing range
+			abilities [5].useAbility ();
+			// transform.localScale = new Vector3 (size, size, size);
+			// Get the theta angle of the current rotation, corresponding to position on the unit circle
+			float theta = (transform.localEulerAngles.z + 90.0f) * Mathf.Deg2Rad;
+			// Get the viewing direction based on the current rotation (resp. on the previously calculated theta)
+			viewingDirection = new Vector3 (Mathf.Cos (theta), Mathf.Sin (theta), 0.0f);
+
+			if (blinded && blindedTimer > 0) {
+				// TODO make screen less bright (exponentially)
+				blindedTimer -= Time.deltaTime;
+			} else {
+				blinded = false;
+			}
+
+			if (!stunned) {
+
+				// Capture player input
+				if (Input.GetButton ("Fire1")) {
+					//	Debug.Log ("Fire1");
+					if (abilities [0] != null && abilities [0].isReady ())
+						abilities [0].useAbility ();
+				}
+				if (Input.GetButton ("Fire2")) {
+					//	Debug.Log ("Fire2");
+					if (abilities [1] != null && abilities [1].isReady ())
+						abilities [1].useAbility ();
+				}
+				if (Input.GetButton ("Fire3")) {
+					//	Debug.Log ("Fire3");
+					if (abilities [2] != null && abilities [2].isReady ())
+						abilities [2].useAbility ();
+				}
+				if (Input.GetButton ("Jump")) {
+					//	Debug.Log ("Jump");
+					if (abilities [3] != null && abilities [3].isReady ())
+						abilities [3].useAbility ();
+				}
+
+
+				if (canMove) {
+					// Use runAbility if the player is moving
+					if (Input.GetAxis ("Vertical") != 0 || Input.GetAxis ("Horizontal") != 0) {
+						abilities [4].useAbility ();
+					}
+					currentSpeed = baseVelocity + runVelocityBoost;
+					// Move blob according to joystick input
+					transform.Rotate (0.0f, 0.0f, -Input.GetAxis ("Horizontal") * currentSpeed);
+					transform.position += Input.GetAxis ("Vertical") * currentSpeed * transform.up * Time.deltaTime; // vorwärts bewegen
+				}
+			} else {
+				stunnedTimer -= Time.deltaTime;
+				if (stunnedTimer <= 0)
+					stunned = false;
+			}
+			// Apply environmental push back force
+			transform.position += environmentalPushBack;
+			environmentalPushBack = new Vector3 (0, 0, 0);
+
+			// Inflict environmental damage
+			size -= environmentalDamage;
+			// Reset it to 0 for the next frame
+			environmentalDamage = 0.0f;
+
+			size -= abilityDamage;
+			abilityDamage = 0.0f;
+
+			if (size <= 0.0f) {
+				size = 0.0f;
+				dead = true;
+			}
+		}
+
 		// Change appearance according to current size
 		grow();
-		// transform.localScale = new Vector3 (size, size, size);
-		// Get the theta angle of the current rotation, corresponding to position on the unit circle
-		float theta = (transform.localEulerAngles.z + 90.0f) * Mathf.Deg2Rad;
-		// Get the viewing direction based on the current rotation (resp. on the previously calculated theta)
-		viewingDirection = new Vector3 (Mathf.Cos (theta), Mathf.Sin (theta), 0.0f);
-
-		if (blinded && blindedTimer > 0) {
-			// TODO make screen less bright (exponentially)
-			blindedTimer -= Time.deltaTime;
-		} else {
-			blinded = false;
-		}
-
-		if (!stunned) {
-
-			// Capture player input
-			if (Input.GetButton ("Fire1")) {
-				//	Debug.Log ("Fire1");
-				if (abilities [0] != null && abilities [0].isReady ())
-					abilities [0].useAbility ();
-			}
-			if (Input.GetButton ("Fire2")) {
-				//	Debug.Log ("Fire2");
-				if (abilities [1] != null && abilities [1].isReady ())
-					abilities [1].useAbility ();
-			}
-			if (Input.GetButton ("Fire3")) {
-				//	Debug.Log ("Fire3");
-				if (abilities [2] != null && abilities [2].isReady ())
-					abilities [2].useAbility ();
-			}
-			if (Input.GetButton ("Jump")) {
-				//	Debug.Log ("Jump");
-				if (abilities [3] != null && abilities [3].isReady ())
-					abilities [3].useAbility ();
-			}
 
 
-			if (canMove) {
-				// Use runAbility if the player is moving
-				if (Input.GetAxis ("Vertical") != 0 || Input.GetAxis ("Horizontal") != 0) {
-					abilities [4].useAbility ();
-				}
-				currentSpeed = maxVelocity;
-				// Move blob according to joystick input
-				transform.Rotate (0.0f, 0.0f, -Input.GetAxis ("Horizontal") * rotationSpeed);
-				transform.position += Input.GetAxis ("Vertical") * maxVelocity * transform.up * Time.deltaTime; // vorwärts bewegen
-			}
-		} else {
-			stunnedTimer -= Time.deltaTime;
-			if(stunnedTimer <= 0)
-				stunned = false;
-		}
 
 	}
 
-	void OnTriggerEnter2D(Collider2D other)
+	void LateUpdate() {
+		if (size <= 0)
+			size = 0;
+	}
+
+	void OnTriggerEnter(Collider other)
 	{
 		Debug.Log ("Collision detected");
 		// Check whether the player collided with an enemy or with something else
@@ -218,6 +256,23 @@ public class player : MonoBehaviour
 		// TODO make stun visible
 		stunned = true;
 		stunnedTimer = time;
+	}
+
+	public void inflictEnvironmentalDamage(float damage)
+	{
+		// There will be only environmental damage by one collider in each frame (the maximum)
+		environmentalDamage = Mathf.Max (environmentalDamage,damage);
+	}
+
+	public void inflictDamage(float damage)
+	{
+		abilityDamage += damage;
+	}
+
+	public void addEnvironmentPushBackForce(Vector3 force)
+	{
+		if (force.magnitude > environmentalPushBack.magnitude)
+			environmentalPushBack = force;
 	}
 	
 }
