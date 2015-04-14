@@ -31,6 +31,12 @@ public class enemyManager : MonoBehaviour {
 	
 	private abilityManager abilityManagerScript;
 
+	private EAbilityType[] necessaryAbilities;
+
+	// 1 is the highest difficulty and 5 the lowest
+	// Defines for each enemy, how many abilities it gets
+	public float difficulty;
+
 
 	// Use this for initialization
 	void Start () 
@@ -57,8 +63,6 @@ public class enemyManager : MonoBehaviour {
 			enemyScripts[i] = (enemy)enemyGameObjects[i].GetComponent(typeof(enemy));
 			// Set values for this script
 			setRandomInitialValues(enemyScripts[i], enemyGameObjects[i]);
-			// Set abilities
-			abilityManagerScript.addAbilityToEnemy(enemyGameObjects[i],EAbilityType.ERamAbility,0,4);
 		}
 	}
 	
@@ -66,31 +70,32 @@ public class enemyManager : MonoBehaviour {
 	void Update () {
 
 		// Make sure the radius increases with the player's size
-		radius = 5.0f*playerScript.viewingRange + Mathf.Sqrt(8.0f*nofEnemies*player.transform.localScale.x) + 4.0f * playerScript.maxVelocity;
+		radius = 5.0f*playerScript.viewingRange + nofEnemies/2.0f*1.28f*player.transform.localScale.x + 4.0f*playerScript.maxVelocity;
 
 		// Get the current position of the player
 		Vector3 playerPosition = player.transform.position;
 		// Loop over all enemies and check whether they need to be repositioned (out of the radius)
-		for (int it = 0; it < nofEnemies; it++) 
+		for (int i = 0; i < nofEnemies; i++) 
 		{
-			float distance = (enemyGameObjects [it].transform.position - playerPosition).magnitude;
+			float distance = (enemyGameObjects [i].transform.position - playerPosition).magnitude;
 			if (distance > radius)
 			{
-				setRandomInitialValues (enemyScripts [it], enemyGameObjects [it]);
-				distance = (enemyGameObjects [it].transform.position - playerPosition).magnitude;
+				setRandomInitialValues (enemyScripts [i], enemyGameObjects [i]);
+				distance = (enemyGameObjects [i].transform.position - playerPosition).magnitude;
 			}	
 
-			if(enemyScripts[it].size <= 0) 
+			// Respawn defeated enemies
+			if(enemyGameObjects[i].transform.localScale.x <= 0) 
 			{
-				setRandomInitialValues (enemyScripts [it], enemyGameObjects [it]);
-				distance = (enemyGameObjects [it].transform.position - playerPosition).magnitude;
+				setRandomInitialValues (enemyScripts [i], enemyGameObjects [i]);
+				distance = (enemyGameObjects [i].transform.position - playerPosition).magnitude;
 			}
 
 			// Deactivate enemies if they are too far from the player
-			if(distance > 3.0f*(playerScript.viewingRange + playerScript.size))
-				enemyGameObjects[it].SetActive(false);
+			if(distance > 2.5f*(playerScript.viewingRange + playerScript.size + enemyGameObjects[i].transform.localScale.x))
+				enemyGameObjects[i].SetActive(false);
 			else
-				enemyGameObjects[it].SetActive(true);
+				enemyGameObjects[i].SetActive(true);
 		}
 
 	}
@@ -117,13 +122,46 @@ public class enemyManager : MonoBehaviour {
 
 		// Set values for this script
 		enemyScript.size = size;
+		enemyScript.transform.localScale = new Vector3 (size, size, size);
 		enemyScript.viewingRange = (size + Random.Range(7.0f,12.0f));
-		enemyScript.idleOperationRadius = size + 20.0f;
-		enemyScript.activeOperationRadius = size + enemyScript.viewingRange + 40.0f;
+		enemyScript.idleOperationRadius = size + 2.0f*enemyScript.viewingRange;
+		enemyScript.activeOperationRadius = size + enemyScript.maxVelocity*15.0f;
 		enemyScript.cosViewingAngle = Random.Range(0.0f,0.7f);
-		enemyScript.maxVelocity = Random.Range(4.0f,6.0f);
+		enemyScript.baseVelocity = Random.Range(4.0f,6.0f);
 
 		enemyScript.resetAllStates();
+
+		// Calculate how many abilities this enemy should get
+		int nofAbilities = (int)Mathf.Floor(1.0f/Mathf.Exp(difficulty*Random.value) * 8 + 0.8f);
+		// Decide which abilities it should get
+		switch (nofAbilities) {
+		case 0: 
+			break;
+		case 1: 
+			if (Random.value > 0.5)
+				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 20 - (int)Mathf.Floor (difficulty)));
+			else
+				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 4, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
+			break;
+		case 2:
+			if (Random.value > 0.5) {
+				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 20 - (int)Mathf.Floor (difficulty)));
+				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 4, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
+			} else {
+				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 20 - (int)Mathf.Floor (difficulty)));
+				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 0, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
+			}
+			break;
+		case 3:
+			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 0, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
+			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 20 - (int)Mathf.Floor (difficulty)));
+			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 4, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
+			break;
+		default:
+			break;
+		}
+
+//		abilityManagerScript.addAbilityToEnemy(enemyObject,EAbilityType.ERamAbility,0,4);
 	}
 	
 	private Vector3 calculateSpawnPosition()
@@ -133,6 +171,11 @@ public class enemyManager : MonoBehaviour {
 		float r = Random.Range ((2.0f*(playerScript.viewingRange + playerScript.size)), radius);
 		Vector3 offset = new Vector3(r*Mathf.Cos(theta), r*Mathf.Sin(theta), 0);
 		return player.transform.position + offset;
+	}
+
+	public void setNecessaryAbilities(EAbilityType[] abilities)
+	{
+		necessaryAbilities = abilities;
 	}
 
 }

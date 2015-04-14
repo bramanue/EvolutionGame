@@ -21,16 +21,26 @@ public enum EAbilityType {
 	EElectricityShieldAbility
 }
 
+public enum EAbilityClass {
+	EEmptyAbility,
+	EPassiveAbility,
+	EActiveAbility,
+	EShieldAbility
+}
+
 public class abilityManager : MonoBehaviour {
 
+	// PASSIVE ABILITY PREFABS
 	public GameObject runAbility;
 
 	public GameObject ramAbility;
 
+	// ACTIVE ABILITY PREFABS
 	public GameObject biteAbility;
 
 	public GameObject viewAbility;
 
+	// SHIELD ABILITY PREFABS
 	public GameObject iceShieldAbility;
 
 	public GameObject lavaShieldAbility;
@@ -45,9 +55,11 @@ public class abilityManager : MonoBehaviour {
 
 	public GameObject electricityShieldAbility;
 
+
+
 	// Use this for initialization
 	void Start () {
-	
+
 	}
 	
 	// Update is called once per frame
@@ -99,12 +111,17 @@ public class abilityManager : MonoBehaviour {
 			return;
 		}
 
+		player playerScript = (player)parent.GetComponent(typeof(player));
+		int existingSlot = playerScript.hasAbility (abilityType);
+		if (existingSlot != -1) {
+			playerScript.addAbility (abilityObject, existingSlot);
+		} else {
+			playerScript.addAbility (abilityObject, slot);
+		}
+
 		abilityObject.transform.parent = parent.transform;
 		ability abilityScript = (ability)abilityObject.GetComponent(typeof(ability));
 		abilityScript.level = level;
-
-		player playerScript = (player)parent.GetComponent(typeof(player));
-		playerScript.addAbility(abilityObject, slot);
 	}
 
 	public void addAbilityToEnemy(GameObject parent, EAbilityType abilityType, int slot, int level)
@@ -122,6 +139,100 @@ public class abilityManager : MonoBehaviour {
 		abilityScript.level = level;
 
 		enemy enemyScript = (enemy)parent.GetComponent(typeof(enemy));
+		// Passive abilities have a specific predefined index
+		if (EAbilityType.ERunAbility == abilityType)
+			slot = 6;
+		else if (EAbilityType.EViewAbility == abilityType)
+			slot = 7;
+
 		enemyScript.addAbility(abilityObject, slot);
+	}
+
+	public EAbilityType getRandomPassiveAbility()
+	{
+		int index = Random.Range (0, 2);
+		Debug.Log (index);
+		switch (index) {
+		// Passive abilities
+		case 0:
+			return EAbilityType.ERunAbility;
+		case 1:
+			return EAbilityType.EViewAbility;
+		default :
+			return EAbilityType.EEmptyAbility;
+		}
+	}
+
+	public EAbilityType getRandomActiveAbility()
+	{
+		int index = Random.Range (0, 2);
+		
+		switch (index) {
+		case 0:
+			return EAbilityType.ERamAbility;
+		case 1:
+			return EAbilityType.EBiteAbility;
+		default :
+			return EAbilityType.EEmptyAbility;
+		}
+	}
+
+	public EAbilityType getRandomShieldAbility()
+	{
+		int index = Random.Range (0, 7);
+		
+		switch (index) {
+		case 0 :
+			return EAbilityType.EIceShieldAbility;
+		case 1 :
+			return EAbilityType.ELavaShieldAbility;
+		case 2 :
+			return EAbilityType.EDustShieldAbility;
+		case 3 :
+			return EAbilityType.EThornShieldAbility;
+		case 4 :
+			return EAbilityType.EWaterShieldAbility;
+		case 5 :
+			return EAbilityType.EGlowingShieldAbility;
+		case 6 :
+			return EAbilityType.EElectricityShieldAbility;
+		default :
+			return EAbilityType.EEmptyAbility;
+		}
+	}
+
+	public EAbilityType getRandomAbilityType() 
+	{
+		int index = Random.Range (0, 11);
+		
+		switch (index) {
+			// Passive abilities
+		case 0 :
+			return EAbilityType.ERunAbility;
+		case 1 :
+			return EAbilityType.EViewAbility;
+			// Active abilities
+		case 2 :
+			return EAbilityType.ERamAbility;
+		case 3 :
+			return EAbilityType.EBiteAbility;
+			// Shield abilities
+		case 4 :
+			return EAbilityType.EIceShieldAbility;
+		case 5 :
+			return EAbilityType.ELavaShieldAbility;
+		case 6 :
+			return EAbilityType.EDustShieldAbility;
+		case 7 :
+			return EAbilityType.EThornShieldAbility;
+		case 8 :
+			return EAbilityType.EWaterShieldAbility;
+		case 9 :
+			return EAbilityType.EGlowingShieldAbility;
+		case 10 :
+			return EAbilityType.EElectricityShieldAbility;
+		default :
+			return EAbilityType.EEmptyAbility;
+		}
 	}
 }

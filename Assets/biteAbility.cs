@@ -3,7 +3,7 @@ using System.Collections;
 
 public class biteAbility : ability {
 
-	public float baseDamage;
+	public float baseDamage = 0.1f;
 
 	public float damage;
 
@@ -18,22 +18,35 @@ public class biteAbility : ability {
 		// Get the script
 		parentEnemyScript = (enemy)parentBlob.GetComponent(typeof(enemy));
 		parentPlayerScript = (player)parentBlob.GetComponent(typeof(player));
+		// Check whether it is a player or AI blob
 		isPlayer = (bool)parentPlayerScript;
 
 		maxLevel = 10;
-		baseDamage = 0.1f;
 		damage = baseDamage + level * 0.1f;
 		abilityName = "BiteAbility";
 		cooldownTime = 3.0f;
 		cooldownTimer = 0.0f;
 
 		blobInReach = false;
+		otherBlob = null;
+
+		abilityEnum = EAbilityType.EBiteAbility;
+		abilitySuperClassEnum = EAbilityClass.EActiveAbility;
+
+		// Put ability on blob
+		transform.localPosition = new Vector3 (0, 1.3f, 0);
 	}
 	
 	void Update()
 	{
 		cooldownTimer -= Time.deltaTime;
-		transform.localPosition = new Vector3 (0, parentBlob.transform.localScale.y, 0);
+	}
+
+	void LateUpdate()
+	{
+		transform.localPosition = new Vector3(0,1.28f,0);
+		otherBlob = null;
+		blobInReach = false;
 	}
 	
 	public override bool useAbility() 
@@ -47,7 +60,7 @@ public class biteAbility : ability {
 					enemyScript.size -= damage;
 					// A quarter of the inflicted damage is added to the player's size
 					parentPlayerScript.size += 0.25f*Mathf.Min (damage, oldSize);
-					Debug.Log (0.25f*Mathf.Min (damage, oldSize));
+					Debug.Log ("Bite ability inflicted " + 0.25f*Mathf.Min (damage, oldSize) + " damage.");
 					// Put enemy into alert state
 					enemyScript.setAlertState();
 					// Restart cooldown timer
@@ -59,7 +72,7 @@ public class biteAbility : ability {
 					float oldSize = playerScript.size;
 					playerScript.size -= damage;
 					// Half of the inflicted damage is added to the enemy's size
-					parentPlayerScript.size += 0.25f*Mathf.Min (damage, oldSize);
+					playerScript.size += 0.25f*Mathf.Min (damage, oldSize);
 					// Restart cooldown timer
 					cooldownTimer = cooldownTime;
 				}
@@ -105,19 +118,37 @@ public class biteAbility : ability {
 		}
 	}
 
-	// If the teeths leave the object again, remove the object from the local storage (useAbility() will no longer have any effect)
-	void OnTriggerExit(Collider other)
+	void OnTriggerStay(Collider other)
 	{
+		if (other.gameObject == parentBlob)
+			return;
+		
 		// Check whether the teeth of the blob collided with another blob
 		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
 		player playerScript = (player)other.gameObject.GetComponent (typeof(player));
 		
 		if (isPlayer && enemyScript != null || !isPlayer && playerScript != null)
 		{
-			blobInReach = false;
-			otherBlob = null;
+			blobInReach = true;
+			otherBlob = other.gameObject;
+			if(!isPlayer) {
+				parentEnemyScript.activateAbility(parentEnemyScript.hasAbility(EAbilityType.EBiteAbility));
+			}
 		}
 	}
+	
+	public override float calculateUseProbability(player playerScript, bool attack) 
+	{
+		if (cooldownTimer > 0)
+			return 0.0f;
+		
+		if (blobInReach) {
+			return 0.9f;
+		} else {
+			return 0.0f;
+		}
+	}
+
 
 	public override EAbilityType getAbilityEnum()
 	{

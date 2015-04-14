@@ -15,10 +15,9 @@ public class dangerProximity {
 
 	public Vector3[] directions = new Vector3[3];
 
+	// 
 	public dangerProximity()
-	{
-
-	}
+	{ }
 
 	public Vector3 getClosestDirection() 
 	{
@@ -32,24 +31,42 @@ public class dangerProximity {
 		}		return directions[closestIndex];
 	}
 
+	// Get the vector in which direction there most probably is no dangerous structure
 	public Vector3 getSafestDirection()
 	{
+		// The index where the safest direction is stored
 		int furthestIndex = 0;
+		// The distance to the dangerous object in the safest direction
 		float furthestDistance = distances [0];
+		// The shortest distance to the dangerous along all directions
+		float closestDistance = distances [0];
+		// The normal of the dangerous structure at the closest intersection
 		Vector3 normal = normals [0];
+		// Maybe there are 2 directions, that have infinite distance to the next dangerous environment - store it as well
 		int alternativeIndex = -1;
+
+		int nofAlternatives = 0;
+
 		for (int i = 1; i < nofSamples; i++) {
+			// Check whether this direction is safer
 			if(distances[i] > furthestDistance) {
 				furthestDistance = distances[i];
 				furthestIndex = i;
 			}
+			// Check whether it is equally save
 			else if (distances[i] == furthestDistance)
 			{
+				nofAlternatives++;
 				alternativeIndex = i;
 			}
+			// In case there are several safest direction, also store the normal of the object at the closest intersection
 			else
 			{
-				normal = normals[i];
+				// TODO Comparison not necessary in case of only 3 rays
+				if(distances[i] < closestDistance) {
+					closestDistance = distances[i];
+					normal = normals[i];
+				}
 			}
 		}
 
@@ -59,6 +76,11 @@ public class dangerProximity {
 				return directions [alternativeIndex];
 			else
 				return directions [furthestIndex];
+		} 
+		// If no direction showed a danger, then move straight on
+		else if (nofAlternatives == nofSamples - 1) 
+		{ 
+			return directions [((int)nofSamples/2)];
 		}
 		else
 			return directions[furthestIndex];

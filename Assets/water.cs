@@ -20,9 +20,10 @@ public class water : hazardousEnvironment {
 
 		if (playerScript) 
 		{
-			if( playerScript.hasAbility(EAbilityType.EWaterShieldAbility) != -1 ) {
-				// Nothing to do, player can enter
-				// TODO play sound or such
+		/*	if( playerScript.hasAbility(EAbilityType.EWaterShieldAbility) != -1 ) 
+				Debug.Log ("Player could swim :) and uses the shield " + playerScript.shieldInUse);*/
+			if(playerScript.shieldInUse != null && playerScript.shieldInUse.getAbilityEnum() == EAbilityType.EWaterShieldAbility) {
+				// Nothing to do, player can stay
 			}
 			else
 			{
@@ -35,9 +36,11 @@ public class water : hazardousEnvironment {
 		}
 		else if (enemyScript) 
 		{
-			if( enemyScript.hasAbility(EAbilityType.EWaterShieldAbility) != -1 ) {
+			/*	if( enemyScript.hasAbility(EAbilityType.EWaterShieldAbility) != -1 ) {
 				// Nothing to do, enemy can enter
-				// TODO play sound or such
+			}*/
+			if(enemyScript.shieldInUse != null && enemyScript.shieldInUse.getAbilityEnum() == EAbilityType.EWaterShieldAbility) {
+				// Nothing to do, player can stay
 			}
 			else
 			{
@@ -48,15 +51,19 @@ public class water : hazardousEnvironment {
 		}
 	}
 
-	void OnTriggerStay(Collider other) {
+	void OnTriggerStay(Collider other) 
+	{
 		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
 		player playerScript = (player)other.gameObject.GetComponent(typeof(player));
 		
 		if (playerScript) 
 		{
-			if( playerScript.hasAbility(EAbilityType.EWaterShieldAbility) != -1 ) {
-				// Nothing to do, player can enter
-				// TODO play sound or such
+			playerScript.currentEnvironment = this;
+		/*	if( playerScript.hasAbility(EAbilityType.EWaterShieldAbility) != -1 ) {
+				// Nothing to do, player can stay
+			}*/
+			if(playerScript.shieldInUse != null && playerScript.shieldInUse.getAbilityEnum() == EAbilityType.EWaterShieldAbility) {
+				// Nothing to do, player can stay
 			}
 			else
 			{
@@ -71,9 +78,12 @@ public class water : hazardousEnvironment {
 		}
 		else if (enemyScript) 
 		{
-			if( enemyScript.hasAbility(EAbilityType.EWaterShieldAbility) != -1 ) {
+			enemyScript.currentEnvironment = this;
+		/*	if( enemyScript.hasAbility(EAbilityType.EWaterShieldAbility) != -1 ) {
 				// Nothing to do, enemy can enter
-				// TODO play sound or such
+			}*/
+			if(enemyScript.shieldInUse != null && enemyScript.shieldInUse.getAbilityEnum() == EAbilityType.EWaterShieldAbility) {
+				// Nothing to do, player can stay
 			}
 			else
 			{

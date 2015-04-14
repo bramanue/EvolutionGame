@@ -60,17 +60,23 @@ public class ramAbility : ability {
 		internalRange = baseRange + 0.5f*level;
 		range = internalRange*parentBlob.transform.localScale.x;
 
-		abilityName = "RamAbility";
+		abilityName = "Ram Attack";
+		abilitySuperClassEnum = EAbilityClass.EActiveAbility;
 		cooldownTimer = 0.0f;
 
 		increaseLevel (0);
+
+		abilityEnum = EAbilityType.ERamAbility;
+
+		// Put ability on blob
+		transform.localPosition = new Vector3 (0, 0, 0);
 	}
 
 	void Update()
 	{
 		cooldownTimer -= Time.deltaTime;
-		// Put ability on player
 		transform.localPosition = new Vector3 (0, 0, 0);
+		transform.localScale = new Vector3 (1, 1, 1);
 
 		// Update range and damage
 		damage = internalDamage*parentBlob.transform.localScale.x;
@@ -82,7 +88,6 @@ public class ramAbility : ability {
 			// If target direction is not the zero vector (i.e. useAbility has been called and stick moved into a certain direction during last frame)
 			if (targetDirection != new Vector3 (0, 0, 0)) 
 			{
-				Debug.Log (targetDirection);
 				// If the player has released the button (i.e. not inUse), then initialize rotation
 				if (!inUse && inTargetMode)
 				{
@@ -98,7 +103,6 @@ public class ramAbility : ability {
 					rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, parentBlob.transform.localEulerAngles.z + angleBetween));
 					// Reset time scale to normal
 					Time.timeScale = 1.0f;
-					Debug.Log (Time.timeScale);
 				}
 				else if (inChargeMode)
 				{
@@ -344,6 +348,30 @@ public class ramAbility : ability {
 		return level - previousLevel;
 		
 		// TODO Change appearance of ability sprite
+	}
+
+	public override float calculateUseProbability(player playerScript, bool attack) 
+	{
+		if (cooldownTimer > 0)
+			return 0.0f;
+
+		if (attack) 
+		{
+			Vector3 playerPosition = playerScript.gameObject.transform.position;
+			Vector3 toPlayer = playerPosition - parentBlob.transform.position;
+			float distance = toPlayer.magnitude;
+			if (distance < range) {
+				// Make it more likely to use, if player is behind you (due to fast rotation)
+				float multiplier = 1.0f + Mathf.Abs (Vector3.Dot (parentEnemyScript.viewingDirection, toPlayer) - 1) * 0.3f;
+				return (1.0f - distance / range) * multiplier;
+			} else
+				// For fast rotation and approach
+				return Mathf.Abs (Vector3.Dot (parentEnemyScript.viewingDirection, toPlayer) - 1) * 0.2f;
+		} 
+		else 
+		{
+			return 0.0f;
+		}
 	}
 
 	public override EAbilityType getAbilityEnum()

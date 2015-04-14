@@ -22,7 +22,13 @@ public class enemy : MonoBehaviour {
 	// Viewing direction of this enemy (normalized)
 	public Vector3 viewingDirection;
 
-	// Defines how far this enemy can see
+	// The base viewing range without any eye ability
+	public float baseViewingRange = 5.0f;
+	
+	// The viewing range boost given by the eye ability
+	public float viewingRangeBoost;
+	
+	// Viewing Range of the player (depends on ability "Eyes")
 	public float viewingRange;
 
 	// Stores the original viewing range
@@ -32,7 +38,10 @@ public class enemy : MonoBehaviour {
 	public float cosViewingAngle;
 	
 	// Stores the original cosViewingAngle for restoring default after escape procedure
-	private float originalCosViewingAngle;
+	public float originalCosViewingAngle;
+
+	// Flag set, when enemy can see player
+	private bool canSeePlayer;
 
 
 	// The base velocity of this blob (without any running ability)
@@ -73,6 +82,9 @@ public class enemy : MonoBehaviour {
 	// Timer that starts when this blob is blinded
 	private float blindedTimer;
 
+	// The total blinded time
+	private float originalBlindedTimer;
+
 	// Defines whether this enemy is at idle or is hunting the player
 	public bool isHuntingPlayer;
 	
@@ -80,13 +92,13 @@ public class enemy : MonoBehaviour {
 	private bool isRunningAwayFromPlayer;
 
 	// Defines whether enemy is still in alarmed state
-	private bool isAfterEscape;
+	private bool isInAlertedState;
 
 	// Timer used to keep awareness of enemy blob up
-	private float isInAlertStateTimer = 0.0f;
+	private float isInAlertedStateTimer = 0.0f;
 	
 	// Original timer value for interpolation
-	private float originalActiveTimer = 0.0f;
+	private float originalInAlertedStateTimer = 0.0f;
 
 
 	// Damage inflicted by touching or residing inside a certain environment
@@ -145,6 +157,20 @@ public class enemy : MonoBehaviour {
 	// Stores a reference to the currently active shield
 	public ability shieldInUse;
 
+	// Stores the environment the enemy blob currently resides in
+	public hazardousEnvironment currentEnvironment;
+
+	// Stores the environment, the enemy blob was previously in
+	private hazardousEnvironment previousEnvironment;
+
+	// Saves the last known spot on the map without environmental hazards
+	private Vector3 lastSecureSpot;
+
+	private bool closeToEnvironmentBoundary;
+
+	public Color defaultColor = new Color(0.75f,0.0f,0.0f);
+
+
 
 
 	// Use this for initialization
@@ -163,7 +189,7 @@ public class enemy : MonoBehaviour {
 		// Store the starting position of this enemy
 		originalPosition = transform.position;
 		// Store the original viewing range
-		originalViewingRange = viewingRange;
+		originalViewingRange = baseViewingRange + viewingRangeBoost;
 		// Set the flags to idle
 		resetAllStates ();
 	}
@@ -171,52 +197,60 @@ public class enemy : MonoBehaviour {
 	// Update is called once per frame
 	void Update() 
 	{
+		// If this blob is dead, then don't move anymore
+		if (size <= 0)
+			return;
+
 		// Get the viewing direction
 		viewingDirection = transform.up;
 
 		// Calculate vector pointing to the player
 		toPlayer = player.transform.position - transform.position;
 
-		// Reduce active timer
-		isInAlertStateTimer -= Time.deltaTime;
-		if (isAfterEscape && isInAlertStateTimer > 0) {
+		// Use eye ability
+		if(abilities[7] != null)
+			abilities[7].useAbility();
+		// Set the original viewing range
+		originalViewingRange = baseViewingRange + viewingRangeBoost;
+
+		// Modify viewing angle
+		if (isInAlertedStateTimer > 0) {
+			// Reduce active timer
+			isInAlertedStateTimer -= Time.deltaTime;
 			// After escape from player reduce awareness(viewing angle) only with time
-			cosViewingAngle += (originalCosViewingAngle + 1) * (Time.deltaTime/originalActiveTimer);
+			cosViewingAngle += (originalCosViewingAngle + 1) * (Time.deltaTime/originalInAlertedStateTimer);
 		}
-		if (isInAlertStateTimer <= 0) {
-			if(isAfterEscape) {
-				// Reset viewing angle to original state
-				cosViewingAngle = originalCosViewingAngle;
-				// No longer in after escape status
-				isAfterEscape = false;
-			}
+		else {
+			cosViewingAngle = originalCosViewingAngle;
+			isInAlertedState = false;
 		}
 
 		// If blinded, then slowly restore viewing range
 		if (blinded && blindedTimer > 0) {
-			float diff = originalViewingRange - viewingRange;
-			viewingRange += 0.5f*diff/(blindedTimer/Time.deltaTime);	// Restore only until have original viewing range
 			blindedTimer -= Time.deltaTime;
+			// Completely blinded for the first half of the blinded duration
+			if(blindedTimer <= originalBlindedTimer*0.5)
+			{
+				// Then restore until full viewing range
+				float diff = originalViewingRange - viewingRange;
+				viewingRange += 2.0f * diff * (Time.deltaTime/originalBlindedTimer);
+			}
 		}
 		else {
-			viewingRange = originalViewingRange;	// Restore viewing range
+			viewingRange = originalViewingRange;	// Restore viewing range completely
 			blinded = false;
 		}
+
+		// Calculate the current maximally achievable speed
+		currentSpeed = baseVelocity + runVelocityBoost;
 
 		// Move and use abilities if not stunned
 		if (!stunned) {
 
-			// Use running
-			if(abilities[6] != null)
-				abilities[6].useAbility();
+			// Check whether the player can be seen by this enemy
+			canSeePlayer = isInViewingRange (player);
 
-			// Calculate the current speed
-			currentSpeed = baseVelocity + runVelocityBoost;
-
-			// Check whether the player could be seen by this enemy
-			bool isPlayerInViewingRange = isInViewingRange (player);
-
-			if (isPlayerInViewingRange) {
+			if (canSeePlayer) {
 				// TODO: Camouflage, darkness, scene geometry, etc...
 
 				// Enemy can see player
@@ -229,31 +263,43 @@ public class enemy : MonoBehaviour {
 					}
 					// Only hunt, if enemy isn't too far from its original position
 					if ((transform.position - originalPosition).magnitude <= activeOperationRadius && size < 2.0f * playerScript.size) {
-						cosViewingAngle = -1;
-						isHuntingPlayer = true;
-						isAfterEscape = false;
-						isRunningAwayFromPlayer = false;
-						resetIdleStates ();
-						huntPlayer ();
-						return;
+						// Do only hunt, if enemy is not in an environment, that this enemy cannot enter
+						// TODO aggressivity level -> some may take the pursuit never the less
+						if(playerScript.currentEnvironment == null || hasAbility(playerScript.currentEnvironment.requiredAbility) != -1)
+						{
+							// Use running
+							if(abilities[6] != null)
+								abilities[6].useAbility();
+							// Increase awareness
+							cosViewingAngle = -1;
+							isHuntingPlayer = true;
+							isInAlertedState = true;
+							isInAlertedStateTimer = Random.Range (3.0f,6.0f);
+							isRunningAwayFromPlayer = false;
+							resetIdleStates ();
+							huntPlayer ();
+							return;
+						}
 					}
 					if(size < 2.0f * playerScript.size) {
 						isHuntingPlayer = false;
-						isAfterEscape = false;
+						isInAlertedState = false;
 						isRunningAwayFromPlayer = false;
 						resetIdleStates ();
 						// Proceed with idle behaviour
 					}
-					// Stop pursuit if too far away
+					// Stop pursuit
 				} else {
+					// Use running
+					if(abilities[6] != null)
+						abilities[6].useAbility();
 					// Enemy is smaller than player -> run away (forever? or get slower by exhaustion?)
 					isRunningAwayFromPlayer = true;
-					isAfterEscape = false;
+					isInAlertedState = false;
 					isHuntingPlayer = false;
 					// Set viewing angle to 360° for the duration of the escape
 					cosViewingAngle = -1;
 					resetIdleStates ();
-					// TODO look for hiding spots near location
 					runAwayFromPlayer ();
 					return;
 				}
@@ -265,15 +311,20 @@ public class enemy : MonoBehaviour {
 			currentSpeed *= idleSpeedReduction;
 
 			// If the enemy was hunting the player, then wait a few seconds before walking back to the original position
-			if (isHuntingPlayer) {
-				if (!isAfterEscape) {
-					isAfterEscape = true;
+			if (isHuntingPlayer) 
+			{
+				// If we have just lost sight of the player in the previous frame, then keep the awareness up for some time
+				if (!isInAlertedState) {
+					isInAlertedState = true;
 					// Define for how long the awareness of the blob remains sharpend
-					isInAlertStateTimer = Random.Range (3.0f, 6.0f);
+					isInAlertedStateTimer = Random.Range (3.0f, 6.0f);
+					originalInAlertedStateTimer = isInAlertedStateTimer;
+					cosViewingAngle = -1;
 					return;
 				} else {
+					// In the next frame, we continue idle behaviour (but still in alerted state)
 					performIdleBehaviour ();
-					if (isInAlertStateTimer <= 0.0f) {
+					if (isInAlertedStateTimer <= 0.0f) {
 						// Idle wait is over. Walk back to original position
 						isHuntingPlayer = false;
 						// Set walking target to iriginal position of enemy
@@ -294,17 +345,14 @@ public class enemy : MonoBehaviour {
 				// Enemy can no longer see player hunting him - go back to idle but remain alert for a certain time
 				isRunningAwayFromPlayer = false;
 				// Set timer until when the viewing angle is back to normal
-				isInAlertStateTimer = Random.Range (3.0f, 6.0f);
-				originalActiveTimer = isInAlertStateTimer;
+				isInAlertedStateTimer = Random.Range (3.0f, 6.0f);
+				cosViewingAngle = -1;
+				originalInAlertedStateTimer = isInAlertedStateTimer;
 				originalPosition = transform.position;
 				// Set alarm state of enemy higher
-				isAfterEscape = true;
+				isInAlertedState = true;
 			} else {
-				// In case that setAlertstate() was called but player was not spotted
-				if (cosViewingAngle < originalCosViewingAngle && isInAlertStateTimer <= 0) {
-					isAfterEscape = true;
-					isInAlertStateTimer = Random.Range (3.0f, 6.0f);
-				}
+
 				performIdleBehaviour ();
 			}
 
@@ -313,9 +361,6 @@ public class enemy : MonoBehaviour {
 			if(stunnedTimer <= 0.0f)
 				stunned = false;
 		}
-
-
-		environmentProximityData = null;
 
 		// Apply environmental factors
 		transform.position += environmentalPushBack;
@@ -326,23 +371,83 @@ public class enemy : MonoBehaviour {
 
 		size -= environmentalDamage;
 		environmentalDamage = 0.0f;
-		// Adapt visuals to the actual size
-		grow ();
+
+		if (currentEnvironment == null)
+			lastSecureSpot = transform.position;
 	}
 
-	// Calculates whether player blob can be seen by this enemy or not
-	private bool isInViewingRange(GameObject gameObject) {
+	void LateUpdate() {
+		// Adapt visuals to the actual size
+		grow ();
+
+		previousEnvironment = currentEnvironment;
+		currentEnvironment = null;
+		environmentProximityData = null;
+	}
+
+	// Calculates whether player blob can be seen by this enemy or not TODO for 3D we need to give the rayDirection a value for the 3rd component (height)
+	private bool isInViewingRange(GameObject gameObject) 
+	{
 		Vector3 toGameObject = gameObject.transform.position - transform.position;
-		bool result = ((toGameObject.magnitude - gameObject.transform.localScale.x) < viewingRange) && (Vector3.Dot (toGameObject.normalized, viewingDirection) >= cosViewingAngle);
-		return result;
+		if (toGameObject.magnitude - gameObject.transform.localScale.x < transform.localScale.x + viewingRange) {
+			bool inViewingAngle = Vector3.Dot (toGameObject.normalized, viewingDirection) >= cosViewingAngle;
+			if(!inViewingAngle) {
+				RaycastHit hit;
+				// Find vector pointing along the maxViewingAngle cone
+				Quaternion quat = Quaternion.AngleAxis(Mathf.Sign (Vector3.Cross(toGameObject,viewingDirection).z) * Mathf.Acos(cosViewingAngle)*Mathf.Rad2Deg, new Vector3(0,0,-1));
+				Vector3 rayDirection = quat * viewingDirection;
+				// Check whether the ray hits an object
+				if(Physics.Raycast(transform.position, rayDirection, out hit, toGameObject.magnitude - gameObject.transform.localScale.x))
+				{
+					if(hit.collider.gameObject == gameObject) {
+						return true;
+					}
+				}
+			}
+			return inViewingAngle;
+		} else {
+			return false;
+		}
 	}
 
 	// Function called, when the blob is hunting the player
 	private void huntPlayer() 
 	{
-		abilities[0].useAbility();
+		// Decide on a shield to use if any
+		float[] useShieldProbabilities = new float[2];
+		for (int i = 4; i < 6; i++) {
+			useShieldProbabilities[i-4] = (abilities[i] != null) ? abilities[i].calculateUseProbability(playerScript, isHuntingPlayer) : 0.0f;
+		}
+		int mostProbableShieldIndex = -1;
+		float maxShieldUseProbability = 0.0f;
+		for (int i = 0; i < 2; i++) {
+			if(useShieldProbabilities[i] > maxShieldUseProbability) {
+				mostProbableShieldIndex = i+4;
+				maxShieldUseProbability = useShieldProbabilities[i];
+			}
+		}
+		if(mostProbableShieldIndex != -1)
+			abilities[mostProbableShieldIndex].useAbility();
+
+
 		if (canMove) 
 		{
+			// Decide on an attack ability to use if any
+			float[] useProbabilities = new float[4];
+			for (int i = 0; i < 4; i++) {
+				useProbabilities[i] = (abilities[i] != null) ? abilities[i].calculateUseProbability(playerScript, isHuntingPlayer) : 0.0f;
+			}
+			int mostProbableIndex = -1;
+			float maxUseProbability = 0.0f;
+			for (int i = 0; i < 4; i++) {
+				if(useProbabilities[i] > maxUseProbability) {
+					mostProbableIndex = i;
+					maxUseProbability = useProbabilities[i];
+				}
+			}
+			if(mostProbableIndex != -1)
+				abilities[mostProbableIndex].useAbility();
+
 			// Calculate rotation target (the viewing direction this enemy strives for, i.e. towards player)
 			Vector3 rotationTarget = toPlayer.normalized;
 			// Perform rotation towards player
@@ -355,38 +460,69 @@ public class enemy : MonoBehaviour {
 	// Function called when this blob is running away from the player
 	private void runAwayFromPlayer() 
 	{
-		if (canMove)
-		{
+		if (canMove) {
 			if (environmentProximityData != null) {
-				avoidEnvironmentalHazard();
-			}
-			else
-			{
+				avoidEnvironmentalHazard ();
+			} else {
 				// Calculate rotation target (the target viewing direction, i.e. look away from player)
 				Vector3 rotationTarget = -toPlayer.normalized;
 				// Perform rotation away from the player
-				performRotation(rotationTarget);
+				performRotation (rotationTarget);
 			}
 			// Run away from player
 			transform.position += viewingDirection * currentSpeed * Time.deltaTime;
+		} else if (!stunned) {
+
 		}
 	}
 
 	// Function called to evade environmental hazards
 	private void avoidEnvironmentalHazard()
 	{
-		// Get a vector that points away from the dangerous object
-		Vector3 rotationTarget = environmentProximityData.getSafestDirection();
-		Debug.Log ("Towards" + rotationTarget);
+		// If we have just entered a dangerous environment try to get out again
+		if (closeToEnvironmentBoundary || (currentEnvironment != null && previousEnvironment == null)) {
+			Debug.Log ("Just entered hazardous environment. Turn around");
+			if (!closeToEnvironmentBoundary) {
+				idleRotationTarget = -viewingDirection;
+				closeToEnvironmentBoundary = true;
+				return;
+			} else {
+				if (currentEnvironment == null){
+					closeToEnvironmentBoundary = false;
+					return;	// We safely got out
+				} else {
+					// Perform rotation and moving with max speed
+					currentSpeed = baseVelocity + runVelocityBoost;
+					performRotation (idleRotationTarget);
+					transform.position += viewingDirection * currentSpeed * Time.deltaTime;
+					return;
+				}
+			}
+		} 
+		// If we are stuck in a hazardous environment, then try to get our with max speed
+		else if (currentEnvironment != null && previousEnvironment != null) 
+		{
+			Debug.Log ("Inside hazardous environment. Get out straight on");
+			// Perform rotation and moving with max speed
+			currentSpeed = baseVelocity + runVelocityBoost;
+			transform.position += viewingDirection * currentSpeed * Time.deltaTime;
+		}
+		else  // If we are close to a boundary, then try to avoid the environmental hazard
+		{
+			// Get a vector that points away from the dangerous object
+			Vector3 rotationTarget = environmentProximityData.getSafestDirection ();
+			Debug.Log (rotationTarget);
+			//	Debug.Log ("Towards" + rotationTarget);
+			transform.position += Time.deltaTime * currentSpeed * viewingDirection;
+			// If the safest direction is along the viewingDirection, then no special rotation is required - simply walk on
+			if (1.0f - Vector3.Dot (rotationTarget, viewingDirection) <= 0.01f) {
 
-		// If the safest direction is along the viewingDirection, then no special rotation is required - simply walk on
-		if(1.0f - Vector3.Dot (rotationTarget, viewingDirection) <= 0.01f) {
-			transform.position += Time.deltaTime*currentSpeed*viewingDirection;
+				return;
+			}
+			// Perform the rotation
+			performRotation (rotationTarget);
 			return;
 		}
-		// Perform the rotation
-		performRotation (rotationTarget);
-		return;
 	}
 
 	// Performs a rotation around the z-axis, such that the blob will eventually look into 'targetViewingDirection'
@@ -564,16 +700,34 @@ public class enemy : MonoBehaviour {
 		isIdleAnimationComplete = true;
 		isHuntingPlayer = false;
 		isRunningAwayFromPlayer = false;
-		isAfterEscape = false;
+		isInAlertedState = false;
 		canMove = true;
 	}
 
-	// Adds an ability into index 'slot' of the ability array of this enemy
 	public void addAbility(GameObject ability, int slot)
 	{
 		nofAbilities++;
-		abilityObjects[slot] = ability;
-		abilities[slot] = (ability)abilityObjects[slot].GetComponent(typeof(ability));
+		if (abilities [slot] != null) {
+			removeAndDestroyAbility(slot);
+		}
+		abilityObjects [slot] = ability;
+		abilities[slot] = (ability)abilityObjects [slot].GetComponent (typeof(ability));
+	}
+	
+	public void removeAndDestroyAbility(int slot) {
+		if (abilities [slot] != null) {
+			nofAbilities--;
+			abilities [slot] = null;
+			GameObject.Destroy (abilityObjects [slot].gameObject);
+		}
+	}
+
+	public void removeAbility(int slot) {
+		if (abilities [slot] != null) {
+			nofAbilities--;
+			abilities [slot] = null;
+			abilityObjects [slot] = null;
+		}
 	}
 
 	// Returns a bool indicating whether this enemy has any abilities
@@ -586,14 +740,27 @@ public class enemy : MonoBehaviour {
 	public ability getRandomAbility()
 	{
 		if (nofAbilities > 0) {
-			return abilities [Random.Range (0, nofAbilities - 1)];
-		} else
-			return null;
+			int index = Random.Range (0, nofAbilities - 1);
+			int counter = 0;
+			for(int i = 0; i < 8; i++) {
+				if(abilities[i] != null) {
+					if(counter == index)
+						return abilities[i];
+					else 
+						counter++;
+				}
+			}
+		} 
+		// else
+		return null;
 	}
 
 	// Returns -1 when the player does not have this ability and otherwise the index to where this ability resides in the ability array
 	public int hasAbility(EAbilityType abilityType)
 	{
+		if (nofAbilities == 0)
+			return -1;
+
 		for (int i = 0; i < abilities.Length; i++) {
 			if(abilities[i] != null && abilities[i].getAbilityEnum() == abilityType)
 				return i;
@@ -601,20 +768,27 @@ public class enemy : MonoBehaviour {
 		return -1;
 	}
 
+	public void getShieldAbilities(out ability shield0, out ability shield1 ) {
+		shield0 = abilities[4];
+		shield1 = abilities[5];
+	}
+
 	// Sets this enemy into alerted state
-	public void setAlertState() {
+	public void setAlertState() 
+	{
 		cosViewingAngle = -1;
-		isInAlertStateTimer = Random.Range (3.0f, 8.0f);
+		isInAlertedStateTimer = Random.Range (3.0f, 8.0f);
+		originalInAlertedStateTimer = isInAlertedStateTimer;
+		isInAlertedState = true;
 	}
 
 	// Sets this enemy to blinded, which reduces the enemy's viewing range considerably
-	public void setBlinded(float time) {
-		if (!blinded) 
-		{
-			viewingRange = 0;
-			blindedTimer = time;
-			blinded = true;
-		}
+	public void setBlinded(float time) 
+	{
+		viewingRange = 0;
+		blindedTimer = time;
+		originalBlindedTimer = time;
+		blinded = true;
 	}
 
 	// Makes this enemy blob unable to act for the specified time
@@ -668,6 +842,4 @@ public class enemy : MonoBehaviour {
 		environmentalCourseCorrection += correction;
 	}
 
-
-	
 }

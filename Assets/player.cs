@@ -16,8 +16,14 @@ public class player : MonoBehaviour
 	// The maximally achievable velocity
 	public float maxVelocity;
 
+	// The base viewing range without any eye ability
+	public float baseViewingRange = 5.0f;
+
+	// The viewing range boost given by the eye ability
+	public float viewingRangeBoost;
+
 	// Viewing Range of the player (depends on ability "Eyes")
-	public float viewingRange = 0.0f;
+	public float viewingRange;
 
 	// Viewing direction of the player (unit vector)
 	public Vector3 viewingDirection;
@@ -61,9 +67,25 @@ public class player : MonoBehaviour
 	// Stores all ability game objects
 	private GameObject[] abilityObjects = new GameObject[8];
 
+	// The total number of abilities
+	private int nofAbilities;
+
+	// Definies whether player blob is dead
 	public bool dead;
 
+	// Stores the currently active shield
 	public ability shieldInUse;
+
+	// Stores in which environment the player blob currently resides in
+	public hazardousEnvironment currentEnvironment;
+
+	private abilityModificationPanel abilityModificationScript;
+
+	public bool isAbilityModificationPanelOpen;
+
+	private bool[] selectionConfirmed = new bool[4];
+
+	public Color defaultColor = new Color(0.7f,0.7f,1.0f);
 
 
 	// Use this for initialization
@@ -75,12 +97,115 @@ public class player : MonoBehaviour
 		size = transform.localScale.x;
 		// Player is allowed to move
 		canMove = true;
+		// Get the ability modification panel
+		abilityModificationScript = (abilityModificationPanel)(this.GetComponentInChildren (typeof(abilityModificationPanel)));
+		abilityModificationScript.gameObject.SetActive (false);
 	}
 	
 	// Update is called once per frame
 	void Update()
 	{
 		if (!dead) {
+
+			shieldInUse = null;
+
+			// If the user is about to chose whether to keep a new ability or not
+			if(abilityModificationScript.isActiveAndEnabled && abilityModificationScript.isInChosingState) {
+				// Capture player input
+				if (Input.GetButtonDown ("Ability0")) {
+					if (abilities [0] != null && !selectionConfirmed[0]) {
+						selectionConfirmed[0] = true;
+						abilityModificationScript.displayMessage("Please press \"A\" again to confirm \n Press \"Start\" to throw the new ability away \n Press one of the other buttons to map the new ability to them");
+					} else {
+						ability newAbility = abilityModificationScript.newAbility;
+						removeAndDestroyAbility(0);
+						// Transfer ability from enemy to player
+						newAbility.gameObject.transform.parent = this.gameObject.transform;
+						newAbility.updateParent();
+						// Reduce the level (maybe set it 1 ?)
+						newAbility.level /= 2;
+						addAbility(newAbility.gameObject, 0);
+						// Remove the ability from the enemy
+						abilityModificationScript.enemyScript.removeAbility(abilityModificationScript.enemyScript.hasAbility(newAbility.getAbilityEnum()));
+						Debug.Log("You gained a new ability : " + abilities[0].abilityName + " at level " + abilities[0].level);
+						abilityModificationScript.highlightButtonAndHide(abilities[0].abilityName, EButtonType.EAButton);
+						selectionConfirmed[0] = false;
+					}
+					// Reset the other selections
+					selectionConfirmed[1] = selectionConfirmed[2] = selectionConfirmed[3] = false;
+				}
+				else if (Input.GetButtonDown ("Ability1")) {
+					if (abilities [1] != null && !selectionConfirmed[1]) {
+						selectionConfirmed[1] = true;
+						abilityModificationScript.displayMessage("Please press \"B\" again to confirm \n Press \"Start\" to throw the new ability away. \n Press one of the other buttons to map the new ability to them.");
+					} else {
+						ability newAbility = abilityModificationScript.newAbility;
+						removeAndDestroyAbility(1);
+						// Transfer ability from enemy to player
+						newAbility.gameObject.transform.parent = this.gameObject.transform;
+						newAbility.updateParent();
+						// Reduce the level (maybe set it 1 ?)
+						newAbility.level /= 2;
+						addAbility(newAbility.gameObject, 1);
+						// Remove the ability from the enemy
+						abilityModificationScript.enemyScript.removeAbility(abilityModificationScript.enemyScript.hasAbility(newAbility.getAbilityEnum()));
+						Debug.Log("You gained a new ability : " + abilities[1].abilityName + " at level " + abilities[1].level);
+						abilityModificationScript.highlightButtonAndHide(abilities[1].abilityName, EButtonType.EBButton);
+						selectionConfirmed[1] = false;
+					}
+					// Reset the other selections
+					selectionConfirmed[0] = selectionConfirmed[2] = selectionConfirmed[3] = false;
+				}
+				else if (Input.GetButtonDown ("Ability2")) {
+					if (abilities [2] != null && !selectionConfirmed[2]) {
+						selectionConfirmed[2] = true;
+						abilityModificationScript.displayMessage("Please press \"X\" again to confirm \n Press \"Start\" to throw the new ability away. \n Press one of the other buttons to map the new ability to them.");
+					} else {
+						ability newAbility = abilityModificationScript.newAbility;
+						removeAndDestroyAbility(2);
+						// Transfer ability from enemy to player
+						newAbility.gameObject.transform.parent = this.gameObject.transform;
+						newAbility.updateParent();
+						// Reduce the level (maybe set it 1 ?)
+						newAbility.level /= 2;
+						addAbility(newAbility.gameObject, 2);
+						// Remove the ability from the enemy
+						abilityModificationScript.enemyScript.removeAbility(abilityModificationScript.enemyScript.hasAbility(newAbility.getAbilityEnum()));
+						Debug.Log("You gained a new ability : " + abilities[2].abilityName + " at level " + abilities[2].level);
+						abilityModificationScript.highlightButtonAndHide(abilities[2].abilityName, EButtonType.EXButton);
+						selectionConfirmed[2] = false;
+					}
+					// Reset the other selections
+					selectionConfirmed[0] = selectionConfirmed[1] = selectionConfirmed[3] = false;
+				}
+				else if (Input.GetButtonDown ("Ability3")) {
+					if (abilities [3] != null && !selectionConfirmed[3]) {
+						selectionConfirmed[3] = true;
+						abilityModificationScript.displayMessage("Please press \"Y\" again to confirm \n Press \"Start\" to throw the new ability away \n Press one of the other buttons to map the new ability to them");
+					} else {
+						ability newAbility = abilityModificationScript.newAbility;
+						removeAndDestroyAbility(3);
+						// Transfer ability from enemy to player
+						newAbility.gameObject.transform.parent = this.gameObject.transform;
+						newAbility.updateParent();
+						// Reduce the level (maybe set it 1 ?)
+						newAbility.level /= 2;
+						addAbility(newAbility.gameObject, 3);
+						// Remove the ability from the enemy
+						abilityModificationScript.enemyScript.removeAbility(abilityModificationScript.enemyScript.hasAbility(newAbility.getAbilityEnum()));
+						Debug.Log("You gained a new ability : " + abilities[3].abilityName + " at level " + abilities[3].level);
+						abilityModificationScript.highlightButtonAndHide(abilities[3].abilityName, EButtonType.EYButton);
+						selectionConfirmed[3] = false;
+					}
+					// Reset the other selections
+					selectionConfirmed[0] = selectionConfirmed[1] = selectionConfirmed[2] = false;
+				}
+				else if(Input.GetButtonDown ("Cancel")) {
+					abilityModificationScript.hidePanel();
+				}
+				return;
+			}
+
 			// Get the viewing range
 			abilities [7].useAbility ();
 			// Get the viewing direction
@@ -97,51 +222,43 @@ public class player : MonoBehaviour
 
 				// Capture player input
 				if (Input.GetButton ("Ability0")) {
-					if (abilities [0] != null && abilities [0].isReady ())
+					if (abilities [0] != null) {
+						shieldInUse = abilities[0];
 						abilities [0].useAbility ();
+					}
 				}
 				if (Input.GetButton ("Ability1")) {
-					if (abilities [1] != null && abilities [1].isReady ())
+					if (abilities [1] != null) {
+						shieldInUse = abilities[1];
 						abilities [1].useAbility ();
+					}
 				}
 				if (Input.GetButton ("Ability2")) {
-					if (abilities [2] != null && abilities [2].isReady ())
+					if (abilities [2] != null){
+						shieldInUse = abilities[2];
 						abilities [2].useAbility ();
+					}
 				}
 				if (Input.GetButton ("Ability3")) {
-					if (abilities [3] != null && abilities [3].isReady ())
+					if (abilities [3] != null){
+						shieldInUse = abilities[3];
 						abilities [3].useAbility ();
+					}
 				}
 
 				// Capture player input concerning shields (XBOX360 only)
 				float shield0 = Input.GetAxis("Shield0");
 				float shield1 = Input.GetAxis("Shield1");
 				if(shield0 > shield1) {
-					if (abilities [4] != null && abilities [4].isReady ()) {
-						if(abilities [4].useAbility ()) {
+					if (abilities [4] != null && abilities [4].useAbility ()) {
 							// If the other shield is still active, then deactivate that one first.
 						/*	if(shieldInUse != abilities [4])
 								abilities[5].useAbility ();*/
 							// Set Shield1 as the currently active one
 							shieldInUse = abilities[4];
-						}
 					}
 					else if(shield1 > 0) {
-						if (abilities [5] != null && abilities [5].isReady ()) {
-							if(abilities [5].useAbility ()) {
-								// If the other shield is still active, then deactivate that one first.
-							/*	if(shieldInUse != abilities [5])
-									abilities[4].useAbility ();*/
-								// Set Shield1 as the currently active one
-								shieldInUse = abilities[5];
-							}
-						}
-					}
-				}
-				else if (shield1 > shield0)
-				{
-					if (abilities [5] != null && abilities [5].isReady ()) {
-						if(abilities [5].useAbility ()) {
+						if (abilities [5] != null && abilities [5].useAbility ()) {
 							// If the other shield is still active, then deactivate that one first.
 						/*	if(shieldInUse != abilities [5])
 								abilities[4].useAbility ();*/
@@ -149,15 +266,23 @@ public class player : MonoBehaviour
 							shieldInUse = abilities[5];
 						}
 					}
+				}
+				else if (shield1 > shield0)
+				{
+					if (abilities [5] != null && abilities [5].useAbility ()) {
+							// If the other shield is still active, then deactivate that one first.
+						/*	if(shieldInUse != abilities [5])
+								abilities[4].useAbility ();*/
+							// Set Shield1 as the currently active one
+							shieldInUse = abilities[5];
+					}
 					else if(shield0 > 0) {
-						if (abilities [4] != null && abilities [4].isReady ()) {
-							if(abilities [4].useAbility ()) {
-								// If the other shield is still active, then deactivate that one first.
-							/*	if(shieldInUse != abilities [4])
-									abilities[5].useAbility ();*/
-								// Set Shield1 as the currently active one
-								shieldInUse = abilities[4];
-							}
+						if (abilities [4] != null && abilities [4].useAbility ()) {
+							// If the other shield is still active, then deactivate that one first.
+						/*	if(shieldInUse != abilities [4])
+								abilities[5].useAbility ();*/
+							// Set Shield1 as the currently active one
+							shieldInUse = abilities[4];
 						}
 					}
 				}
@@ -165,56 +290,48 @@ public class player : MonoBehaviour
 				else if (shield0 == 1.0f && shield1 == 1.0f) {
 					if(shieldInUse != null) {
 						// Try to keep the previously active ability
-						if (shieldInUse.isReady () && shieldInUse.useAbility ()) {
+						if (shieldInUse.useAbility ()) {
 							// Everything OK
 						}
 						else 
 						{
 							shieldInUse = null;
 							// Evaluate which one the other shield ability is
-							if(abilities [4] != shieldInUse && abilities [4] != null && abilities [4].isReady()) {
-								if(abilities [4].useAbility ()) {
-									shieldInUse = abilities[4];
-								}
+							if(abilities [4] != shieldInUse && abilities [4] != null && abilities [4].useAbility ()) {
+								shieldInUse = abilities[4];
 							}
-							else if(abilities [5] != shieldInUse && abilities [5] != null && abilities [5].isReady ()) {
-								if(abilities [5].useAbility ()) {
-									shieldInUse = abilities[5];
-								}
+							else if(abilities [5] != shieldInUse && abilities [5] != null && abilities [5].useAbility ()) {
+								shieldInUse = abilities[5];
 							}
 						}
 					}
 					else 	// Favour the first ability
 					{
-						if (abilities [4] != null && abilities [4].isReady ()) {
-							if(abilities [4].useAbility ()) {
-								// If the other shield is still active, then deactivate that one first.
-							/*	if(shieldInUse != abilities [4])
-									abilities[5].useAbility ();*/
-								// Set Shield1 as the currently active one
-								shieldInUse = abilities[4];
-							}
+						if (abilities [4] != null && abilities [4].useAbility ()) {
+							// If the other shield is still active, then deactivate that one first.
+						/*	if(shieldInUse != abilities [4])
+								abilities[5].useAbility ();*/
+							// Set Shield1 as the currently active one
+							shieldInUse = abilities[4];
 						}
-						else if (abilities [5] != null && abilities [5].isReady ()) {
-							if(abilities [5].useAbility ()) {
-								// If the other shield is still active, then deactivate that one first.
-							/*	if(shieldInUse != abilities [5])
-									abilities[4].useAbility ();*/
-								// Set Shield1 as the currently active one
-								shieldInUse = abilities[5];
-							}
+						else if (abilities [5] != null && abilities [5].useAbility ()) {
+							// If the other shield is still active, then deactivate that one first.
+						/*	if(shieldInUse != abilities [5])
+								abilities[4].useAbility ();*/
+							// Set Shield1 as the currently active one
+							shieldInUse = abilities[5];
 						}
 					}
 				}
 				else if (shield0 == 0.0f && shield1 == 0.0f) {
-					shieldInUse = null;
+					//shieldInUse = null;
 				}
 
 
 				if (canMove) 
 				{
 					// Get the target direction from user input
-					Vector3 targetDirection = new Vector3 (Input.GetAxis ("Horizontal"), Input.GetAxis ("Vertical"), 0.0f);
+					Vector3 targetDirection = new Vector3 (Input.GetAxis ("Horizontal"), Input.GetAxis ("Vertical"), 0.0f).normalized;
 					// Calculate the current maximally achievable speed
 					currentSpeed = baseVelocity + runVelocityBoost;
 					// Get the desired speed fraction
@@ -266,30 +383,35 @@ public class player : MonoBehaviour
 
 
 	void LateUpdate() {
-		if (size <= 0)
+		if (size <= 0) {
 			size = 0;
+			dead = true;
+		}
+		// Reset the current environment
+		currentEnvironment = null;
 	}
 
 	void OnTriggerEnter(Collider other)
 	{
-		Debug.Log ("Collision detected");
 		// Check whether the player collided with an enemy or with something else
 		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
 		if (enemyScript != null)
 		{
 			// If player is bigger than enemy, then eat it
-			if (enemyScript.size < size) 
+			if (enemyScript.transform.localScale.x < transform.localScale.x) 
 			{
-				eatBlob (enemyScript, other.gameObject);
+				// If enemy has not been eaten yet, eat him
+				if(enemyScript.size > 0)
+					eatBlob (enemyScript, other.gameObject);
 			} 
 			else 
 			{ 	// If the player's creature is smaller than the enemy, then reduce player's size
-				size -= 0.1f;
+				// size -= 0.1f;
 			}
 		}
 	}
 
-	// Makes the blob grow smoothly
+	// Makes the blob grow/shrink smoothly
 	private void grow()
 	{
 		float currentSize = transform.localScale.x;
@@ -308,6 +430,7 @@ public class player : MonoBehaviour
 		}
 	}
 
+	// Function called, when eating another blob, to grow in size and to acquire its abilities
 	private void eatBlob(enemy enemyScript, GameObject enemyObject)
 	{
 		if(enemyScript.hasAbilities())
@@ -316,6 +439,7 @@ public class player : MonoBehaviour
 			ability newAbility = enemyScript.getRandomAbility();
 			// Check whether player already has this ability
 			int abilityIndex = hasAbility(newAbility.getAbilityEnum());
+
 			// If player already has this ability, then increase its level by a certain amount
 			if(abilityIndex >= 0) {
 				// The increase in ability is half the difference between enemie's level and player's level but at least 1
@@ -325,13 +449,13 @@ public class player : MonoBehaviour
 			}
 			else
 			{
-				// TODO show GUI to map the new ability to some key
-				int slotIndex = 0;
-				// Transfer ability from enemy to player
-				enemyScript.gameObject.transform.parent = this.gameObject.transform;
-				// Reduce the level (maybe set it 1 ?)
-				newAbility.level /= 2;
-				addAbility(enemyScript.gameObject, slotIndex);
+				string[] abilityNames = new string[4];
+				for(int i = 0; i < 4; i++) {
+					abilityNames[i] = (abilities[i] != null) ? (abilities[i].abilityName + " (lvl. " + abilities[i].level +")") : string.Empty;
+				}
+				abilityModificationScript.showPanel(abilityNames, newAbility, enemyScript);
+				abilityModificationScript.displayTitle(newAbility.abilityName);
+				abilityModificationScript.displayMessage("You acuired the other blob's ability! \n Press the button you want to map it to. \n Press \"Start\" to throw it away.");
 			}
 			
 		}
@@ -340,14 +464,17 @@ public class player : MonoBehaviour
 		float growFactor = enemyObject.transform.localScale.x / transform.localScale.x;
 		// Set scaling of the blob (transform will be changed during next Update())
 		size += 0.1f*growFactor*growFactor;
-		// Reposition enemy
-		enemyMngr.respawnEnemy(enemyObject);
+		// Kill enemy, will be respawned by the emeny manager
+		enemyScript.size = 0.0f;
 	}
 
 
 	// Returns -1 when the player does not have this ability and otherwise the index to where this ability resides in the ability array
 	public int hasAbility(EAbilityType abilityType)
 	{
+		if (nofAbilities == 0)
+			return -1;
+
 		for (int i = 0; i < abilities.Length; i++) {
 			if(abilities[i] != null && abilities[i].getAbilityEnum() == abilityType)
 				return i;
@@ -357,8 +484,20 @@ public class player : MonoBehaviour
 
 	public void addAbility(GameObject ability, int slot)
 	{
+		nofAbilities++;
+		if (abilities [slot] != null) {
+			removeAndDestroyAbility(slot);
+		}
 		abilityObjects [slot] = ability;
 		abilities[slot] = (ability)abilityObjects [slot].GetComponent (typeof(ability));
+	}
+
+	public void removeAndDestroyAbility(int slot) {
+		if (abilities [slot] != null) {
+			nofAbilities--;
+			abilities [slot] = null;
+			GameObject.Destroy (abilityObjects [slot].gameObject);
+		}
 	}
 
 	public void setBlinded(float time) {

@@ -10,33 +10,75 @@ public class glowingShieldAbility : ability {
 	private float blindnessDuration = 1.0f;
 	
 	private bool inUse;
+
+	private bool deactivateInNextFrame;
 	
 	// Use this for initialization
 	void Start () {
-		maxLevel = 10;
+		// Get the game object which has this ram ability
+		parentBlob = transform.parent.gameObject;
+		// Get the script
+		parentEnemyScript = (enemy)parentBlob.GetComponent(typeof(enemy));
+		parentPlayerScript = (player)parentBlob.GetComponent(typeof(player));
+		isPlayer = (bool)parentPlayerScript;
+		
+		cooldownTimer = 0.0f;
+
+		maxTimeToGlow = 30.0f + 30.0f * level;
 		timer = maxTimeToGlow;
 		blindnessDuration = 1.0f + level * 0.3f;
-		
-		abilityName = "GlowingShieldAbility";
+
+		abilitySuperClassEnum = EAbilityClass.EShieldAbility;
 	}
 	
 	// Update is called once per frame
 	void Update () {
+		transform.localPosition = new Vector3 (0, 0, 0);
+		transform.localScale = new Vector3 (1, 1, 1);
+	}
+
+	void LateUpdate() {
+		// Deactivate shield if requested in previous frame
+			if (deactivateInNextFrame)
+				inUse = false;
+
 		if (inUse) {
+			// TODO change visuals
+			((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = new Color(0.0f,1.0f,0.0f,0.5f);
+			
 			// Make sure ability is not able to be used forever unless the ability is at its max level
 			if(level < maxLevel)
 				timer -= Time.deltaTime;
-			// If the timer runs out, the shield cannot be used until it's restored
-			if(timer <= 0)
-				inUse = false;
-		} else {
+		} 
+		else 
+		{
+			cooldownTimer -= Time.deltaTime;
+			
+			if (timer <= 0 && cooldownTimer <= 0) {
+				// Once the ability has been used to its end, give it a 5 second cooldown, befor it can be used again
+				cooldownTimer = 5.0f;
+			} 
+			
 			// Restore timer, when ability is not in use
-			timer = Mathf.Max (maxTimeToGlow, timer += Time.deltaTime);
+			timer = Mathf.Min (maxTimeToGlow, timer + Time.deltaTime);
+			
+			// Reset to default sprite if no other shield is active
+			if(isPlayer) {
+				if(parentPlayerScript.shieldInUse == null)
+					((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentPlayerScript.defaultColor;
+			} else {
+				if(parentEnemyScript.shieldInUse == null)
+					((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentEnemyScript.defaultColor;
+			}
 		}
+		deactivateInNextFrame = true;
 	}
 	
 	void OnTriggerEnter(Collider other)
 	{
+		if (!inUse)
+			return;
+
 		// If collision with own blob, do nothing
 		if (other.gameObject == parentBlob)
 			return;
@@ -46,17 +88,33 @@ public class glowingShieldAbility : ability {
 		player playerScript = (player)other.gameObject.GetComponent (typeof(player));
 		
 		if (isPlayer && enemyScript) {
-			// Enemy is hurt by player's electricity shield if enemy does not have a dust shield
-			if(enemyScript.hasAbility(EAbilityType.EDustShieldAbility) == -1 )
+			// Enemy is blinded by player's bioluminescence shield if enemy does not have a glowing shield itself
+		/*	if(enemyScript.hasAbility(EAbilityType.EGlowingShieldAbility) == -1 )
 			{
 				// TODO Only if it is dark and if enemy is looking into this direction
 				// TODO Cast effect
 				enemyScript.setBlinded(blindnessDuration);
 				enemyScript.setAlertState();
+			}*/
+
+			if(enemyScript.shieldInUse == null || enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EGlowingShieldAbility )
+			{
+				// TODO Only if it is dark and if enemy is looking into this direction
+				// TODO Cast effect
+				Debug.Log ("Enemy blinded by glowing shield");
+				enemyScript.setBlinded(blindnessDuration);
+				enemyScript.setAlertState();
 			}
 		} else if (!isPlayer && playerScript) {
 			// Player is hurt by enemy's thorn shield if player does not have a thorn shield or dust shield
-			if(playerScript.hasAbility(EAbilityType.EDustShieldAbility) == -1 )
+		/*	if(playerScript.hasAbility(EAbilityType.EDustShieldAbility) == -1 )
+			{
+				// TODO Only if it is dark and if player is looking into this direction
+				// TODO Cast effect
+				playerScript.setBlinded(blindnessDuration);
+			}*/
+
+			if(playerScript.shieldInUse == null || playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EGlowingShieldAbility )
 			{
 				// TODO Only if it is dark and if player is looking into this direction
 				// TODO Cast effect
@@ -78,13 +136,10 @@ public class glowingShieldAbility : ability {
 	
 	public override bool useAbility() 
 	{
-		if (inUse) {
-			inUse = false;
-			return true;
-		}
 		if (timer > 0) {
-			// TODO change visuals (add point light)
+			// TODO change visuals (activate point light)
 			inUse = true;
+			deactivateInNextFrame = false;
 			return true;
 		} else {
 			return false;

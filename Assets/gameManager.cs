@@ -11,7 +11,21 @@ public class gameManager : MonoBehaviour {
 
 	private abilityManager abilityManagerScript;
 
+	private GameObject enemyMngr;
+
+	private enemyManager enemyManagerScript;
+
+	private GameObject environmentMngr;
+
+	private environmentManager environmentManagerScript;
+
 	private bool paused;
+
+	private float timer;
+
+	private bool bossDefeated;
+
+	private abilityModificationPanel abilityModificationPanelScript;
 	
 	// Use this for initialization
 	void Start () 
@@ -24,10 +38,22 @@ public class gameManager : MonoBehaviour {
 		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.ERamAbility,0,4);
 		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EBiteAbility,1,1);
 		// Shield abilities
-		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EThornShieldAbility,2,1);
+		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EThornShieldAbility,4,1);
+		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EElectricityShieldAbility,2,1);
 		// Passive abilities
 		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.ERunAbility,6,4);
 		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EViewAbility,7,5);
+
+		bossDefeated = false;
+		chooseNextEnvironmentalChange ();
+
+		enemyMngr = GameObject.Find ("EnemyManager");
+		enemyManagerScript = (enemyManager)enemyMngr.GetComponent (typeof(enemyManager));
+		EAbilityType[] necessaryAbilities = {EAbilityType.EThornShieldAbility, EAbilityType.EWaterShieldAbility};
+		enemyManagerScript.setNecessaryAbilities(necessaryAbilities);
+
+		abilityModificationPanelScript = (abilityModificationPanel)GameObject.Find ("AbilityModificationPanel").GetComponent (typeof(abilityModificationPanel));
+
 	}
 	
 	// Update is called once per frame
@@ -38,7 +64,8 @@ public class gameManager : MonoBehaviour {
 			Time.timeScale = 0.1f;
 		}
 
-		if (Input.GetButtonDown ("Pause"))
+		// Pause / resume game upon player input
+		if (!abilityModificationPanelScript.isInChosingState && Input.GetButtonDown ("Pause"))
 		{ 
 			if (paused) {
 				playerScript.setStunned(0.0f);
@@ -58,6 +85,27 @@ public class gameManager : MonoBehaviour {
 			playerScript.setStunned (9999999999999.0f);
 		}
 
+		// If the environmental change has finished, start the boss battle
+		if (timer <= 0) {
+			// Start boss battle
+		} else {
+			// Reduce timer
+			timer -= Time.deltaTime;
+		}
+
+		// If the player has defeated the boss, then go to the next environmental change
+		if (bossDefeated) {
+			chooseNextEnvironmentalChange();
+		}
+
+	}
+
+	private void chooseNextEnvironmentalChange()
+	{
+		// Choose the next environmental change at random
+		int index = Random.Range (0, 9);
+		timer = 6000.0f;
+		bossDefeated = false;
 	}
 
 }

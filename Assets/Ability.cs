@@ -26,9 +26,13 @@ public class ability : MonoBehaviour {
 
 	public bool isPlayer;
 
+	public EAbilityType abilityEnum;
+
+	public EAbilityClass abilitySuperClassEnum;
+
 
 	void Start () {
-
+		abilityEnum = EAbilityType.EEmptyAbility;
 	}
 
 	void Update () {
@@ -65,5 +69,23 @@ public class ability : MonoBehaviour {
 	public virtual EAbilityType getAbilityEnum()
 	{
 		return EAbilityType.EEmptyAbility;
+	}
+
+	// Returns the chance of using this ability (for the AI)
+	public virtual float calculateUseProbability(player playerScript, bool attack) {
+		return 0.0f;
+	}
+
+	// Needs to be called, when this game object is handed over to a new blob
+	public void updateParent()
+	{
+		// Get the game object which has this ram ability
+		parentBlob = transform.parent.gameObject;
+		// Get the script
+		parentEnemyScript = (enemy)parentBlob.GetComponent(typeof(enemy));
+		parentPlayerScript = (player)parentBlob.GetComponent(typeof(player));
+		isPlayer = (bool)parentPlayerScript;
+
+		cooldownTimer = 0.0f;
 	}
 }

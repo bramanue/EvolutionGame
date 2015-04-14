@@ -15,10 +15,10 @@ public class environmentManager : MonoBehaviour {
 	// The resolution of the environment reflection cube map
 	public Vector2 cubeMapTextureResolution;
 
-
-
+	// Stores reference to the player game object	
 	private GameObject player;
 
+	// Stores reference to the player script
 	private player playerScript;
 
 
@@ -125,6 +125,8 @@ public class environmentManager : MonoBehaviour {
 		environmentPlanes[planeIndex].SetActive(true);
 		// Get the mesh of the currently active background plane
 		currentEnvironmentMesh = ((MeshFilter)environmentPlanes[planeIndex].GetComponent (typeof(MeshFilter))).mesh;
+		// Mark the mesh as dynamic, since it will be changed in every frame
+		currentEnvironmentMesh.MarkDynamic ();
 		// Get the extends of the currently active mesh
 		meshSize = environmentPlaneRenderers[planeIndex].bounds.max - environmentPlaneRenderers[planeIndex].bounds.min;
 
@@ -136,13 +138,11 @@ public class environmentManager : MonoBehaviour {
 		float t0 = System.DateTime.Now.Millisecond;
 
 		// Scale the mesh according to the player's viewing range
-		environmentPlanes [planeIndex].transform.localScale = new Vector3((playerScript.size + playerScript.viewingRange)*2.5f, 1, (playerScript.size + playerScript.viewingRange)*1.1f);
+		environmentPlanes [planeIndex].transform.localScale = new Vector3((playerScript.transform.localScale.x + playerScript.viewingRange)*2.5f, 1, (playerScript.size + playerScript.viewingRange)*1.1f);
 
 		// Get the current size of the mesh (we need to take it from the renderer in order to get world coordinates - the mesh has bounds in untransformed coordinates)
 		meshSize = environmentPlaneRenderers[planeIndex].bounds.max - environmentPlaneRenderers[planeIndex].bounds.min;
 
-		// Move the environment plane along with the player
-		environmentPlanes[planeIndex].transform.position = player.transform.position;
 
 		// TODO update perlin noise parameters according to time
 
@@ -154,6 +154,11 @@ public class environmentManager : MonoBehaviour {
 
 	//	Debug.Log ("Total time for environment update on CPU : " + (System.DateTime.Now.Millisecond - t0) + "ms");
 
+	}
+
+	void LateUpdate() {
+		// Move the environment plane along with the player
+		environmentPlanes[planeIndex].transform.position = player.transform.position;
 	}
 
 	// Calculates a texture for each environment component that acts as mask for high resolution textures
@@ -197,7 +202,6 @@ public class environmentManager : MonoBehaviour {
 		// Main thread waits for the other threads to finish
 		for (int threadIndex = 0; threadIndex < nofThreads-1; threadIndex++)
 			threads [threadIndex].Join();
-
 
 		// Apply the texture to the mesh renderer
 		environmentTexture.SetPixels (mainTextureColor);

@@ -3,11 +3,14 @@ using System.Collections;
 
 public class proximitySensor : MonoBehaviour {
 
-	GameObject parentBlob;
+	public GameObject parentBlob;
 
-	enemy parentEnemyScript;
+	public enemy parentEnemyScript;
 
-	player parentPlayerScript;
+	public player parentPlayerScript;
+
+	// Make only one check per frame and enemy blob
+	private bool alreadyChecked;
 
 	// Use this for initialization
 	void Start () {
@@ -18,32 +21,53 @@ public class proximitySensor : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		// Do not change length of the collider
-	//	transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);	
+
 	}
+
+	void LateUpdate()
+	{
+		// Check only one intersection in the next frame
+		alreadyChecked = false;
+	}
+
 
 	void OnTriggerEnter(Collider other) 
 	{
+		if (alreadyChecked)
+			return;
+
 		hazardousEnvironment hazardousObject = (hazardousEnvironment)other.gameObject.GetComponent (typeof(hazardousEnvironment));
-		if (!hazardousObject)
+		if (hazardousObject == null)
+			return;
+
+		// Parent enemy script can be null, at beginning of the game in case that this blob is placed inside an environmental hazard 
+		if (parentEnemyScript == null)
 			return;
 
 		EAbilityType requiredAbility = hazardousObject.requiredAbility;
-		int abilityIndex = parentEnemyScript.hasAbility (requiredAbility);
+		int abilityIndex = parentEnemyScript.hasAbility(requiredAbility);
 		if (abilityIndex != -1) {
 			// Parent blob has required ability to enter the hazardous environment
 			parentEnemyScript.activateAbility(abilityIndex);
 		} else {
 			// Give the parent the necessary information about the proximity of the environmental hazard
 			parentEnemyScript.environmentProximityData = getProximityDataOfHazardousEnvironment();
+			alreadyChecked = true;
 		}
 	}
 
 
 	void OnTriggerStay(Collider other) 
 	{
+		if (alreadyChecked)
+			return;
+
 		hazardousEnvironment hazardousObject = (hazardousEnvironment)other.gameObject.GetComponent (typeof(hazardousEnvironment));
 		if (!hazardousObject)
+			return;
+
+		// Parent enemy script can be null, at beginning of the game in case that this blob is placed inside an environmental hazard 
+		if (parentEnemyScript == null)
 			return;
 
 		EAbilityType requiredAbility = hazardousObject.requiredAbility;
@@ -54,6 +78,7 @@ public class proximitySensor : MonoBehaviour {
 		} else {
 			// Give the parent the necessary information about the proximity of the environmental hazard
 			parentEnemyScript.environmentProximityData = getProximityDataOfHazardousEnvironment();
+			alreadyChecked = true;
 		}
 	}
 

@@ -39,10 +39,13 @@ public class runAbility : ability {
 		
 		cooldownTime = 0;
 		maxLevel = 20;
-		abilityName = "RunAbility";
+		abilityName = "Running ability";
+		abilitySuperClassEnum = EAbilityClass.EPassiveAbility;
 	}
 	
 	void Update () {
+		transform.localPosition = new Vector3 (0, 0, 0);
+
 		// Set current speed back to default value if it is not used for some time
 		if (!inUse) {
 			currentSpeed = Mathf.Max(0.0f, currentSpeed - maxSpeed / timeToTopSpeed * Time.deltaTime);

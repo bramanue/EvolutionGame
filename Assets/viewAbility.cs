@@ -4,7 +4,7 @@ using System.Collections;
 public class viewAbility : ability {
 
 	// Sets the minimal viewing range
-	public float minViewingRange;
+	public float baseViewingRange = 1.0f;
 
 	// Defines the current viewing range
 	private float viewingRange;
@@ -19,25 +19,28 @@ public class viewAbility : ability {
 		parentPlayerScript = (player)parentBlob.GetComponent (typeof(player));
 		// Decide whether this ability is attached to the player or to an enemy
 		isPlayer = (parentPlayerScript != null);
-		// Set the minimal viewing range
-		minViewingRange = 5.0f;
 		// Calculate the initial viewing range
-		viewingRange = minViewingRange + level;
+		viewingRange = baseViewingRange + level;
 
 		cooldownTime = 0;
-		maxLevel = 45;
-		abilityName = "ViewAbility";
+		abilityName = "View Ability";
+		abilitySuperClassEnum = EAbilityClass.EPassiveAbility;
 
 		if (isPlayer) {
-			parentPlayerScript.viewingRange = viewingRange;
+			parentPlayerScript.viewingRangeBoost = viewingRange;
 		} else {
-			parentEnemyScript.originalViewingRange = viewingRange;
+			parentEnemyScript.viewingRangeBoost = viewingRange;
 		}
 	}
 	
 	// Update is called once per frame
 	void Update () {
-	
+		transform.localPosition = new Vector3 (0, 0, 0);
+		if (isPlayer) {
+			parentPlayerScript.viewingRangeBoost = viewingRange;
+		} else {
+			parentEnemyScript.viewingRangeBoost = viewingRange;
+		}
 	}
 
 	// Increases the level of this ability by x and returns the effective change in levels
@@ -46,14 +49,13 @@ public class viewAbility : ability {
 		// TODO update viusals
 		int previousLevel = level;
 		level = Mathf.Max (0, Mathf.Min(level + x, maxLevel));
-		viewingRange = minViewingRange + level;
+		viewingRange = baseViewingRange + level;
 
 		if (isPlayer) {
-			parentPlayerScript.viewingRange = viewingRange;
+			parentPlayerScript.viewingRangeBoost = viewingRange;
 		} else {
-			parentEnemyScript.originalViewingRange = viewingRange;
+			parentEnemyScript.viewingRangeBoost = viewingRange;
 		}
-		Debug.Log ((level - previousLevel) + " to view ability");
 		return level - previousLevel;
 	}
 
@@ -61,9 +63,9 @@ public class viewAbility : ability {
 	public override bool useAbility()
 	{
 		if (isPlayer) {
-			parentPlayerScript.viewingRange = viewingRange;
+			parentPlayerScript.viewingRangeBoost = viewingRange;
 		} else {
-			parentEnemyScript.originalViewingRange = viewingRange;
+			parentEnemyScript.viewingRangeBoost = viewingRange;
 		}
 		return true;
 	}
