@@ -65,7 +65,9 @@ public class viewAbility : ability {
 		if (isPlayer) {
 			parentPlayerScript.viewingRangeBoost = viewingRange;
 		} else {
-			parentEnemyScript.viewingRangeBoost = viewingRange;
+			// After respawn the script reference can be null
+			if(parentEnemyScript != null)
+				parentEnemyScript.viewingRangeBoost = viewingRange;
 		}
 		return true;
 	}

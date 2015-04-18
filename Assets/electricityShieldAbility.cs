@@ -11,7 +11,7 @@ public class electricityShieldAbility : ability {
 	
 	private bool inUse;
 
-	private bool deactivate;
+	private bool deactivateInNextFrame;
 	
 	// Use this for initialization
 	void Start () {
@@ -39,7 +39,7 @@ public class electricityShieldAbility : ability {
 
 	void LateUpdate() 
 	{
-		if (deactivate)
+		if (deactivateInNextFrame)
 			inUse = false;
 
 		if (inUse) {
@@ -72,13 +72,12 @@ public class electricityShieldAbility : ability {
 			}
 		}
 		// Delay the deactivation (i.e. inUse = false) by one frame due to update order. Collision triggers are called before the update and therefore inUse would always be false
-		deactivate = true;
+		deactivateInNextFrame = true;
 	}
 
 	void OnTriggerEnter(Collider other)
 	{
 		if (!inUse) {
-			Debug.Log ("Electricity shield collided but not activated");
 			return;
 		}
 
@@ -113,7 +112,7 @@ public class electricityShieldAbility : ability {
 					enemyScript.size -= damage;
 				}
 				Debug.Log ("Enemy hurt by electricity shield: Damage = " + damage);
-				enemyScript.setAlertState();
+				enemyScript.setAlertedState();
 			}
 		} else if (!isPlayer && playerScript) {
 			// Player is hurt by enemy's electricity shield if enemy does not have a dust or electricity shield
@@ -151,8 +150,8 @@ public class electricityShieldAbility : ability {
 	
 	public override bool useAbility() 
 	{
-		if (timer > 0) {
-			deactivate = false;
+		if (timer > 0  && cooldownTimer < 0) {
+			deactivateInNextFrame = false;
 			inUse = true;
 			return true;
 		} else {

@@ -87,7 +87,7 @@ public class abilityModificationPanel : MonoBehaviour {
 	{
 		if (active) 
 		{
-			Time.timeScale = 0.01f;
+			Time.timeScale = 0.1f;
 			// Make sure that if the fade animation is active, that the panel has not been opened again
 			if(fadeAnimationId == id)
 			{
@@ -156,7 +156,7 @@ public class abilityModificationPanel : MonoBehaviour {
 		isInChosingState = true;
 		id = Random.value;	// Random value as id
 
-		Time.timeScale = 0.01f;
+		Time.timeScale = 0.1f;
 		this.enemyScript = enemyScript;
 		this.newAbility = newAbility;
 

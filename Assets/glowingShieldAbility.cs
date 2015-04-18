@@ -103,7 +103,7 @@ public class glowingShieldAbility : ability {
 				// TODO Cast effect
 				Debug.Log ("Enemy blinded by glowing shield");
 				enemyScript.setBlinded(blindnessDuration);
-				enemyScript.setAlertState();
+				enemyScript.setAlertedState();
 			}
 		} else if (!isPlayer && playerScript) {
 			// Player is hurt by enemy's thorn shield if player does not have a thorn shield or dust shield
@@ -136,7 +136,7 @@ public class glowingShieldAbility : ability {
 	
 	public override bool useAbility() 
 	{
-		if (timer > 0) {
+		if (timer > 0 && cooldownTimer < 0) {
 			// TODO change visuals (activate point light)
 			inUse = true;
 			deactivateInNextFrame = false;

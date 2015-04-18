@@ -39,7 +39,7 @@ public class gameManager : MonoBehaviour {
 		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EBiteAbility,1,1);
 		// Shield abilities
 		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EThornShieldAbility,4,1);
-		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EElectricityShieldAbility,2,1);
+		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EElectricityShieldAbility,5,1);
 		// Passive abilities
 		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.ERunAbility,6,4);
 		abilityManagerScript.addAbilityToPlayer(player,EAbilityType.EViewAbility,7,5);

@@ -17,7 +17,6 @@ public class iceField : hazardousEnvironment {
 	
 	void OnTriggerEnter(Collider other)
 	{
-		Debug.Log ("Collision detected");
 		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
 		player playerScript = (player)other.gameObject.GetComponent(typeof(player));
 		
@@ -45,7 +44,6 @@ public class iceField : hazardousEnvironment {
 			}
 			else
 			{
-				Debug.Log ("Player has no active ice shield!");
 				// Player takes damager
 				playerScript.size -= 0.1f;
 				// Throw back approacher
@@ -75,13 +73,12 @@ public class iceField : hazardousEnvironment {
 			}*/
 		
 
-			if( enemyScript.shieldInUse.abilityEnum != EAbilityType.EIceShieldAbility ) {
+			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum != EAbilityType.EIceShieldAbility ) {
 				// Nothing to do, enemy can enter
 				// TODO play sound or such
 			}
 			else
 			{
-				Debug.Log ("Enemy has no ice shield!");
 				// Enemy takes damager
 				enemyScript.size -= 0.1f;
 				// Throw back approacher
@@ -95,7 +92,6 @@ public class iceField : hazardousEnvironment {
 
 	void OnTriggerStay(Collider other)
 	{
-		Debug.Log ("Collision detected");
 		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
 		player playerScript = (player)other.gameObject.GetComponent(typeof(player));
 		
@@ -154,13 +150,12 @@ public class iceField : hazardousEnvironment {
 		}*/
 	
 			
-			if( enemyScript.shieldInUse.abilityEnum != EAbilityType.EIceShieldAbility ) {
+			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum != EAbilityType.EIceShieldAbility ) {
 				// Nothing to do, enemy can enter
 				// TODO play sound or such
 			}
 			else
 			{
-				Debug.Log ("Enemy has no ice shield!");
 				// Enemy takes damager
 				enemyScript.size -= 0.1f;
 				// Throw back approacher

@@ -107,6 +107,7 @@ public class player : MonoBehaviour
 	{
 		if (!dead) {
 
+			ability oldShield = shieldInUse;
 			shieldInUse = null;
 
 			// If the user is about to chose whether to keep a new ability or not
@@ -247,85 +248,79 @@ public class player : MonoBehaviour
 				}
 
 				// Capture player input concerning shields (XBOX360 only)
+				float shields = Input.GetAxis("Shields");
+				if(shields > 0.05f)
+				{
+					Debug.Log ("Activate shield0");
+					if (abilities [4] != null && abilities [4].useAbility ()) {
+						shieldInUse = abilities[4];
+					}
+				}
+				else if (shields < -0.05f)
+				{
+					Debug.Log ("Activate shield1");
+					if (abilities [5] != null && abilities [5].useAbility ()) {
+						shieldInUse = abilities[5];
+					}
+				}
+
+				/*
 				float shield0 = Input.GetAxis("Shield0");
 				float shield1 = Input.GetAxis("Shield1");
 				if(shield0 > shield1) {
+					Debug.Log ("Shield0");
 					if (abilities [4] != null && abilities [4].useAbility ()) {
-							// If the other shield is still active, then deactivate that one first.
-						/*	if(shieldInUse != abilities [4])
-								abilities[5].useAbility ();*/
-							// Set Shield1 as the currently active one
 							shieldInUse = abilities[4];
 					}
 					else if(shield1 > 0) {
 						if (abilities [5] != null && abilities [5].useAbility ()) {
-							// If the other shield is still active, then deactivate that one first.
-						/*	if(shieldInUse != abilities [5])
-								abilities[4].useAbility ();*/
-							// Set Shield1 as the currently active one
 							shieldInUse = abilities[5];
 						}
 					}
 				}
 				else if (shield1 > shield0)
 				{
+					Debug.Log ("Shield1");
 					if (abilities [5] != null && abilities [5].useAbility ()) {
-							// If the other shield is still active, then deactivate that one first.
-						/*	if(shieldInUse != abilities [5])
-								abilities[4].useAbility ();*/
-							// Set Shield1 as the currently active one
 							shieldInUse = abilities[5];
 					}
 					else if(shield0 > 0) {
 						if (abilities [4] != null && abilities [4].useAbility ()) {
-							// If the other shield is still active, then deactivate that one first.
-						/*	if(shieldInUse != abilities [4])
-								abilities[5].useAbility ();*/
-							// Set Shield1 as the currently active one
 							shieldInUse = abilities[4];
 						}
 					}
 				}
 				// If both triggers are fully pressed stay with the ability that was used before
 				else if (shield0 == 1.0f && shield1 == 1.0f) {
-					if(shieldInUse != null) {
+					Debug.Log ("Shield0&1");
+					if(oldShield != null) {
 						// Try to keep the previously active ability
-						if (shieldInUse.useAbility ()) {
+						if (oldShield.useAbility ()) {
+							shieldInUse = oldShield;
 							// Everything OK
 						}
 						else 
 						{
-							shieldInUse = null;
-							// Evaluate which one the other shield ability is
-							if(abilities [4] != shieldInUse && abilities [4] != null && abilities [4].useAbility ()) {
+							// The previously active shield could no longer be acivated. Try to activate the other one
+							if(abilities [4] != oldShield && abilities [4] != null && abilities [4].useAbility ()) {
 								shieldInUse = abilities[4];
 							}
-							else if(abilities [5] != shieldInUse && abilities [5] != null && abilities [5].useAbility ()) {
+							else if(abilities [5] != oldShield && abilities [5] != null && abilities [5].useAbility ()) {
 								shieldInUse = abilities[5];
 							}
 						}
 					}
-					else 	// Favour the first ability
+					else 	// If there wasn't any shield active before, favour the first shield ability
 					{
 						if (abilities [4] != null && abilities [4].useAbility ()) {
-							// If the other shield is still active, then deactivate that one first.
-						/*	if(shieldInUse != abilities [4])
-								abilities[5].useAbility ();*/
-							// Set Shield1 as the currently active one
 							shieldInUse = abilities[4];
 						}
 						else if (abilities [5] != null && abilities [5].useAbility ()) {
-							// If the other shield is still active, then deactivate that one first.
-						/*	if(shieldInUse != abilities [5])
-								abilities[4].useAbility ();*/
-							// Set Shield1 as the currently active one
 							shieldInUse = abilities[5];
 						}
 					}
 				}
-				else if (shield0 == 0.0f && shield1 == 0.0f) {
-					//shieldInUse = null;
-				}
+				*/
 
 
 				if (canMove) 

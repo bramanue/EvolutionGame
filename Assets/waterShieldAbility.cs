@@ -99,7 +99,7 @@ public class waterShieldAbility : ability {
 			{
 				Debug.Log ("Enemy hurt by water shield: Damage = " + damage);
 				enemyScript.size -= damage;
-				enemyScript.setAlertState();
+				enemyScript.setAlertedState();
 			}
 		} else if (!isPlayer && playerScript) {
 			// Player is hurt by enemy's water shield if player has a lava shield
@@ -129,7 +129,7 @@ public class waterShieldAbility : ability {
 	
 	public override bool useAbility() 
 	{
-		if (timer > 0) {
+		if (timer > 0 && cooldownTimer < 0) {
 			inUse = true;
 			deactivateInNextFrame = false;
 			if(isPlayer)

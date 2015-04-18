@@ -92,7 +92,7 @@ public class enemyManager : MonoBehaviour {
 			}
 
 			// Deactivate enemies if they are too far from the player
-			if(distance > 2.5f*(playerScript.viewingRange + playerScript.size + enemyGameObjects[i].transform.localScale.x))
+			if(distance > 2.2f*(playerScript.viewingRange + player.transform.localScale.x + enemyGameObjects[i].transform.localScale.x))
 				enemyGameObjects[i].SetActive(false);
 			else
 				enemyGameObjects[i].SetActive(true);
@@ -112,7 +112,7 @@ public class enemyManager : MonoBehaviour {
 	{
 		float playerSize = player.transform.localScale.x;
 		// Define a random size
-		float size = Random.Range(playerSize - 0.5f*playerSize, playerSize + 0.5f*playerSize);
+		float size = Random.Range(playerSize - 0.3f*playerSize, playerSize + 0.5f*playerSize);
 		// Set size of GameObject
 		enemyObject.transform.localScale = new Vector3(size,size,size);
 		// Get spawn point...
@@ -126,6 +126,7 @@ public class enemyManager : MonoBehaviour {
 		enemyScript.viewingRange = (size + Random.Range(7.0f,12.0f));
 		enemyScript.idleOperationRadius = size + 2.0f*enemyScript.viewingRange;
 		enemyScript.activeOperationRadius = size + enemyScript.maxVelocity*15.0f;
+		enemyScript.baseViewingRange = Random.Range(5.0f,8.0f);
 		enemyScript.cosViewingAngle = Random.Range(0.0f,0.7f);
 		enemyScript.baseVelocity = Random.Range(4.0f,6.0f);
 

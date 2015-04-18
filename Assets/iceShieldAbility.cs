@@ -104,7 +104,7 @@ public class iceShieldAbility : ability {
 			{
 				Debug.Log ("Enemy hurt by ice shield: Damage = " + damage);
 				enemyScript.size -= damage;
-				enemyScript.setAlertState();
+				enemyScript.setAlertedState();
 			}
 		} else if (!isPlayer && playerScript) {
 			// Player is hurt by enemy's thorn shield if player does not have a thorn shield or dust shield
@@ -141,7 +141,7 @@ public class iceShieldAbility : ability {
 	
 	public override bool useAbility() 
 	{
-		if (timer > 0) {
+		if (timer > 0  && cooldownTimer < 0) {
 			inUse = true;
 			deactivateInNextFrame = false;
 			return true;

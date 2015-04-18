@@ -62,7 +62,7 @@ public class biteAbility : ability {
 					parentPlayerScript.size += 0.25f*Mathf.Min (damage, oldSize);
 					Debug.Log ("Bite ability inflicted " + 0.25f*Mathf.Min (damage, oldSize) + " damage.");
 					// Put enemy into alert state
-					enemyScript.setAlertState();
+					enemyScript.setAlertedState();
 					// Restart cooldown timer
 					cooldownTimer = cooldownTime;
 				}

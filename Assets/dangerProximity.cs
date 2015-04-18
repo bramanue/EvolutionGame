@@ -15,7 +15,8 @@ public class dangerProximity {
 
 	public Vector3[] directions = new Vector3[3];
 
-	// 
+
+
 	public dangerProximity()
 	{ }
 
@@ -28,7 +29,8 @@ public class dangerProximity {
 				closestDistance = distances[i];
 				closestIndex = i;
 			}
-		}		return directions[closestIndex];
+		}		
+		return directions[closestIndex];
 	}
 
 	// Get the vector in which direction there most probably is no dangerous structure

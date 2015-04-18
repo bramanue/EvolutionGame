@@ -106,7 +106,7 @@ public class lavaShieldAbility : ability {
 			{
 				Debug.Log ("Enemy hurt by lava shield: Damage = " + damage);
 				enemyScript.size -= damage;
-				enemyScript.setAlertState();
+				enemyScript.setAlertedState();
 			}
 		} else if (!isPlayer && playerScript) {
 			// Player is hurt by enemy's lava shield if player does not have a lava, dust or water shield

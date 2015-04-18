@@ -115,7 +115,7 @@ public class dustShieldAbility : ability {
 			inUse = false;
 			return true;
 		}*/
-		if (timer > 0) {
+		if (timer > 0 && cooldownTimer < 0) {
 			inUse = true;
 			deactivateInNextFrame = false;
 			return true;

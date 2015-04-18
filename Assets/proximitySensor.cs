@@ -33,27 +33,29 @@ public class proximitySensor : MonoBehaviour {
 
 	void OnTriggerEnter(Collider other) 
 	{
+		// We do not care about this intersection if we already got one during this frame
 		if (alreadyChecked)
 			return;
 
+		// We only care about collisions with hazardous environment
 		hazardousEnvironment hazardousObject = (hazardousEnvironment)other.gameObject.GetComponent (typeof(hazardousEnvironment));
 		if (hazardousObject == null)
 			return;
 
-		// Parent enemy script can be null, at beginning of the game in case that this blob is placed inside an environmental hazard 
+		// Parent enemy script can be null, at beginning of the game in case that this blob was placed inside an environmental hazard 
 		if (parentEnemyScript == null)
 			return;
 
-		EAbilityType requiredAbility = hazardousObject.requiredAbility;
-		int abilityIndex = parentEnemyScript.hasAbility(requiredAbility);
-		if (abilityIndex != -1) {
+	//	EAbilityType requiredAbility = hazardousObject.requiredAbility;
+	//	int abilityIndex = parentEnemyScript.hasAbility(requiredAbility);
+	/*	if (abilityIndex != -1) {
 			// Parent blob has required ability to enter the hazardous environment
 			parentEnemyScript.activateAbility(abilityIndex);
-		} else {
+		} else {*/
 			// Give the parent the necessary information about the proximity of the environmental hazard
 			parentEnemyScript.environmentProximityData = getProximityDataOfHazardousEnvironment();
 			alreadyChecked = true;
-		}
+		//}
 	}
 
 
@@ -70,16 +72,16 @@ public class proximitySensor : MonoBehaviour {
 		if (parentEnemyScript == null)
 			return;
 
-		EAbilityType requiredAbility = hazardousObject.requiredAbility;
-		int abilityIndex = parentEnemyScript.hasAbility (requiredAbility);
-		if (abilityIndex != -1) {
-			// Parent blob has required ability to enter the hazardous environment
-			parentEnemyScript.activateAbility(abilityIndex);
-		} else {
+	//	EAbilityType requiredAbility = hazardousObject.requiredAbility;
+	//	int abilityIndex = parentEnemyScript.hasAbility (requiredAbility);
+	//	if (abilityIndex != -1) {
+	//		// Parent blob has required ability to enter the hazardous environment
+	//		parentEnemyScript.activateAbility(abilityIndex);
+	//	} else {
 			// Give the parent the necessary information about the proximity of the environmental hazard
 			parentEnemyScript.environmentProximityData = getProximityDataOfHazardousEnvironment();
 			alreadyChecked = true;
-		}
+	//	}
 	}
 
 
