@@ -147,9 +147,11 @@ public class environmentManager : MonoBehaviour {
 			environmentalHazards[i].AddComponent<MeshFilter>();
 			environmentalHazards[i].GetComponent<MeshFilter>().mesh.MarkDynamic();
 			environmentalHazards[i].AddComponent<MeshRenderer>();
-			environmentalHazards[i].AddComponent<MeshCollider>();
-			environmentalHazards[i].GetComponent<MeshCollider>().convex = true;
-			environmentalHazards[i].GetComponent<MeshCollider>().isTrigger = true;
+		//	environmentalHazards[i].AddComponent<MeshCollider>();
+		//	environmentalHazards[i].GetComponent<MeshCollider>().convex = true;
+		//	environmentalHazards[i].GetComponent<MeshCollider>().isTrigger = true;
+			environmentalHazards[i].AddComponent<BoxCollider>();
+			environmentalHazards[i].GetComponent<BoxCollider>().isTrigger = true;
 			environmentalHazards[i].AddComponent(typeof(thornBush));
 			environmentalHazards[i].SetActive(false);
 		}
@@ -222,7 +224,7 @@ public class environmentManager : MonoBehaviour {
 		for (int threadIndex = 0; threadIndex < nofThreads-1; threadIndex++)
 			threads [threadIndex].Join();
 
-	//	generateEnvironmentalHazards(0.8f,environmentalHazardMask);
+		generateEnvironmentalHazards(0.8f,environmentalHazardMask);
 
 		// Apply the texture to the mesh renderer
 		environmentTexture.SetPixels (mainTextureColor);
@@ -258,23 +260,36 @@ public class environmentManager : MonoBehaviour {
 	{
 		Vector2[] pointGrid = new Vector2[(int)(environmentalHazardResolution.x * environmentalHazardResolution.y)];
 		Vector3 lowerLeftPoint = new Vector3 (player.transform.position.x - 0.5f * meshSize.x, player.transform.position.y - 0.5f * meshSize.y, 0);
+		Vector3 originalLowerLeftPoint = new Vector3 (player.transform.position.x - 0.5f * meshSize.x, player.transform.position.y - 0.5f * meshSize.y, 0);
 		Vector3 stepSize = new Vector3 (meshSize.x / (environmentalHazardResolution.x - 1), meshSize.y / (environmentalHazardResolution.y - 1), 0);
 		// Make sure the sampling grid stays the same for the same background plane size
+		// Calculate the offset between sampling grid and lower left point of the plane (in world space)
 		float offsetX = lowerLeftPoint.x % stepSize.x;
 		float offsetY = lowerLeftPoint.y % stepSize.y;
-		lowerLeftPoint += new Vector3 (offsetX, offsetY, 0);	
-		offsetX /= stepSize.x;
-		offsetY /= stepSize.y;
-		offsetX = 0;
-		offsetY = 0;
+		// Set bottom left of the plane on a point belonging to the sampling grid
+		lowerLeftPoint -= new Vector3 (offsetX, offsetY, 0);	
+		// Convert offsets to local space of the textures
+		float unitOffsetX = offsetX/stepSize.x;
+		float unitOffsetY = offsetY/stepSize.y;
+
 		// We assume that all textures are squares
 		int maskRes = (int)Mathf.Sqrt (mask1.Length);
 		float stepSizeOnMask = maskRes / environmentalHazardResolution.x;
 
+		// Used to convert from global coordinates to coordinates on the environmentMask Texture
+		Vector3 global2Mask = new Vector3(maskRes/meshSize.x, maskRes/meshSize.y, 0);
+
 		for (int y = 0; y < environmentalHazardResolution.y; y++) {
 			for (int x = 0; x < environmentalHazardResolution.x; x++) {
 				// Get the sample point in space of the mask
-				int samplePoint = (int)(((y+offsetY) * environmentalHazardResolution.x + (x+offsetX)) * stepSizeOnMask);
+				int samplePoint = (int)((x*stepSize.x - offsetX)*global2Mask.x) + (int)(((int)((y*stepSize.y - offsetY)*global2Mask.y))*maskRes);
+				//	int samplePoint = (int)((((int)(y-unitOffsetY)) * environmentalHazardResolution.x + ((int)(x-unitOffsetX))) * stepSizeOnMask);
+				// If the sampled point lies outside the mask, then set this point's value to -1
+				if(samplePoint < 0 || samplePoint >= mask1.Length) {
+					pointGrid [(int)(y * environmentalHazardResolution.x + x)] = new Vector2 (0, -1);
+					continue;
+				}
+
 				if (mask1 [samplePoint] > threshold1) {
 					pointGrid [(int)(y * environmentalHazardResolution.x + x)] = new Vector2 (1, mask1 [samplePoint]);
 				} else {
@@ -283,10 +298,6 @@ public class environmentManager : MonoBehaviour {
 			}
 		}
 
-
-
-		Debug.Log ("lowerLeftPoint = " + lowerLeftPoint);
-		Debug.Log ("stepSizeOnMesh = " + stepSize);
 		Vector3[] vertices = new Vector3[(int)(2 * environmentalHazardResolution.x)];
 		int[] faces = new int[(int)(2 * 3 * environmentalHazardResolution.x)];
 		int vertexCount = 0;
@@ -295,7 +306,6 @@ public class environmentManager : MonoBehaviour {
 		int gameObjectIndex = 0;
 
 		for (int y = 0; y < environmentalHazardResolution.y - 1; y++) {
-			bool connected = true;
 			for (int x = 0; x < environmentalHazardResolution.x - 1; x++) {
 				int index = (int)(y * environmentalHazardResolution.x + x);
 				if (pointGrid [index].x == 1) {
@@ -346,30 +356,10 @@ public class environmentManager : MonoBehaviour {
 							faces [(faceCount * 3) + 1] = vertexCount - 2; // top
 							faces [(faceCount * 3) + 2] = vertexCount - 1; // top right
 							faceCount++;
+
 							// End of convex shape
-							Mesh mesh = environmentalHazards [gameObjectIndex].GetComponent<MeshFilter> ().mesh;
-							mesh.Clear();
-							Vector3[] newVertices = new Vector3[vertexCount];
-							for(int i = 0; i < vertexCount; i++){
-								newVertices[i] = vertices[i];
-							}
-							int[] newFaces = new int[faceCount*3];
-							for(int i = 0; i < faceCount*3; i++){
-								newFaces[i] = faces[i];
-							}
-							mesh.vertices = newVertices;
-							mesh.triangles = newFaces;
-							mesh.RecalculateBounds();
-							mesh.RecalculateNormals();
-							MeshCollider meshCollider = environmentalHazards[gameObjectIndex].GetComponent<MeshCollider>();
-							// meshCollider.sharedMesh = null;
-							meshCollider.sharedMesh = mesh;
-							Debug.Log (meshCollider.contactOffset);
-							environmentalHazards [gameObjectIndex].SetActive (true);
-							gameObjectIndex++;
-							// Reset datastructures
-							vertexCount = 0;
-							faceCount = 0;
+							createObstacleColliderMesh(ref gameObjectIndex, ref vertexCount, ref faceCount, vertices, faces);
+
 						} else if (top && right) {
 							// Triangle :.
 							// End of convex shape
@@ -386,54 +376,13 @@ public class environmentManager : MonoBehaviour {
 							faces [(faceCount * 3) + 2] = vertexCount - 1; // right
 							faceCount++;
 							// End of convex shape
-							Mesh mesh = environmentalHazards [gameObjectIndex].GetComponent<MeshFilter> ().mesh;
-							mesh.Clear();
-							Vector3[] newVertices = new Vector3[vertexCount];
-							for(int i = 0; i < vertexCount; i++){
-								newVertices[i] = vertices[i];
-							}
-							int[] newFaces = new int[faceCount*3];
-							for(int i = 0; i < faceCount*3; i++){
-								newFaces[i] = faces[i];
-							}
-							mesh.vertices = newVertices;
-							mesh.triangles = newFaces;
-							MeshCollider meshCollider = environmentalHazards[gameObjectIndex].GetComponent<MeshCollider>();
-							// meshCollider.sharedMesh = null;
-							meshCollider.sharedMesh = mesh;
-							meshCollider.sharedMesh.RecalculateBounds();
-							meshCollider.sharedMesh.RecalculateNormals();
-							environmentalHazards [gameObjectIndex].SetActive (true);
-							gameObjectIndex++;
-							// Reset datastructures
-							vertexCount = 0;
-							faceCount = 0;
+							createObstacleColliderMesh(ref gameObjectIndex, ref vertexCount, ref faceCount, vertices, faces);
+						
 						} else if (topRight && right) {
 							// Triangle .:
 							// Begin of convex shape
 							if (vertexCount != 0) {
-								Mesh mesh = environmentalHazards [gameObjectIndex].GetComponent<MeshFilter> ().mesh;
-								mesh.Clear();
-								Vector3[] newVertices = new Vector3[vertexCount];
-								for(int i = 0; i < vertexCount; i++){
-									newVertices[i] = vertices[i];
-								}
-								int[] newFaces = new int[faceCount*3];
-								for(int i = 0; i < faceCount*3; i++){
-									newFaces[i] = faces[i];
-								}
-								mesh.vertices = newVertices;
-								mesh.triangles = newFaces;
-								MeshCollider meshCollider = environmentalHazards[gameObjectIndex].GetComponent<MeshCollider>();
-								// meshCollider.sharedMesh = null;
-								meshCollider.sharedMesh = mesh;
-								meshCollider.sharedMesh.RecalculateBounds();
-								meshCollider.sharedMesh.RecalculateNormals();
-								environmentalHazards [gameObjectIndex].SetActive (true);
-								gameObjectIndex++;
-								// Reset datastructures
-								vertexCount = 0;
-								faceCount = 0;
+								createObstacleColliderMesh(ref gameObjectIndex, ref vertexCount, ref faceCount, vertices, faces);
 							}
 							if (vertexCount == 0) {
 								vertices [vertexCount] = lowerLeftPoint + new Vector3 (x * stepSize.x, y * stepSize.y, 0);	// point
@@ -468,54 +417,13 @@ public class environmentManager : MonoBehaviour {
 									faces [(faceCount * 3) + 2] = vertexCount - 1; // top right
  									faceCount++;
 									// End of convex shape
-									Mesh mesh = environmentalHazards [gameObjectIndex].GetComponent<MeshFilter> ().mesh;
-									mesh.Clear();
-									Vector3[] newVertices = new Vector3[vertexCount];
-									for(int i = 0; i < vertexCount; i++){
-										newVertices[i] = vertices[i];
-									}
-									int[] newFaces = new int[faceCount*3];
-									for(int i = 0; i < faceCount*3; i++){
-										newFaces[i] = faces[i];
-									}
-									mesh.vertices = newVertices;
-									mesh.triangles = newFaces;
-									MeshCollider meshCollider = environmentalHazards[gameObjectIndex].GetComponent<MeshCollider>();
-									// meshCollider.sharedMesh = null;
-									meshCollider.sharedMesh = mesh;
-									meshCollider.sharedMesh.RecalculateBounds();
-									meshCollider.sharedMesh.RecalculateNormals();
-									environmentalHazards [gameObjectIndex].SetActive (true);
-									gameObjectIndex++;
-									// Reset datastructures
-									vertexCount = 0;
-									faceCount = 0;
+									createObstacleColliderMesh(ref gameObjectIndex, ref vertexCount, ref faceCount, vertices, faces);
+								
 								} else {
 									// pointGrid[(int)(index + environmentalHazardResolution.x + 1)].x = 0;
 									// No Triangle
 									if (vertexCount != 0) {
-										Mesh mesh = environmentalHazards [gameObjectIndex].GetComponent<MeshFilter> ().mesh;
-										mesh.Clear();
-										Vector3[] newVertices = new Vector3[vertexCount];
-										for(int i = 0; i < vertexCount; i++){
-											newVertices[i] = vertices[i];
-										}
-										int[] newFaces = new int[faceCount*3];
-										for(int i = 0; i < faceCount*3; i++){
-											newFaces[i] = faces[i];
-										}
-										mesh.vertices = newVertices;
-										mesh.triangles = newFaces;
-										MeshCollider meshCollider = environmentalHazards[gameObjectIndex].GetComponent<MeshCollider>();
-										// meshCollider.sharedMesh = null;
-										meshCollider.sharedMesh = mesh;
-										meshCollider.sharedMesh.RecalculateBounds();
-										meshCollider.sharedMesh.RecalculateNormals();
-										environmentalHazards [gameObjectIndex].SetActive (true);
-										gameObjectIndex++;
-										// Reset datastructures
-										vertexCount = 0;
-										faceCount = 0;
+										createObstacleColliderMesh(ref gameObjectIndex, ref vertexCount, ref faceCount, vertices, faces);
 									}
 								}
 							} else {
@@ -538,54 +446,13 @@ public class environmentManager : MonoBehaviour {
 									faces [(faceCount * 3) + 2] = vertexCount - 1; // right
 									faceCount++;
 									// End of convex shape
-									Mesh mesh = environmentalHazards [gameObjectIndex].GetComponent<MeshFilter> ().mesh;
-									mesh.Clear();
-									Vector3[] newVertices = new Vector3[vertexCount];
-									for(int i = 0; i < vertexCount; i++){
-										newVertices[i] = vertices[i];
-									}
-									int[] newFaces = new int[faceCount*3];
-									for(int i = 0; i < faceCount*3; i++){
-										newFaces[i] = faces[i];
-									}
-									mesh.vertices = newVertices;
-									mesh.triangles = newFaces;
-									MeshCollider meshCollider = environmentalHazards[gameObjectIndex].GetComponent<MeshCollider>();
-									// meshCollider.sharedMesh = null;
-									meshCollider.sharedMesh = mesh;
-									meshCollider.sharedMesh.RecalculateBounds();
-									meshCollider.sharedMesh.RecalculateNormals();
-									environmentalHazards [gameObjectIndex].SetActive (true);
-									gameObjectIndex++;
-									// Reset datastructures
-									vertexCount = 0;
-									faceCount = 0;
+									createObstacleColliderMesh(ref gameObjectIndex, ref vertexCount, ref faceCount, vertices, faces);
+								
 								} else {
 									// pointGrid[(int)(index + environmentalHazardResolution.x + 1)].x = 0;
 									// No Triangle
 									if (vertexCount != 0) {
-										Mesh mesh = environmentalHazards [gameObjectIndex].GetComponent<MeshFilter> ().mesh;
-										mesh.Clear();
-										Vector3[] newVertices = new Vector3[vertexCount];
-										for(int i = 0; i < vertexCount; i++){
-											newVertices[i] = vertices[i];
-										}
-										int[] newFaces = new int[faceCount*3];
-										for(int i = 0; i < faceCount*3; i++){
-											newFaces[i] = faces[i];
-										}
-										mesh.vertices = newVertices;
-										mesh.triangles = newFaces;
-										MeshCollider meshCollider = environmentalHazards[gameObjectIndex].GetComponent<MeshCollider>();
-										// meshCollider.sharedMesh = null;
-										meshCollider.sharedMesh = mesh;
-										meshCollider.sharedMesh.RecalculateBounds();
-										meshCollider.sharedMesh.RecalculateNormals();
-										environmentalHazards [gameObjectIndex].SetActive (true);
-										gameObjectIndex++;
-										// Reset datastructures
-										vertexCount = 0;
-										faceCount = 0;
+										createObstacleColliderMesh(ref gameObjectIndex, ref vertexCount, ref faceCount, vertices, faces);
 									}
 								}
 							}
@@ -598,28 +465,7 @@ public class environmentManager : MonoBehaviour {
 									// Triangle .:
 									// Begin of convex shape
 									if (vertexCount != 0) {
-										Mesh mesh = environmentalHazards [gameObjectIndex].GetComponent<MeshFilter> ().mesh;
-										mesh.Clear();
-										Vector3[] newVertices = new Vector3[vertexCount];
-										for(int i = 0; i < vertexCount; i++){
-											newVertices[i] = vertices[i];
-										}
-										int[] newFaces = new int[faceCount*3];
-										for(int i = 0; i < faceCount*3; i++){
-											newFaces[i] = faces[i];
-										}
-										mesh.vertices = newVertices;
-										mesh.triangles = newFaces;
-										MeshCollider meshCollider = environmentalHazards[gameObjectIndex].GetComponent<MeshCollider>();
-										// meshCollider.sharedMesh = null;
-										meshCollider.sharedMesh = mesh;
-										meshCollider.sharedMesh.RecalculateBounds();
-										meshCollider.sharedMesh.RecalculateNormals();
-										environmentalHazards [gameObjectIndex].SetActive (true);
-										gameObjectIndex++;
-										// Reset datastructures
-										vertexCount = 0;
-										faceCount = 0;
+										createObstacleColliderMesh(ref gameObjectIndex, ref vertexCount, ref faceCount, vertices, faces);
 									}
 									// copied
 									if (vertexCount == 0) {
@@ -638,30 +484,7 @@ public class environmentManager : MonoBehaviour {
 									// pointGrid[(int)(index + 1)].x = 0;
 									// No Triangle
 									if (vertexCount != 0) {
-										Mesh mesh = environmentalHazards [gameObjectIndex].GetComponent<MeshFilter> ().mesh;
-										mesh.Clear();
-										Vector3[] newVertices = new Vector3[vertexCount];
-										for(int i = 0; i < vertexCount; i++){
-											newVertices[i] = vertices[i];
-										}
-										Debug.Log ("nofVertices = " + vertexCount);
-										int[] newFaces = new int[faceCount*3];
-										for(int i = 0; i < faceCount*3; i++){
-											newFaces[i] = faces[i];
-											Debug.Log ("referenced vertex = " + faces[i]);
-										}
-										mesh.vertices = newVertices;
-										mesh.triangles = newFaces;
-										MeshCollider meshCollider = environmentalHazards[gameObjectIndex].GetComponent<MeshCollider>();
-										// meshCollider.sharedMesh = null;
-										meshCollider.sharedMesh = mesh;
-										meshCollider.sharedMesh.RecalculateBounds();
-										meshCollider.sharedMesh.RecalculateNormals();
-										environmentalHazards [gameObjectIndex].SetActive (true);
-										gameObjectIndex++;
-										// Reset datastructures
-										vertexCount = 0;
-										faceCount = 0;
+										createObstacleColliderMesh(ref gameObjectIndex, ref vertexCount, ref faceCount, vertices, faces);
 									}
 								}
 							} else {
@@ -684,81 +507,19 @@ public class environmentManager : MonoBehaviour {
 									faces [(faceCount * 3) + 2] = vertexCount - 1; // top
 									faceCount++;
 									// End of convex shape
-									Mesh mesh = environmentalHazards [gameObjectIndex].GetComponent<MeshFilter> ().mesh;
-									mesh.Clear();
-									Vector3[] newVertices = new Vector3[vertexCount];
-									for(int i = 0; i < vertexCount; i++){
-										newVertices[i] = vertices[i];
-									}
-									int[] newFaces = new int[faceCount*3];
-									for(int i = 0; i < faceCount*3; i++){
-										newFaces[i] = faces[i];
-									}
-									mesh.vertices = newVertices;
-									mesh.triangles = newFaces;
-									MeshCollider meshCollider = environmentalHazards[gameObjectIndex].GetComponent<MeshCollider>();
-									// meshCollider.sharedMesh = null;
-									meshCollider.sharedMesh = mesh;
-									meshCollider.sharedMesh.RecalculateBounds();
-									meshCollider.sharedMesh.RecalculateNormals();
-									environmentalHazards [gameObjectIndex].SetActive (true);
-									gameObjectIndex++;
-									// Reset datastructures
-									vertexCount = 0;
-									faceCount = 0;
+									createObstacleColliderMesh(ref gameObjectIndex, ref vertexCount, ref faceCount, vertices, faces);
+								
 								} else {
 									// pointGrid[(int)(index + environmentalHazardResolution.x + 1)].x = 0;
 									// No Triangle
 									if (vertexCount != 0) {
-										Mesh mesh = environmentalHazards [gameObjectIndex].GetComponent<MeshFilter> ().mesh;
-										mesh.Clear();
-										Vector3[] newVertices = new Vector3[vertexCount];
-										for(int i = 0; i < vertexCount; i++){
-											newVertices[i] = vertices[i];
-										}
-										int[] newFaces = new int[faceCount*3];
-										for(int i = 0; i < faceCount*3; i++){
-											newFaces[i] = faces[i];
-										}
-										mesh.vertices = newVertices;
-										mesh.triangles = newFaces;
-										MeshCollider meshCollider = environmentalHazards[gameObjectIndex].GetComponent<MeshCollider>();
-										// meshCollider.sharedMesh = null;
-										meshCollider.sharedMesh = mesh;
-										meshCollider.sharedMesh.RecalculateBounds();
-										meshCollider.sharedMesh.RecalculateNormals();
-										environmentalHazards [gameObjectIndex].SetActive (true);
-										gameObjectIndex++;
-										// Reset datastructures
-										vertexCount = 0;
-										faceCount = 0;
+										createObstacleColliderMesh(ref gameObjectIndex, ref vertexCount, ref faceCount, vertices, faces);
 									}
 								}
 							}
 						} else {
 							if (vertexCount != 0) {
-								Mesh mesh = environmentalHazards [gameObjectIndex].GetComponent<MeshFilter> ().mesh;
-								mesh.Clear();
-								Vector3[] newVertices = new Vector3[vertexCount];
-								for(int i = 0; i < vertexCount; i++){
-									newVertices[i] = vertices[i];
-								}
-								int[] newFaces = new int[faceCount*3];
-								for(int i = 0; i < faceCount*3; i++){
-									newFaces[i] = faces[i];
-								}
-								mesh.vertices = newVertices;
-								mesh.triangles = newFaces;
-								MeshCollider meshCollider = environmentalHazards[gameObjectIndex].GetComponent<MeshCollider>();
-								// meshCollider.sharedMesh = null;
-								meshCollider.sharedMesh = mesh;
-								meshCollider.sharedMesh.RecalculateBounds();
-								meshCollider.sharedMesh.RecalculateNormals();
-								environmentalHazards [gameObjectIndex].SetActive (true);
-								gameObjectIndex++;
-								// Reset datastructures
-								vertexCount = 0;
-								faceCount = 0;
+								createObstacleColliderMesh(ref gameObjectIndex, ref vertexCount, ref faceCount, vertices, faces);
 							}
 						}
 					} else { 	// Look down for empty points
@@ -779,29 +540,11 @@ public class environmentManager : MonoBehaviour {
 					}
 				
 				}
-				//if(gameObjectIndex == 1)
-				//	break;
 			}
 
 			// if there still is a mesh in construction, then construct it
 			if (vertexCount != 0) {
-				Mesh mesh = environmentalHazards [gameObjectIndex].GetComponent<MeshFilter> ().mesh;
-				mesh.Clear();
-				Vector3[] newVertices = new Vector3[vertexCount];
-				for(int i = 0; i < vertexCount; i++){
-					newVertices[i] = vertices[i];
-				}
-				int[] newFaces = new int[faceCount*3];
-				for(int i = 0; i < faceCount*3; i++){
-					newFaces[i] = faces[i];
-				}
-				mesh.vertices = newVertices;
-				mesh.triangles = newFaces;
-				environmentalHazards [gameObjectIndex].SetActive (true);
-				gameObjectIndex++;
-				// Reset datastructures
-				vertexCount = 0;
-				faceCount = 0;
+				createObstacleColliderMesh(ref gameObjectIndex, ref vertexCount, ref faceCount, vertices, faces);
 			}
 
 
@@ -814,6 +557,48 @@ public class environmentManager : MonoBehaviour {
 				break;
 		}
 	
+	}
+
+	// Creates a 3D Mesh with box collider and resets the passed integer references for reuse
+	private void createObstacleColliderMesh(ref int gameObjectIndex, ref int vertexCount, ref int faceCount, Vector3[] vertices, int[] faces)
+	{
+		Mesh mesh = environmentalHazards [gameObjectIndex].GetComponent<MeshFilter> ().mesh;
+		// environmentalHazards[gameObjectIndex].GetComponent<MeshCollider>().sharedMesh = null;
+		mesh.Clear();
+		Vector3[] newVertices = new Vector3[vertexCount];
+		for(int i = 0; i < vertexCount; i++){
+			newVertices[i] = vertices[i];
+		}
+		int[] newFaces = new int[faceCount*3];
+		for(int i = 0; i < faceCount*3; i++){
+			newFaces[i] = faces[i];
+		}
+		// Set the vertices of the mesh
+		mesh.vertices = newVertices;
+		// Set the triangles of the mesh
+		mesh.triangles = newFaces;
+		// Recalculate bounds and normals of the newly formed mesh
+		mesh.RecalculateBounds();
+		mesh.RecalculateNormals();
+		// Remove the previous box collider
+		Destroy (environmentalHazards[gameObjectIndex].GetComponent<BoxCollider>());
+		// Add a new box collider (with the correct coordinates)
+		environmentalHazards[gameObjectIndex].AddComponent<BoxCollider>();
+		environmentalHazards[gameObjectIndex].GetComponent<BoxCollider>().isTrigger = true;
+		// Make the collider 3D (and not just flat)
+		Vector3 boxSize = environmentalHazards[gameObjectIndex].GetComponent<BoxCollider>().size;
+		environmentalHazards[gameObjectIndex].GetComponent<BoxCollider>().size = new Vector3(boxSize.x, boxSize.y, player.transform.localScale.x*2.0f);
+		//	MeshCollider meshCollider = environmentalHazards[gameObjectIndex].GetComponent<MeshCollider>();
+		// meshCollider.sharedMesh = null;
+		//	meshCollider.sharedMesh = mesh;
+		//	meshCollider.sharedMesh.RecalculateBounds();
+		//	meshCollider.sharedMesh.RecalculateNormals();
+		// Activate the collider
+		environmentalHazards [gameObjectIndex].SetActive (true);
+		gameObjectIndex++;
+		// Reset datastructures
+		vertexCount = 0;
+		faceCount = 0;
 	}
 
 

@@ -76,7 +76,7 @@ public class ramAbility : ability {
 	{
 		cooldownTimer -= Time.deltaTime;
 		transform.localPosition = new Vector3 (0, 0, 0);
-		transform.localScale = new Vector3 (1, 1, 1);
+	//	transform.localScale = new Vector3 (1, 1, 1);
 
 		// Update range and damage
 		damage = internalDamage*parentBlob.transform.localScale.x;
@@ -350,15 +350,13 @@ public class ramAbility : ability {
 		// TODO Change appearance of ability sprite
 	}
 
-	public override float calculateUseProbability(player playerScript, bool attack) 
+	public override float calculateUseProbability(player playerScript, Vector3 toPlayer, bool attack, bool canSeePlayer) 
 	{
-		if (cooldownTimer > 0)
+		if (cooldownTimer > 0 || !canSeePlayer)
 			return 0.0f;
 
 		if (attack) 
 		{
-			Vector3 playerPosition = playerScript.gameObject.transform.position;
-			Vector3 toPlayer = playerPosition - parentBlob.transform.position;
 			float distance = toPlayer.magnitude;
 			if (distance < range) {
 				// Make it more likely to use, if player is behind you (due to fast rotation)

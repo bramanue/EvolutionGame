@@ -145,7 +145,8 @@ public class abilityModificationPanel : MonoBehaviour {
 		// Keep UI panel from rotating with the player's blob
 		transform.rotation = originalRotation;
 		float size = 0.1f/player.transform.localScale.x;
-		transform.localScale = new Vector3 (size, size, size);
+		if(!float.IsInfinity(size))
+			transform.localScale = new Vector3 (size, size, size);
 		if(isInChosingState)
 			gameObject.SetActive(true);
 	}

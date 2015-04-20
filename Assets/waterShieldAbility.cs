@@ -12,6 +12,8 @@ public class waterShieldAbility : ability {
 	private bool inUse;
 
 	private bool deactivateInNextFrame;
+
+	public Material waterShieldMaterial;
 	
 	// Use this for initialization
 	void Start () {
@@ -23,6 +25,8 @@ public class waterShieldAbility : ability {
 		isPlayer = (bool)parentPlayerScript;
 		
 		cooldownTimer = 0.0f;
+
+		increaseLevel (0);
 
 		maxTimeInWater = 30.0f + 30.0f * level;
 		timer = maxTimeInWater;
@@ -44,7 +48,8 @@ public class waterShieldAbility : ability {
 
 		if (inUse) {
 			// TODO change visuals
-			((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = new Color(0.0f,0,1.0f,0.8f);
+			((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = waterShieldMaterial;
+			//((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = new Color(0.0f,0,1.0f,0.8f);
 			
 			// Make sure ability is not able to be used forever unless the ability is at its max level
 			if(level < maxLevel)
@@ -65,10 +70,12 @@ public class waterShieldAbility : ability {
 			// Reset to default sprite if no other shield is active
 			if(isPlayer) {
 				if(parentPlayerScript.shieldInUse == null)
-					((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentPlayerScript.defaultColor;
+					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentPlayerScript.defaultMaterial;
+					//((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentPlayerScript.defaultColor;
 			} else {
 				if(parentEnemyScript.shieldInUse == null)
-					((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentEnemyScript.defaultColor;
+					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentEnemyScript.defaultMaterial;
+					//((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentEnemyScript.defaultColor;
 			}
 		}
 		deactivateInNextFrame = true;
@@ -140,6 +147,29 @@ public class waterShieldAbility : ability {
 		} else {
 			return false;
 		}
+	}
+
+	public override float calculateUseProbability(player playerScript, Vector3 toPlayer, bool attack, bool canSeePlayer) 
+	{
+		if (cooldownTimer > 0)
+			return 0.0f;
+
+		// If we are in the water, return a high probability
+		if (parentEnemyScript.currentEnvironment != null && parentEnemyScript.currentEnvironment.requiredAbility == EAbilityType.EWaterShieldAbility) {
+			return 0.9f;
+		}
+
+		// If we are close to the water, also return a high probability
+		if (parentEnemyScript.environmentProximityData != null && parentEnemyScript.environmentProximityData.requiredAbility == EAbilityType.EWaterShieldAbility) {
+			return 0.7f;
+		}
+
+		// If player has an active lava shield and is close to the enemy, then activate the water shield
+		if (canSeePlayer && playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.ELavaShieldAbility && toPlayer.magnitude - parentBlob.transform.localScale.x - playerScript.size < parentBlob.transform.localScale.x) {
+			return 0.8f;
+		}
+
+		return 0.0f;
 	}
 	
 	public override EAbilityType getAbilityEnum()

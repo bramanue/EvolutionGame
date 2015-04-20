@@ -20,8 +20,6 @@ public class water : hazardousEnvironment {
 
 		if (playerScript) 
 		{
-		/*	if( playerScript.hasAbility(EAbilityType.EWaterShieldAbility) != -1 ) 
-				Debug.Log ("Player could swim :) and uses the shield " + playerScript.shieldInUse);*/
 			if(playerScript.shieldInUse != null && playerScript.shieldInUse.getAbilityEnum() == EAbilityType.EWaterShieldAbility) {
 				// Nothing to do, player can stay
 			}
@@ -36,9 +34,6 @@ public class water : hazardousEnvironment {
 		}
 		else if (enemyScript) 
 		{
-			/*	if( enemyScript.hasAbility(EAbilityType.EWaterShieldAbility) != -1 ) {
-				// Nothing to do, enemy can enter
-			}*/
 			if(enemyScript.shieldInUse != null && enemyScript.shieldInUse.getAbilityEnum() == EAbilityType.EWaterShieldAbility) {
 				// Nothing to do, player can stay
 			}
@@ -70,7 +65,7 @@ public class water : hazardousEnvironment {
 				// Throw back approacher
 				Vector3 repulsionNormal = getRepulsionNormal(other.gameObject, null, playerScript);
 				repulsionNormal = -playerScript.viewingDirection;
-				playerScript.addEnvironmentPushBackForce(Time.deltaTime*playerScript.currentSpeed*slowDownFactor*repulsionNormal);
+				playerScript.applyEnvironmentalSlowDown(slowDownFactor);
 				// Start drowning (damage dependent on frames per second)
 				playerScript.inflictEnvironmentalDamage(Time.deltaTime*damagePerSecond);
 			}
@@ -79,9 +74,6 @@ public class water : hazardousEnvironment {
 		else if (enemyScript) 
 		{
 			enemyScript.currentEnvironment = this;
-		/*	if( enemyScript.hasAbility(EAbilityType.EWaterShieldAbility) != -1 ) {
-				// Nothing to do, enemy can enter
-			}*/
 			if(enemyScript.shieldInUse != null && enemyScript.shieldInUse.getAbilityEnum() == EAbilityType.EWaterShieldAbility) {
 				// Nothing to do, player can stay
 			}
@@ -89,7 +81,7 @@ public class water : hazardousEnvironment {
 			{
 				// Throw back approacher
 				Vector3 repulsionNormal = getRepulsionNormal(other.gameObject, enemyScript, null);
-				enemyScript.addEnvironmentPushBackForce(Time.deltaTime*enemyScript.currentSpeed*slowDownFactor*repulsionNormal);
+				enemyScript.applyEnvironmentalSlowDown(slowDownFactor);
 				// Start drowning (damage dependent on frames per second)
 				enemyScript.inflictEnvironmentalDamage(Time.deltaTime*damagePerSecond);
 			}

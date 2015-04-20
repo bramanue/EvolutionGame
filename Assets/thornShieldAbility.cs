@@ -13,6 +13,8 @@ public class thornShieldAbility : ability {
 
 	private bool deactivateInNextFrame;
 
+	public Material thornShieldMaterial;
+
 	// Use this for initialization
 	void Start () {
 		// Get the game object which has this ram ability
@@ -21,7 +23,9 @@ public class thornShieldAbility : ability {
 		parentEnemyScript = (enemy)parentBlob.GetComponent(typeof(enemy));
 		parentPlayerScript = (player)parentBlob.GetComponent(typeof(player));
 		isPlayer = (bool)parentPlayerScript;
-		
+
+		increaseLevel (0);
+
 		cooldownTimer = 0.0f;
 		maxTimeInThorns = 30.0f + 30.0f * level;
 		timer = maxTimeInThorns;
@@ -43,7 +47,8 @@ public class thornShieldAbility : ability {
 
 		if (inUse) {
 			// TODO change visuals
-			((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = new Color(0.9f,0,0.9f,1.0f);
+			((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = thornShieldMaterial;
+		//	((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = new Color(0.9f,0,0.9f,1.0f);
 			
 			// Make sure ability is not able to be used forever unless the ability is at its max level
 			if(level < maxLevel)
@@ -63,11 +68,13 @@ public class thornShieldAbility : ability {
 			
 			// Reset to default sprite if no other shield is active
 			if(isPlayer) {
-				if(parentPlayerScript.shieldInUse == null)
-					((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentPlayerScript.defaultColor;
+				if(parentPlayerScript.shieldInUse == null) 
+				//	((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentPlayerScript.defaultColor;
+					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentPlayerScript.defaultMaterial;
 			} else {
 				if(parentEnemyScript.shieldInUse == null)
-					((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentEnemyScript.defaultColor;
+				//	((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentEnemyScript.defaultColor;
+					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentEnemyScript.defaultMaterial;
 			}
 		}
 		deactivateInNextFrame = true;
@@ -141,6 +148,37 @@ public class thornShieldAbility : ability {
 		} else {
 			return false;
 		}
+	}
+
+	public override float calculateUseProbability(player playerScript, Vector3 toPlayer, bool attack, bool canSeePlayer) 
+	{
+		if (cooldownTimer > 0)
+			return 0.0f;
+		
+		// If we are in the water, return a high probability
+		if (parentEnemyScript.currentEnvironment != null && parentEnemyScript.currentEnvironment.requiredAbility == EAbilityType.EThornShieldAbility) {
+			return 0.9f;
+		}
+		
+		// If we are close to the water, also return a high probability
+		if (parentEnemyScript.environmentProximityData != null && parentEnemyScript.environmentProximityData.requiredAbility == EAbilityType.EThornShieldAbility) {
+			return 0.7f;
+		}
+
+		// If running away from player and player is close enough, activate shield for defense
+		if (attack == false && canSeePlayer && toPlayer.magnitude - parentBlob.transform.localScale.x - playerScript.size < parentBlob.transform.localScale.x) {
+			return 0.8f;
+		}
+
+		// If attacking player and remaining use time is high enough, then activate the shield
+		if (attack && maxTimeInThorns > 15) {
+			if(playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.ELavaShieldAbility)
+				return Random.Range(0.0f,0.3f);
+			else
+				return 0.8f;
+		}
+		
+		return 0.0f;
 	}
 
 	public override EAbilityType getAbilityEnum()

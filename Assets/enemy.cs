@@ -126,6 +126,8 @@ public class enemy : MonoBehaviour {
 	// Defines by which factor velocity should be removed for idle walking actions
 	private float idleSpeedReduction = 0.4f;
 
+	private float environmentalSlowDown = 1.0f;
+
 
 	// The location, this enemy wants to walk to.
 	private Vector3 idleWalkingTarget;
@@ -170,7 +172,7 @@ public class enemy : MonoBehaviour {
 
 	public Color defaultColor = new Color(0.75f,0.0f,0.0f);
 
-
+	public Material defaultMaterial;
 
 
 	// Use this for initialization
@@ -245,7 +247,7 @@ public class enemy : MonoBehaviour {
 		}
 
 		// Calculate the current maximally achievable speed
-		currentSpeed = baseVelocity + runVelocityBoost;
+		currentSpeed = (baseVelocity + runVelocityBoost)*environmentalSlowDown;
 
 		// Move and use abilities if not stunned
 		if (!stunned) {
@@ -376,6 +378,8 @@ public class enemy : MonoBehaviour {
 		size -= environmentalDamage;
 		environmentalDamage = 0.0f;
 
+		environmentalSlowDown = 1.0f;
+
 		if (currentEnvironment == null)
 			lastSecureSpot = transform.position;
 	}
@@ -420,7 +424,7 @@ public class enemy : MonoBehaviour {
 		// Decide on a shield to use if any
 		float[] useShieldProbabilities = new float[2];
 		for (int i = 4; i < 6; i++) {
-			useShieldProbabilities[i-4] = (abilities[i] != null) ? abilities[i].calculateUseProbability(playerScript, isHuntingPlayer) : 0.0f;
+			useShieldProbabilities[i-4] = (abilities[i] != null) ? abilities[i].calculateUseProbability(playerScript, toPlayer, isHuntingPlayer, canSeePlayer) : 0.0f;
 		}
 		int mostProbableShieldIndex = -1;
 		float maxShieldUseProbability = 0.0f;
@@ -441,7 +445,7 @@ public class enemy : MonoBehaviour {
 			// Decide on an attack ability to use if any
 			float[] useProbabilities = new float[4];
 			for (int i = 0; i < 4; i++) {
-				useProbabilities[i] = (abilities[i] != null) ? abilities[i].calculateUseProbability(playerScript, isHuntingPlayer) : -1.0f;
+				useProbabilities[i] = (abilities[i] != null) ? abilities[i].calculateUseProbability(playerScript, toPlayer, isHuntingPlayer, canSeePlayer) : -1.0f;
 			}
 			int mostProbableIndex = -1;
 			float maxUseProbability = 0.0f;
@@ -515,7 +519,7 @@ public class enemy : MonoBehaviour {
 					return;	
 				} else {
 					// Perform rotation and moving with max speed
-					currentSpeed = baseVelocity + runVelocityBoost;
+					currentSpeed = (baseVelocity + runVelocityBoost)*environmentalSlowDown;
 					performRotation (idleRotationTarget);
 					transform.position += viewingDirection * currentSpeed * Time.deltaTime;
 					return;
@@ -531,7 +535,7 @@ public class enemy : MonoBehaviour {
 
 			Debug.Log ("Inside hazardous environment. Get out straight on");
 			// Perform rotation and moving with max speed
-			currentSpeed = baseVelocity + runVelocityBoost;
+			currentSpeed = (baseVelocity + runVelocityBoost)*environmentalSlowDown;
 			transform.position += viewingDirection * currentSpeed * Time.deltaTime;
 			return;
 		}
@@ -878,6 +882,11 @@ public class enemy : MonoBehaviour {
 	public void inflictEnvironmentalDamage(float damage)
 	{
 		environmentalDamage = Mathf.Max (environmentalDamage,damage);
+	}
+
+	public void applyEnvironmentalSlowDown(float slowDown)
+	{
+		environmentalSlowDown = slowDown;
 	}
 
 	// Add force induced by hazardous environment

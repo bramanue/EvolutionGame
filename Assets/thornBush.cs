@@ -22,20 +22,6 @@ public class thornBush : hazardousEnvironment {
 
 		if (playerScript) 
 		{
-		/*	if( playerScript.hasAbility(EAbilityType.EThornShieldAbility) != -1 ) {
-				// Nothing to do, player can enter
-				// TODO play sound or such
-			}
-			else
-			{
-				// Player takes damager
-				playerScript.size -= 0.1f;
-				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= playerScript.viewingDirection;
-				// Disable player for a short time
-				playerScript.setStunned(0.3f);
-			}*/
 		
 			if( playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.EThornShieldAbility ) {
 				// Nothing to do, player can enter
@@ -44,10 +30,10 @@ public class thornBush : hazardousEnvironment {
 			else
 			{
 				// Player takes damager
-				playerScript.size -= 0.1f;
+				playerScript.inflictEnvironmentalDamage(0.1f);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= playerScript.viewingDirection;
+				playerScript.addEnvironmentPushBackForce(playerScript.viewingDirection);
 				// Disable player for a short time
 				playerScript.setStunned(0.3f);
 			}
@@ -55,20 +41,6 @@ public class thornBush : hazardousEnvironment {
 		}
 		else if (enemyScript) 
 		{
-		/*	if( enemyScript.hasAbility(EAbilityType.EThornShieldAbility) != -1 ) {
-				// Nothing to do, enemy can enter
-				// TODO play sound or such
-			}
-			else
-			{
-				// Enemy takes damager
-				enemyScript.size -= 0.1f;
-				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
-				// Disable enemy for a short time
-				enemyScript.setStunned(0.3f);
-			}*/
 
 			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum == EAbilityType.EThornShieldAbility ) {
 				// Nothing to do, enemy can enter
@@ -77,10 +49,10 @@ public class thornBush : hazardousEnvironment {
 			else
 			{
 				// Enemy takes damager
-				enemyScript.size -= 0.1f;
+				enemyScript.inflictEnvironmentalDamage(0.1f);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
+				enemyScript.addEnvironmentPushBackForce(enemyScript.viewingDirection);
 				// Disable enemy for a short time
 				enemyScript.setStunned(0.3f);
 			}
@@ -96,19 +68,6 @@ public class thornBush : hazardousEnvironment {
 		if (playerScript) 
 		{
 			playerScript.currentEnvironment = this;
-		/*	if( playerScript.hasAbility(EAbilityType.EThornShieldAbility) != -1 ) {
-				// Nothing to do, player can enter
-			}
-			else
-			{
-				// Player takes damager
-				playerScript.size -= 0.1f;
-				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= playerScript.viewingDirection;
-				// Disable player for a short time
-				playerScript.setStunned(0.3f);
-			}*/
 
 			if( playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.EThornShieldAbility ) {
 				// Nothing to do, player can enter
@@ -129,20 +88,6 @@ public class thornBush : hazardousEnvironment {
 		else if (enemyScript) 
 		{
 			enemyScript.currentEnvironment = this;
-		/*	if( enemyScript.hasAbility(EAbilityType.EThornShieldAbility) != -1 ) {
-				// Nothing to do, enemy can enter
-				// TODO play sound or such
-			}
-			else
-			{
-				// Enemy takes damager
-				enemyScript.size -= 0.1f;
-				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
-				// Disable enemy for a short time
-				enemyScript.setStunned(0.3f);
-			}*/
 
 			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum == EAbilityType.EThornShieldAbility ) {
 				// Nothing to do, enemy can enter

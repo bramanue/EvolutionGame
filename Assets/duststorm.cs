@@ -20,22 +20,7 @@ public class dustStorm : hazardousEnvironment {
 		
 		if (playerScript) 
 		{
-		/*	if( playerScript.hasAbility(EAbilityType.EDustShieldAbility) != -1 ) {
-				// Nothing to do, player can enter
-				// TODO play sound or such
-			}
-			else
-			{
-				Debug.Log ("Player has no dust shield!");
-				// Player takes damager
-				playerScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
-				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= playerScript.viewingDirection;
-				// Disable player for a short time
-			//	playerScript.setStunned(0.3f);
-			}*/
-
+		
 			if( playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.EDustShieldAbility) {
 				// Nothing to do, player can enter
 				// TODO play sound or such
@@ -46,29 +31,12 @@ public class dustStorm : hazardousEnvironment {
 				playerScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= playerScript.viewingDirection;
-				// Disable player for a short time
-				//	playerScript.setStunned(0.3f);
+				playerScript.applyEnvironmentalSlowDown(slowDownFactor);
 			}
 			
 		}
 		else if (enemyScript) 
 		{
-		/*	if( enemyScript.hasAbility(EAbilityType.EDustShieldAbility) != -1 ) {
-				// Nothing to do, enemy can enter
-				// TODO play sound or such
-			}
-			else
-			{
-				Debug.Log ("Enemy has no dust shield!");
-				// Enemy takes damager
-				enemyScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
-				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
-				// Disable enemy for a short time
-				// enemyScript.setStunned(0.3f);
-			}*/
 
 			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum != EAbilityType.EDustShieldAbility ) {
 				// Nothing to do, enemy can enter
@@ -76,13 +44,11 @@ public class dustStorm : hazardousEnvironment {
 			}
 			else
 			{
-				// Enemy takes damager
+				// Player takes damager
 				enemyScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
-				// Disable enemy for a short time
-				// enemyScript.setStunned(0.3f);
+				enemyScript.applyEnvironmentalSlowDown(slowDownFactor);
 			}
 		}
 	}
@@ -96,21 +62,7 @@ public class dustStorm : hazardousEnvironment {
 		if (playerScript) 
 		{
 			playerScript.currentEnvironment = this;
-			/*	if( playerScript.hasAbility(EAbilityType.EDustShieldAbility) != -1 ) {
-				// Nothing to do, player can enter
-				// TODO play sound or such
-			}
-			else
-			{
-				Debug.Log ("Player has no dust shield!");
-				// Player takes damager
-				playerScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
-				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= playerScript.viewingDirection;
-				// Disable player for a short time
-			//	playerScript.setStunned(0.3f);
-			}*/
+
 			
 			if( playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.EDustShieldAbility) {
 				// Nothing to do, player can enter
@@ -122,44 +74,25 @@ public class dustStorm : hazardousEnvironment {
 				playerScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= playerScript.viewingDirection;
-				// Disable player for a short time
-				//	playerScript.setStunned(0.3f);
+				playerScript.applyEnvironmentalSlowDown(slowDownFactor);
 			}
 			
 		}
 		else if (enemyScript) 
 		{
 			enemyScript.currentEnvironment = this;
-			/*	if( enemyScript.hasAbility(EAbilityType.EDustShieldAbility) != -1 ) {
-				// Nothing to do, enemy can enter
-				// TODO play sound or such
-			}
-			else
-			{
-				Debug.Log ("Enemy has no dust shield!");
-				// Enemy takes damager
-				enemyScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
-				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
-				// Disable enemy for a short time
-				// enemyScript.setStunned(0.3f);
-			}*/
-			
+
 			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum != EAbilityType.EDustShieldAbility ) {
 				// Nothing to do, enemy can enter
 				// TODO play sound or such
 			}
 			else
 			{
-				// Enemy takes damager
+				// Player takes damager
 				enemyScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
-				// Disable enemy for a short time
-				// enemyScript.setStunned(0.3f);
+				enemyScript.applyEnvironmentalSlowDown(slowDownFactor);
 			}
 		}
 	}

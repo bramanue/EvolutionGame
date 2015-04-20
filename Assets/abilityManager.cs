@@ -135,7 +135,7 @@ public class abilityManager : MonoBehaviour {
 		}
 
 		abilityObject.transform.parent = parent.transform;
-		ability abilityScript = (ability)ramAbility.GetComponent(typeof(ability));
+		ability abilityScript = (ability)abilityObject.GetComponent(typeof(ability));
 		abilityScript.level = level;
 
 		enemy enemyScript = (enemy)parent.GetComponent(typeof(enemy));

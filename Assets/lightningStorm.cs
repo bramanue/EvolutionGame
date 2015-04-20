@@ -22,22 +22,6 @@ public class lightningStorm : hazardousEnvironment {
 		
 		if (playerScript) 
 		{
-		/*	if( playerScript.hasAbility(EAbilityType.EElectricityShieldAbility) != -1 ) {
-				// Nothing to do, player can enter
-				// TODO play sound or such
-			}
-			else
-			{
-				Debug.Log ("Player has no electricity shield!");
-				// Player takes damager
-				playerScript.size -= 0.1f;
-				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= playerScript.viewingDirection;
-				// Disable player for a short time
-				playerScript.setStunned(0.3f);
-			}*/
-
 			if( playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.EElectricityShieldAbility ) {
 				// Nothing to do, player can enter
 				// TODO play sound or such
@@ -45,32 +29,15 @@ public class lightningStorm : hazardousEnvironment {
 			else
 			{
 				// Player takes damager
-				playerScript.size -= 0.1f;
+				playerScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= playerScript.viewingDirection;
-				// Disable player for a short time
-				playerScript.setStunned(0.3f);
+				playerScript.applyEnvironmentalSlowDown(slowDownFactor);
 			}
 			
 		}
 		else if (enemyScript) 
 		{
-		/*	if( enemyScript.hasAbility(EAbilityType.EElectricityShieldAbility) != -1 ) {
-				// Nothing to do, enemy can enter
-				// TODO play sound or such
-			}
-			else
-			{
-				Debug.Log ("Enemy has no electricity shield!");
-				// Enemy takes damager
-				enemyScript.size -= 0.1f;
-				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
-				// Disable enemy for a short time
-				enemyScript.setStunned(0.3f);
-			}*/
 
 			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum == EAbilityType.EElectricityShieldAbility ) {
 				// Nothing to do, enemy can enter
@@ -79,12 +46,10 @@ public class lightningStorm : hazardousEnvironment {
 			else
 			{
 				// Enemy takes damager
-				enemyScript.size -= 0.1f;
+				enemyScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
-				// Disable enemy for a short time
-				enemyScript.setStunned(0.3f);
+				enemyScript.applyEnvironmentalSlowDown(slowDownFactor);
 			}
 		}
 	}
@@ -97,22 +62,7 @@ public class lightningStorm : hazardousEnvironment {
 		if (playerScript) 
 		{
 			playerScript.currentEnvironment = this;
-			/*	if( playerScript.hasAbility(EAbilityType.EElectricityShieldAbility) != -1 ) {
-				// Nothing to do, player can enter
-				// TODO play sound or such
-			}
-			else
-			{
-				Debug.Log ("Player has no electricity shield!");
-				// Player takes damager
-				playerScript.size -= 0.1f;
-				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= playerScript.viewingDirection;
-				// Disable player for a short time
-				playerScript.setStunned(0.3f);
-			}*/
-			
+
 			if( playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.EElectricityShieldAbility ) {
 				// Nothing to do, player can enter
 				// TODO play sound or such
@@ -120,47 +70,28 @@ public class lightningStorm : hazardousEnvironment {
 			else
 			{
 				// Player takes damager
-				playerScript.size -= 0.1f;
+				playerScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= playerScript.viewingDirection;
-				// Disable player for a short time
-				playerScript.setStunned(0.3f);
+				playerScript.applyEnvironmentalSlowDown(slowDownFactor);
 			}
 			
 		}
 		else if (enemyScript) 
 		{
 			enemyScript.currentEnvironment = this;
-			/*	if( enemyScript.hasAbility(EAbilityType.EElectricityShieldAbility) != -1 ) {
-				// Nothing to do, enemy can enter
-				// TODO play sound or such
-			}
-			else
-			{
-				Debug.Log ("Enemy has no electricity shield!");
-				// Enemy takes damager
-				enemyScript.size -= 0.1f;
-				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
-				// Disable enemy for a short time
-				enemyScript.setStunned(0.3f);
-			}*/
-			
+
 			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum == EAbilityType.EElectricityShieldAbility ) {
 				// Nothing to do, enemy can enter
 				// TODO play sound or such
 			}
 			else
 			{
-				// Enemy takes damager
-				enemyScript.size -= 0.1f;
+				/// Enemy takes damager
+				enemyScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
-				// Disable enemy for a short time
-				enemyScript.setStunned(0.3f);
+				enemyScript.applyEnvironmentalSlowDown(slowDownFactor);
 			}
 		}
 	}

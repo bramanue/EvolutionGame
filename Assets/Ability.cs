@@ -72,7 +72,7 @@ public class ability : MonoBehaviour {
 	}
 
 	// Returns the chance of using this ability (for the AI)
-	public virtual float calculateUseProbability(player playerScript, bool attack) {
+	public virtual float calculateUseProbability(player playerScript, Vector3 toPlayer, bool attack, bool canSeePlayer) {
 		return 0.0f;
 	}
 

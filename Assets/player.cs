@@ -87,6 +87,10 @@ public class player : MonoBehaviour
 
 	public Color defaultColor = new Color(0.7f,0.7f,1.0f);
 
+	public float environmentalSlowDown = 1.0f; 
+
+	public Material defaultMaterial;
+
 
 	// Use this for initialization
 	void Start()
@@ -100,6 +104,8 @@ public class player : MonoBehaviour
 		// Get the ability modification panel
 		abilityModificationScript = (abilityModificationPanel)(this.GetComponentInChildren (typeof(abilityModificationPanel)));
 		abilityModificationScript.gameObject.SetActive (false);
+
+	//	((meshDistorter)this.GetComponent (typeof(meshDistorter))).distortMesh ();
 	}
 	
 	// Update is called once per frame
@@ -264,71 +270,14 @@ public class player : MonoBehaviour
 					}
 				}
 
-				/*
-				float shield0 = Input.GetAxis("Shield0");
-				float shield1 = Input.GetAxis("Shield1");
-				if(shield0 > shield1) {
-					Debug.Log ("Shield0");
-					if (abilities [4] != null && abilities [4].useAbility ()) {
-							shieldInUse = abilities[4];
-					}
-					else if(shield1 > 0) {
-						if (abilities [5] != null && abilities [5].useAbility ()) {
-							shieldInUse = abilities[5];
-						}
-					}
-				}
-				else if (shield1 > shield0)
-				{
-					Debug.Log ("Shield1");
-					if (abilities [5] != null && abilities [5].useAbility ()) {
-							shieldInUse = abilities[5];
-					}
-					else if(shield0 > 0) {
-						if (abilities [4] != null && abilities [4].useAbility ()) {
-							shieldInUse = abilities[4];
-						}
-					}
-				}
-				// If both triggers are fully pressed stay with the ability that was used before
-				else if (shield0 == 1.0f && shield1 == 1.0f) {
-					Debug.Log ("Shield0&1");
-					if(oldShield != null) {
-						// Try to keep the previously active ability
-						if (oldShield.useAbility ()) {
-							shieldInUse = oldShield;
-							// Everything OK
-						}
-						else 
-						{
-							// The previously active shield could no longer be acivated. Try to activate the other one
-							if(abilities [4] != oldShield && abilities [4] != null && abilities [4].useAbility ()) {
-								shieldInUse = abilities[4];
-							}
-							else if(abilities [5] != oldShield && abilities [5] != null && abilities [5].useAbility ()) {
-								shieldInUse = abilities[5];
-							}
-						}
-					}
-					else 	// If there wasn't any shield active before, favour the first shield ability
-					{
-						if (abilities [4] != null && abilities [4].useAbility ()) {
-							shieldInUse = abilities[4];
-						}
-						else if (abilities [5] != null && abilities [5].useAbility ()) {
-							shieldInUse = abilities[5];
-						}
-					}
-				}
-				*/
-
 
 				if (canMove) 
 				{
 					// Get the target direction from user input
 					Vector3 targetDirection = new Vector3 (Input.GetAxis ("Horizontal"), Input.GetAxis ("Vertical"), 0.0f).normalized;
 					// Calculate the current maximally achievable speed
-					currentSpeed = baseVelocity + runVelocityBoost;
+					currentSpeed = (baseVelocity + runVelocityBoost)*environmentalSlowDown;
+					environmentalSlowDown = 1.0f;
 					// Get the desired speed fraction
 					float speedFraction =  targetDirection.magnitude;
 
@@ -514,6 +463,11 @@ public class player : MonoBehaviour
 	{
 		// There will be only environmental damage by one collider in each frame (the maximum)
 		environmentalDamage = Mathf.Max (environmentalDamage,damage);
+	}
+
+	public void applyEnvironmentalSlowDown(float slowDown)
+	{
+		environmentalSlowDown = slowDown;
 	}
 
 	public void inflictDamage(float damage)

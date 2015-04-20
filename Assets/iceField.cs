@@ -22,21 +22,6 @@ public class iceField : hazardousEnvironment {
 		
 		if (playerScript) 
 		{
-		/*	if( playerScript.hasAbility(EAbilityType.EIceShieldAbility) != -1 ) {
-				// Nothing to do, player can enter
-				// TODO play sound or such
-			}
-			else
-			{
-				Debug.Log ("Player has no ice shield!");
-				// Player takes damager
-				playerScript.size -= 0.1f;
-				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= playerScript.viewingDirection;
-				// Disable player for a short time
-				playerScript.setStunned(0.3f);
-			}*/
 
 			if( playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.EIceShieldAbility ) {
 				// Nothing to do, player can enter
@@ -44,34 +29,16 @@ public class iceField : hazardousEnvironment {
 			}
 			else
 			{
-				// Player takes damager
-				playerScript.size -= 0.1f;
+				// Enemy takes damager
+				playerScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= playerScript.viewingDirection;
-				// Disable player for a short time
-				playerScript.setStunned(0.3f);
+				playerScript.applyEnvironmentalSlowDown(slowDownFactor);
 			}
 			
 		}
 		else if (enemyScript) 
 		{
-		/*	if( enemyScript.hasAbility(EAbilityType.EIceShieldAbility) != -1 ) {
-				// Nothing to do, enemy can enter
-				// TODO play sound or such
-			}
-			else
-			{
-				Debug.Log ("Enemy has no ice shield!");
-				// Enemy takes damager
-				enemyScript.size -= 0.1f;
-				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
-				// Disable enemy for a short time
-				enemyScript.setStunned(0.3f);
-			}*/
-		
 
 			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum != EAbilityType.EIceShieldAbility ) {
 				// Nothing to do, enemy can enter
@@ -80,12 +47,10 @@ public class iceField : hazardousEnvironment {
 			else
 			{
 				// Enemy takes damager
-				enemyScript.size -= 0.1f;
+				enemyScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
-				// Disable enemy for a short time
-				enemyScript.setStunned(0.3f);
+				enemyScript.applyEnvironmentalSlowDown(slowDownFactor);
 			}
 		}
 	}
@@ -98,58 +63,25 @@ public class iceField : hazardousEnvironment {
 		if (playerScript) 
 		{
 			playerScript.currentEnvironment = this;
-			/*	if( playerScript.hasAbility(EAbilityType.EIceShieldAbility) != -1 ) {
-			// Nothing to do, player can enter
-			// TODO play sound or such
-		}
-		else
-		{
-			Debug.Log ("Player has no ice shield!");
-			// Player takes damager
-			playerScript.size -= 0.1f;
-			// Throw back approacher
-			// TODO throw back in normal direction of the thorn bush
-			other.gameObject.transform.position -= playerScript.viewingDirection;
-			// Disable player for a short time
-			playerScript.setStunned(0.3f);
-		}*/
-			
+
 			if( playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.EIceShieldAbility ) {
 				// Nothing to do, player can enter
 				// TODO play sound or such
 			}
 			else
 			{
-				// Player takes damager
-				playerScript.size -= 0.1f;
+				// Enemy takes damager
+				playerScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= playerScript.viewingDirection;
-				// Disable player for a short time
-				playerScript.setStunned(0.3f);
+				playerScript.applyEnvironmentalSlowDown(slowDownFactor);
 			}
 			
 		}
 		else if (enemyScript) 
 		{
 			enemyScript.currentEnvironment = this;
-			/*	if( enemyScript.hasAbility(EAbilityType.EIceShieldAbility) != -1 ) {
-			// Nothing to do, enemy can enter
-			// TODO play sound or such
-		}
-		else
-		{
-			Debug.Log ("Enemy has no ice shield!");
-			// Enemy takes damager
-			enemyScript.size -= 0.1f;
-			// Throw back approacher
-			// TODO throw back in normal direction of the thorn bush
-			other.gameObject.transform.position -= enemyScript.viewingDirection;
-			// Disable enemy for a short time
-			enemyScript.setStunned(0.3f);
-		}*/
-	
-			
+
 			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum != EAbilityType.EIceShieldAbility ) {
 				// Nothing to do, enemy can enter
 				// TODO play sound or such
@@ -157,12 +89,10 @@ public class iceField : hazardousEnvironment {
 			else
 			{
 				// Enemy takes damager
-				enemyScript.size -= 0.1f;
+				enemyScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
-				// Disable enemy for a short time
-				enemyScript.setStunned(0.3f);
+				enemyScript.applyEnvironmentalSlowDown(slowDownFactor);
 			}
 		}
 	}

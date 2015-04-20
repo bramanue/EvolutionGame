@@ -38,7 +38,7 @@ public class runAbility : ability {
 			parentEnemyScript.maxVelocity = parentEnemyScript.baseVelocity + maxSpeed;
 		
 		cooldownTime = 0;
-		maxLevel = 20;
+		maxLevel = 40;
 		abilityName = "Running ability";
 		abilitySuperClassEnum = EAbilityClass.EPassiveAbility;
 	}
@@ -63,7 +63,7 @@ public class runAbility : ability {
 	{
 		int previousLevel = level;
 		level = Mathf.Max (0, Mathf.Min(level + x, maxLevel));
-		maxSpeed = level;
+		maxSpeed = 0.5f*level;
 		Debug.Log (x + " to run ability");
 
 		
