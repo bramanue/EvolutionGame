@@ -15,13 +15,35 @@ public class dangerProximity {
 
 	public Vector3[] directions = new Vector3[3];
 
+	private Vector3 closestProximityVector;
+
+	private float closestDistance;
 
 
 	public dangerProximity()
 	{ }
 
+	public void registerIntersection(Vector3 vectorToObstacle)
+	{
+		float distance = vectorToObstacle.magnitude;
+	//	Debug.Log (distance + " vs " + closestDistance);
+		if (distance < closestDistance) {
+			closestDistance = distance;
+			closestProximityVector = vectorToObstacle;
+		//	Debug.Log ("New closest distance" + closestProximityVector);
+		}
+	}
+
+	public void clearData()
+	{
+		closestDistance = float.MaxValue;
+		closestProximityVector = new Vector3 (0, -float.MaxValue, 0);
+	}
+
 	public Vector3 getClosestDirection() 
 	{
+		return closestProximityVector;
+
 		int closestIndex = 0;
 		float closestDistance = distances [0];
 		for (int i = 1; i < nofSamples; i++) {
@@ -36,6 +58,8 @@ public class dangerProximity {
 	// Get the vector in which direction there most probably is no dangerous structure
 	public Vector3 getSafestDirection()
 	{
+		return -closestProximityVector.normalized;
+
 		// The index where the safest direction is stored
 		int furthestIndex = 0;
 		// The distance to the dangerous object in the safest direction

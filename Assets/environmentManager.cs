@@ -113,6 +113,9 @@ public class environmentManager : MonoBehaviour {
 
 	public float backgroundTimeMultiplier = 0.3f;
 
+	// The size of the environment texture in global space(should cover viewing range)
+	public Vector2 mainTextureSize;
+
 
 	// Use this for initialization
 	void Start () {
@@ -236,6 +239,7 @@ public class environmentManager : MonoBehaviour {
 
 		float viewingRange = playerScript.viewingRange*2.0f;
 		Vector3 playerPos = player.transform.position;
+		mainTextureSize = new Vector2 (2.0f*(viewingRange+player.transform.localScale.x), 2.0f*(viewingRange+player.transform.localScale.y));
 
 		// Loop over the 9 planes from the bottom left row-wise to the top
 		for (int i = 0; i < 9; i++) {
@@ -272,10 +276,7 @@ public class environmentManager : MonoBehaviour {
 		// TODO update perlin noise parameters according to time
 
 		// Calculate current environment texture
-	//	calculateEnvironmentTexture ();
-
-		// Calculate 3D terrain
-	//	calculateTerrainMap ();
+		calculateEnvironmentTexture ();
 
 		for (int i = 0; i < 9; i++) {
 			if (environmentPlaneTiles[planeTileOrdering[i]].activeSelf) {
@@ -526,7 +527,7 @@ public class environmentManager : MonoBehaviour {
 		float xOffset = player.transform.position.x + randomInitialValue;
 		float yOffset = player.transform.position.y + randomInitialValue;
 		// Calculate for each texture what distance each pixel covers in world coordinates
-		Vector2 distancePerPixel = new Vector2 (meshSize.x / mainTextureResolution.x, meshSize.y / mainTextureResolution.y);
+		Vector2 distancePerPixel = new Vector2 (mainTextureSize.x / mainTextureResolution.x, mainTextureSize.y / mainTextureResolution.y);
 		// Get the current time for time dependent perlin noise
 		float currentTime = Time.time;
 
@@ -590,9 +591,9 @@ public class environmentManager : MonoBehaviour {
 	private void generateEnvironmentalHazards (float threshold1, float[] mask1)
 	{
 		Vector2[] pointGrid = new Vector2[(int)(environmentalHazardResolution.x * environmentalHazardResolution.y)];
-		Vector3 lowerLeftPoint = new Vector3 (player.transform.position.x - 0.5f * meshSize.x, player.transform.position.y - 0.5f * meshSize.y, 0);
-		Vector3 originalLowerLeftPoint = new Vector3 (player.transform.position.x - 0.5f * meshSize.x, player.transform.position.y - 0.5f * meshSize.y, 0);
-		Vector3 stepSize = new Vector3 (meshSize.x / (environmentalHazardResolution.x - 1), meshSize.y / (environmentalHazardResolution.y - 1), 0);
+		Vector3 lowerLeftPoint = new Vector3 (player.transform.position.x - 0.5f * mainTextureSize.x, player.transform.position.y - 0.5f * mainTextureSize.y, 0);
+		Vector3 originalLowerLeftPoint = new Vector3 (player.transform.position.x - 0.5f * mainTextureSize.x, player.transform.position.y - 0.5f * mainTextureSize.y, 0);
+		Vector3 stepSize = new Vector3 (mainTextureSize.x / (environmentalHazardResolution.x - 1), mainTextureSize.y / (environmentalHazardResolution.y - 1), 0);
 		// Make sure the sampling grid stays the same for the same background plane size
 		// Calculate the offset between sampling grid and lower left point of the plane (in world space)
 		float offsetX = lowerLeftPoint.x % stepSize.x;
@@ -608,7 +609,7 @@ public class environmentManager : MonoBehaviour {
 		float stepSizeOnMask = maskRes / environmentalHazardResolution.x;
 
 		// Used to convert from global coordinates to coordinates on the environmentMask Texture
-		Vector3 global2Mask = new Vector3(maskRes/meshSize.x, maskRes/meshSize.y, 0);
+		Vector3 global2Mask = new Vector3(maskRes/mainTextureSize.x, maskRes/mainTextureSize.y, 0);
 
 		for (int y = 0; y < environmentalHazardResolution.y; y++) {
 			for (int x = 0; x < environmentalHazardResolution.x; x++) {

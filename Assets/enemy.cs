@@ -270,8 +270,6 @@ public class enemy : MonoBehaviour {
 					// Only hunt, if enemy isn't too far from its original position
 					if ((transform.position - originalPosition).magnitude <= activeOperationRadius && size < 2.0f * player.transform.localScale.x) {
 
-						Debug.Log ("Begin hunt -> set new originalPosition");
-
 						// Do only hunt, if player is not in an environment, that this enemy cannot enter
 						// TODO aggressivity level -> some may take the pursuit never the less
 						if(playerScript.currentEnvironment == null || hasAbility(playerScript.currentEnvironment.requiredAbility) != -1)
@@ -321,8 +319,6 @@ public class enemy : MonoBehaviour {
 
 			// Enemy cannot see player
 
-			// Reduce the blob's speed for idle behaviour
-			currentSpeed *= idleSpeedReduction;
 
 			// If the enemy was hunting the player, then wait a few seconds before walking back to the original position
 			if (isHuntingPlayer) 
@@ -555,18 +551,21 @@ public class enemy : MonoBehaviour {
 			if(!isHuntingPlayer)
 			{
 				// Get a vector that points away from the dangerous object
-				Vector3 rotationTarget = environmentProximityData.getSafestDirection ();
-				Debug.Log (rotationTarget);
+				Vector3 rotationTarget = environmentProximityData.getSafestDirection();
+				Vector3 closestObstacle = environmentProximityData.getClosestDirection();
+				float distance = closestObstacle.magnitude;
+				float rotationDampening = Mathf.Min(1.0f, 1.0f - distance/(2.0f*currentSpeed));
+				Debug.Log ("Rotate towards " + rotationTarget);
 				//	Debug.Log ("Towards" + rotationTarget);
 				transform.position += Time.deltaTime * currentSpeed * viewingDirection;
 				// If the safest direction is along the viewingDirection, then no special rotation is required - simply walk on
-				if (1.0f - Vector3.Dot (rotationTarget, viewingDirection) <= 0.01f) {
+				if (Mathf.Abs (Vector3.Dot (rotationTarget, viewingDirection)) <= 0.01f /*1.0f - Vector3.Dot (rotationTarget, viewingDirection) <= 0.01f*/) {
 					return;
 				}
 				else
 				{
 					// Perform the rotation
-					performRotation (rotationTarget);
+					performRotation (rotationTarget,rotationDampening);
 					return;
 				}
 			}
@@ -579,23 +578,26 @@ public class enemy : MonoBehaviour {
 	}
 
 	// Performs a rotation around the z-axis, such that the blob will eventually look into 'targetViewingDirection'
-	private void performRotation(Vector3 targetViewingDirection)
+	private void performRotation(Vector3 targetViewingDirection, float rotationDampener = 1.0f)
 	{
 		// Get the angle between the current viewing direction and the target viewing direction
 		float angleBetween = Mathf.Sign (Vector3.Cross (viewingDirection, targetViewingDirection).z) * Vector3.Angle (viewingDirection, targetViewingDirection);
 		// Target rotation Quaternion
 		Quaternion rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
 		// Interpolate rotation for the current time step
-		transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed);
+		transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * Mathf.Min (currentSpeed,1.0f) * rotationDampener);
 	}
 
 
 	// This function is called when the player is not in reach and lets the enemy move around randomly
 	private void performIdleBehaviour()
 	{
+		// Reduce the blob's speed for idle behaviour
+		currentSpeed *= idleSpeedReduction;
+
 		// If enemy has walked/turned close to a dangerous environment, then turn away from this object
 		if (environmentProximityData != null) {
-			resetIdleStates();
+		//	resetIdleStates();
 			avoidEnvironmentalHazard();
 			return;
 		}
@@ -608,25 +610,28 @@ public class enemy : MonoBehaviour {
 			if (rndValue > 0.7) 
 			{
 				// Rotate at position
-				findIdleRotationTarget();		
+				findIdleRotationTarget();	
+				Debug.Log ("Rotate");
 			} 
 			else if (rndValue > 0.2) 
 			{
 				// Rotate and walk towards point
 				findIdleWalkingTarget();
+				Debug.Log ("Walk to " + idleWalkingTarget);
 			} 
 			else 
 			{
 				// Stand still
 				idleTimer = Random.Range(0.5f,3.5f);
 				isIdleWaiting = true;
-
+				Debug.Log ("Wait");
 			}
 			isIdleAnimationComplete = false;
 		} 
 		else 	// Continue animation
 		{
 			if(isIdleWaiting) {
+
 				// Stop standing still animation after timer runs out.
 				idleTimer -= Time.deltaTime;
 				if(idleTimer <= 0.0f) {
@@ -646,7 +651,7 @@ public class enemy : MonoBehaviour {
 				else 	// Continue rotation animation
 				{
 					// Calculate the rotation matrix for current timestep and apply it to the model
-					transform.rotation = Quaternion.Slerp(transform.rotation, idleRotationTargetQuaternion, Time.deltaTime * currentSpeed);
+					transform.rotation = Quaternion.Slerp(transform.rotation, idleRotationTargetQuaternion, Time.deltaTime * Mathf.Min(1.0f,currentSpeed));
 					return;
 				}
 
@@ -659,6 +664,7 @@ public class enemy : MonoBehaviour {
 				if(toTargetLocation.magnitude <= size ) {
 					isIdleWalking = false;
 					isIdleAnimationComplete = true;
+					Debug.Log ("Target reached");
 					return;
 				} else {
 					// Calculate rotation target (the target viewing direction, s.t. enemy looks towards target location)
@@ -675,35 +681,12 @@ public class enemy : MonoBehaviour {
 	// Decide what happens when this blob collides with another structure
 	void OnTriggerEnter(Collider other)
 	{
-		// This is handled in the player script
-	/*	if (other.gameObject == player) { 
-			if(isHuntingPlayer) {
-				playerScript.size -= 0.08f*transform.localScale.x/other.transform.localScale.x;
-			}
-			return;
-		}*/
-
 		// If 2 enemies collide during idle action, let them search a new idle target
-		if (!isIdleAnimationComplete) {
-			resetIdleStates();
-			return;
-		}
-
-		// If the enemy is hunting the player and collides with a different enemy, then the smaller enemy
-		// gets eaten
-	/*	if (isHuntingPlayer) 
-		{
-			enemy enemyScript = (enemy)other.gameObject.GetComponent(typeof(enemy));
-			if(enemyScript && size > enemyScript.size) {
-				// Define by how much the player's blob grows
-				float growFactor = enemyScript.size / size;
-				// Set scaling of the blob
-				size += 0.1f*growFactor*growFactor;
-				// Reposition enemy
-				enemyMngr.respawnEnemy(other.gameObject);
+		if(other.GetComponent(typeof(enemy)))
+			if (!isIdleAnimationComplete) {
+			//	resetIdleStates();
+				return;
 			}
-		}
-		*/
 	}
 
 	// Sets a random walking target for this enemy

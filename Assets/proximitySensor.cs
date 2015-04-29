@@ -10,31 +10,76 @@ public class proximitySensor : MonoBehaviour {
 	public player parentPlayerScript;
 
 	// Make only one check per frame and enemy blob
-	private bool alreadyChecked;
+	private bool alreadyCheckedStay;
+
+	private bool alreadyCheckedEnter;
+
+	private bool isPlayer;
+
+	private BoxCollider collider;
+
+	private dangerProximity proximityData = new dangerProximity();
+
+
 
 	// Use this for initialization
 	void Start () {
 		parentBlob = transform.parent.gameObject;
 		parentEnemyScript = (enemy)parentBlob.GetComponent (typeof(enemy));
 		parentPlayerScript = (player)parentBlob.GetComponent (typeof(player));
+		if (parentPlayerScript)
+			isPlayer = true;
+
+		collider = this.gameObject.GetComponent<BoxCollider> ();
 	}
 	
 	// Update is called once per frame
 	void Update () {
 
+		if (!isPlayer) {
+			// Make the collider bigger, the faster the blob moves
+			float speed = parentEnemyScript.currentSpeed;
+			collider.transform.localPosition = new Vector3 (0, 1.0f + speed * 0.75f, 0);
+			collider.transform.localScale = new Vector3 (3, speed*1.5f, 3);
+
+			RaycastHit hit;
+			Vector3 right = parentBlob.transform.right;
+			bool report = false;
+			
+			// Shoot 3 rays: one along the viewing direction, one 45° to the left and one 45° to the right
+			// Check for proximity of environmental hazards
+			for (int i = -1; i <= 1; i++) {
+				float maxRayLength = parentEnemyScript.size + parentEnemyScript.currentSpeed;
+				Vector3 rayDirection = ((1 - Mathf.Abs (i)) * parentEnemyScript.viewingDirection + i * right);
+				proximityData.directions [i + 1] = rayDirection.normalized;
+				// Check whether the ray hits an object
+				if (Physics.Raycast (parentBlob.transform.position, rayDirection, out hit, maxRayLength)) { 
+					// If the object hit is an environmental hazard...
+					if (hit.collider.gameObject.GetComponent (typeof(hazardousEnvironment))) {
+						report = true;
+						proximityData.registerIntersection (parentBlob.transform.position + hit.distance * rayDirection);
+					}
+				}
+			}
+
+			if(report)
+				parentEnemyScript.environmentProximityData = proximityData;
+		}
 	}
 
 	void LateUpdate()
 	{
 		// Check only one intersection in the next frame
-		alreadyChecked = false;
+		alreadyCheckedEnter = false;
+		alreadyCheckedStay = false;
+		proximityData.clearData ();
 	}
 
 
 	void OnTriggerEnter(Collider other) 
 	{
 		// We do not care about this intersection if we already got one during this frame
-		if (alreadyChecked)
+		if (alreadyCheckedEnter)
 			return;
 
 		// We only care about collisions with hazardous environment
@@ -46,22 +91,15 @@ public class proximitySensor : MonoBehaviour {
 		if (parentEnemyScript == null)
 			return;
 
-	//	EAbilityType requiredAbility = hazardousObject.requiredAbility;
-	//	int abilityIndex = parentEnemyScript.hasAbility(requiredAbility);
-	/*	if (abilityIndex != -1) {
-			// Parent blob has required ability to enter the hazardous environment
-			parentEnemyScript.activateAbility(abilityIndex);
-		} else {*/
-			// Give the parent the necessary information about the proximity of the environmental hazard
-			parentEnemyScript.environmentProximityData = getProximityDataOfHazardousEnvironment();
-			alreadyChecked = true;
-		//}
+		// Give the parent the necessary information about the proximity of the environmental hazard
+		parentEnemyScript.environmentProximityData = getProximityDataOfHazardousEnvironment(other);
+		alreadyCheckedEnter = true;
 	}
 
 
 	void OnTriggerStay(Collider other) 
 	{
-		if (alreadyChecked)
+		if (alreadyCheckedStay)
 			return;
 
 		hazardousEnvironment hazardousObject = (hazardousEnvironment)other.gameObject.GetComponent (typeof(hazardousEnvironment));
@@ -72,25 +110,35 @@ public class proximitySensor : MonoBehaviour {
 		if (parentEnemyScript == null)
 			return;
 
-	//	EAbilityType requiredAbility = hazardousObject.requiredAbility;
-	//	int abilityIndex = parentEnemyScript.hasAbility (requiredAbility);
-	//	if (abilityIndex != -1) {
-	//		// Parent blob has required ability to enter the hazardous environment
-	//		parentEnemyScript.activateAbility(abilityIndex);
-	//	} else {
-			// Give the parent the necessary information about the proximity of the environmental hazard
-			parentEnemyScript.environmentProximityData = getProximityDataOfHazardousEnvironment();
-			alreadyChecked = true;
-	//	}
+		// Give the parent the necessary information about the proximity of the environmental hazard
+		parentEnemyScript.environmentProximityData = getProximityDataOfHazardousEnvironment(other);
+		alreadyCheckedStay = true;
 	}
 
 
-	private dangerProximity getProximityDataOfHazardousEnvironment()
+	private dangerProximity getProximityDataOfHazardousEnvironment(Collider hazard)
 	{
-		// Check how close the hazardous environment is and in which direction it resides
+		Vector3 intersection = hazard.bounds.ClosestPoint (parentBlob.transform.position);
+
+		proximityData.registerIntersection (intersection-parentBlob.transform.position);
+		Debug.Log ("Collision in " + (intersection-parentBlob.transform.position));
+
+		// Shoot a ray into that direction to make sure the distance is not shorter
 		RaycastHit hit;
+		if (Physics.Raycast(parentBlob.transform.position, parentEnemyScript.viewingDirection, out hit, parentEnemyScript.currentSpeed))
+		{ 
+			// If the object hit is an environmental hazard...
+			if(hit.collider.gameObject.GetComponent(typeof(hazardousEnvironment)))
+			{
+				proximityData.registerIntersection (hit.distance*parentEnemyScript.viewingDirection);
+			}
+		}
+		return proximityData;
+
+		// Check how close the hazardous environment is and in which direction it resides
+	//	RaycastHit hit;
 		Vector3 right = parentBlob.transform.right;
-		dangerProximity proximityData = new dangerProximity();
+
 		// Shoot 3 rays: one along the viewing direction, one 45° to the left and one 45° to the right
 		// Check for proximity of environmental hazards
 		for(int i = -1; i <= 1; i++)
