@@ -52,9 +52,9 @@ public class environmentManager : MonoBehaviour {
 	// The higher, the flatter, the terrain will be. The lower the more steep hills/cliffs there will be
 	public float terrainFormingPersistence = 0.1f;
 	// The higher, the shorter the distance between hills/cliffs
-	public float terrainFormingFrequency = 0.03f;
+	public float terrainFormingFrequency = 0.42f;
 	// Maximum height of the terrain
-	public float maxTerrainHeight = 10.0f;
+	public float maxTerrainHeight = 8.0f;
 
 
 	// Defines how many threads are involved in calculating the perlin noise textures
@@ -80,8 +80,22 @@ public class environmentManager : MonoBehaviour {
 
 	private Color[] cubeMapColor;
 
+	public GameObject environmentPlaneTilePrefab;
 
+	private GameObject[] environmentPlaneTiles = new GameObject[9];
 
+	private Renderer[] environmentPlaneTileRenderers = new Renderer[9];
+
+	private Mesh[] environmentPlaneTileMeshes = new Mesh[9];
+
+	private Bounds[] environmentPlaneTileBounds = new Bounds[9];
+
+	private Texture2D[] environmentPlaneTileTextures = new Texture2D[9];
+
+	private int[] planeTileOrdering = new int[9];
+
+	public float tileSize = 20;
+	
 	// Defines which of the 4 3D planes is chosen 
 	// Index 0 has lowest quads count (16x16)
 	// Index 3 has highest quads count (132x132)
@@ -89,12 +103,72 @@ public class environmentManager : MonoBehaviour {
 
 	private Vector3 meshSize;
 
+	private Vector3 tileExtent;
+
+	public bool moveBackground = true;
+
+	public float backgroundMultiplierX = 1.0f;
+
+	public float backgroundMultiplierY = 1.0f;
+
+	public float backgroundTimeMultiplier = 0.3f;
+
 
 	// Use this for initialization
 	void Start () {
 		player = GameObject.Find ("Blob");
 		playerScript = (player)player.GetComponent (typeof(player));
 
+		// Instantiate all background planes
+		for (int i = 0; i < environmentPlaneTiles.Length; i++) {
+			environmentPlaneTiles[i] = (GameObject)GameObject.Instantiate(environmentPlaneTilePrefab);
+			environmentPlaneTiles[i].transform.localScale = new Vector3(tileSize, 1, tileSize);
+		}
+
+		Bounds meshBounds = environmentPlaneTiles[0].GetComponent<MeshFilter>().mesh.bounds;
+		tileExtent = (meshBounds.max - meshBounds.min)*tileSize;
+		tileExtent.y = tileExtent.z;
+		tileExtent.z = 0;
+		Vector3 bottomLeft = player.transform.position - new Vector3 (1.0f * tileExtent.x, 1.0f * tileExtent.y, -15);
+
+		// Position background planes
+		Vector3 playerPos = player.transform.position;
+		for (int y = 0; y < 3; y++) {
+			for (int x = 0; x < 3; x++) {
+				environmentPlaneTiles[y*3 + x].transform.position = bottomLeft + new Vector3(x*tileExtent.x, y*tileExtent.y, 0);
+				planeTileOrdering[y*3 + x] = y*3 + x;
+			}
+		}
+
+		// Get the renderer of the environment planes
+		for (int i = 0; i < environmentPlaneTileRenderers.Length; i++) {
+			environmentPlaneTileRenderers[i] = (Renderer)environmentPlaneTiles[i].GetComponent (typeof(Renderer));
+		}
+		// Get the bounds from the renderers
+		for (int i = 0; i < environmentPlaneTileBounds.Length; i++) {
+			environmentPlaneTileBounds[i] = environmentPlaneTileRenderers[i].bounds;
+		}
+		// Create textures for all environment tile planes
+		for (int i = 0; i < environmentPlaneTileTextures.Length; i++) {
+			// Initialize the main texture
+			environmentPlaneTileTextures[i] = new Texture2D ((int)mainTextureResolution.x, (int)mainTextureResolution.y);
+			environmentPlaneTileRenderers[i].material.SetTexture("_MainTex", environmentPlaneTileTextures[i]);
+		}
+		for (int i = 0; i < environmentPlaneTileMeshes.Length; i++) {
+			environmentPlaneTileMeshes[i] = ((MeshFilter)environmentPlaneTiles[i].GetComponent (typeof(MeshFilter))).mesh;
+			environmentPlaneTileMeshes[i].MarkDynamic ();
+		}
+
+
+		// Instantiate all background planes
+	/*	for (int i = 0; i < environmentPlaneRenderers.Length; i++) {
+			environmentPlanes[i] = (GameObject)GameObject.Instantiate(environmentPlanes[i]);
+		}
+		// Get the renderer of the environment planes
+		for (int i = 0; i < environmentPlaneRenderers.Length; i++) {
+			environmentPlaneRenderers[i] = (Renderer)environmentPlanes[i].GetComponent (typeof(Renderer));
+		}
+*/
 		// Initialize the main texture
 		environmentTexture = new Texture2D ((int)mainTextureResolution.x, (int)mainTextureResolution.y);
 		// Initialize the array, that holds the colors for the texture
@@ -111,7 +185,7 @@ public class environmentManager : MonoBehaviour {
 		cubeMapColor = new Color[(int)cubeMapTextureResolution.x * (int)cubeMapTextureResolution.y];
 
 		// Instantiate all background planes
-		for (int i = 0; i < environmentPlaneRenderers.Length; i++) {
+	/*	for (int i = 0; i < environmentPlaneRenderers.Length; i++) {
 			environmentPlanes[i] = (GameObject)GameObject.Instantiate(environmentPlanes[i]);
 		}
 		// Get the renderer of the environment planes
@@ -129,15 +203,16 @@ public class environmentManager : MonoBehaviour {
 		for (int i = 0; i < environmentPlaneRenderers.Length; i++) {
 			environmentPlanes[i].SetActive(false);
 		}
-
-		// Activate current background plane
 		environmentPlanes[planeIndex].SetActive(true);
+*/
+		// Activate current background plane
+	//	environmentPlanes[planeIndex].SetActive(true);
 		// Get the mesh of the currently active background plane
-		currentEnvironmentMesh = ((MeshFilter)environmentPlanes[planeIndex].GetComponent (typeof(MeshFilter))).mesh;
+	//	currentEnvironmentMesh = ((MeshFilter)environmentPlanes[planeIndex].GetComponent (typeof(MeshFilter))).mesh;
 		// Mark the mesh as dynamic, since it will be changed in every frame
-		currentEnvironmentMesh.MarkDynamic ();
+	//	currentEnvironmentMesh.MarkDynamic ();
 		// Get the extends of the currently active mesh
-		meshSize = environmentPlaneRenderers[planeIndex].bounds.max - environmentPlaneRenderers[planeIndex].bounds.min;
+	//	meshSize = environmentPlaneRenderers[planeIndex].bounds.max - environmentPlaneRenderers[planeIndex].bounds.min;
 		// Get a random initial start point on the map
 		randomInitialValue = Random.Range ((float)int.MinValue/10000.0f,(float)int.MaxValue/10000.0f);
 
@@ -147,9 +222,6 @@ public class environmentManager : MonoBehaviour {
 			environmentalHazards[i].AddComponent<MeshFilter>();
 			environmentalHazards[i].GetComponent<MeshFilter>().mesh.MarkDynamic();
 			environmentalHazards[i].AddComponent<MeshRenderer>();
-		//	environmentalHazards[i].AddComponent<MeshCollider>();
-		//	environmentalHazards[i].GetComponent<MeshCollider>().convex = true;
-		//	environmentalHazards[i].GetComponent<MeshCollider>().isTrigger = true;
 			environmentalHazards[i].AddComponent<BoxCollider>();
 			environmentalHazards[i].GetComponent<BoxCollider>().isTrigger = true;
 			environmentalHazards[i].AddComponent(typeof(thornBush));
@@ -162,30 +234,287 @@ public class environmentManager : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 
+		float viewingRange = playerScript.viewingRange*2.0f;
+		Vector3 playerPos = player.transform.position;
+
+		// Loop over the 9 planes from the bottom left row-wise to the top
+		for (int i = 0; i < 9; i++) {
+			Vector3 distance = playerPos - environmentPlaneTileBounds[planeTileOrdering[i]].center;
+			// Set the plane active if player is within its bounds or players viewingRange reaches the closest point of this planes boundaries
+			if(Mathf.Abs(distance.x) < environmentPlaneTileBounds[planeTileOrdering[i]].extents.x && Mathf.Abs(distance.y) < environmentPlaneTileBounds[planeTileOrdering[i]].extents.y) {
+				environmentPlaneTiles[planeTileOrdering[i]].SetActive(true);
+				// If player has entered a new tile, reposition the planes furthest away
+				if(i != 4) {
+					setNewCenterTile(i);
+				}
+			}
+			else if( (environmentPlaneTileBounds[planeTileOrdering[i]].ClosestPoint(playerPos) - playerPos).magnitude <= 2.0f*viewingRange)
+			{
+				environmentPlaneTiles[planeTileOrdering[i]].SetActive(true);
+			}
+			else 
+			{
+				environmentPlaneTiles[planeTileOrdering[i]].SetActive(false);
+			}
+		}
+
+		// Create terrain elevation for all active planes
+
 		float t0 = System.DateTime.Now.Millisecond;
 
 		// Scale the mesh according to the player's viewing range
-		environmentPlanes [planeIndex].transform.localScale = new Vector3((playerScript.transform.localScale.x + playerScript.viewingRange)*2.5f, 1, (playerScript.size + playerScript.viewingRange)*1.1f);
+	//	environmentPlanes [planeIndex].transform.localScale = new Vector3((playerScript.transform.localScale.x + playerScript.viewingRange)*2.5f, 1, (playerScript.size + playerScript.viewingRange)*2.5f);
 
 		// Get the current size of the mesh (we need to take it from the renderer in order to get world coordinates - the mesh has bounds in untransformed coordinates)
-		meshSize = environmentPlaneRenderers[planeIndex].bounds.max - environmentPlaneRenderers[planeIndex].bounds.min;
+	//	meshSize = environmentPlaneRenderers[planeIndex].bounds.max - environmentPlaneRenderers[planeIndex].bounds.min;
 
 
 		// TODO update perlin noise parameters according to time
 
 		// Calculate current environment texture
-		calculateEnvironmentTexture ();
+	//	calculateEnvironmentTexture ();
 
 		// Calculate 3D terrain
-		calculateTerrainMap ();
+	//	calculateTerrainMap ();
+
+		for (int i = 0; i < 9; i++) {
+			if (environmentPlaneTiles[planeTileOrdering[i]].activeSelf) {
+				distortBackgroundPlane(planeTileOrdering[i],moveBackground,backgroundTimeMultiplier,backgroundMultiplierX,backgroundMultiplierY);
+			}
+		}
 
 	//	Debug.Log ("Total time for environment update on CPU : " + (System.DateTime.Now.Millisecond - t0) + "ms");
 
 	}
-
+	
 	void LateUpdate() {
 		// Move the environment plane along with the player
 		environmentPlanes[planeIndex].transform.position = player.transform.position;
+	}
+
+	// Is called, when the player enters a new plane tile and reorders the plane tiles such that 'index' is the new central tile
+	// Following are the indices of the tiles (4 is alwas the central plane)
+	// 6 7 8
+	// 3 4 5
+	// 0 1 2
+	private void setNewCenterTile(int index) 
+	{
+		Vector3 centralPlaneTilePos = environmentPlaneTiles[planeTileOrdering[index]].transform.position;
+		int old0, old1, old2, old3, old4, old5, old6, old7, old8;
+		old0 = planeTileOrdering[0];
+		old1 = planeTileOrdering[1];
+		old2 = planeTileOrdering[2];
+		old3 = planeTileOrdering[3];
+		old4 = planeTileOrdering[4];
+		old5 = planeTileOrdering[5];
+		old6 = planeTileOrdering[6];
+		old7 = planeTileOrdering[7];
+		old8 = planeTileOrdering[8];
+		Debug.Log ("Switched to plane" + index);
+		switch(index) {
+		case (0) :
+			// reposition 2,5,6,7,8 to 0,1,2,3,6
+			
+			// Move 2 to 2
+			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[2]] = environmentPlaneTileRenderers[planeTileOrdering[2]].bounds;
+			// Move 5 to 3
+			environmentPlaneTiles[planeTileOrdering[5]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, 0, 0);
+			environmentPlaneTileBounds[planeTileOrdering[5]] = environmentPlaneTileRenderers[planeTileOrdering[5]].bounds;
+			planeTileOrdering[3] = planeTileOrdering[5];
+			// Move 6 to 6
+			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[6]] = environmentPlaneTileRenderers[planeTileOrdering[6]].bounds;
+			// Move 7 to 0
+			environmentPlaneTiles[planeTileOrdering[7]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[7]] = environmentPlaneTileRenderers[planeTileOrdering[7]].bounds;
+			planeTileOrdering[0] = planeTileOrdering[7];
+			// Move 8 to 1
+			environmentPlaneTiles[planeTileOrdering[8]].transform.position = centralPlaneTilePos + new Vector3(0, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[8]] = environmentPlaneTileRenderers[planeTileOrdering[8]].bounds;
+			planeTileOrdering[1] = planeTileOrdering[8];
+			
+			planeTileOrdering[4] = old0;
+			planeTileOrdering[5] = old1;
+			planeTileOrdering[7] = old3;
+			planeTileOrdering[8] = old4;
+			break;
+		case (1) :
+			// reposition 6,7,8 to 0,1,2
+			
+			// Move 6 to 0
+			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[6]] = environmentPlaneTileRenderers[planeTileOrdering[6]].bounds;
+			planeTileOrdering[0] = planeTileOrdering[6];
+			// Move 7 to 1
+			environmentPlaneTiles[planeTileOrdering[7]].transform.position = centralPlaneTilePos + new Vector3(0, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[7]] = environmentPlaneTileRenderers[planeTileOrdering[7]].bounds;
+			planeTileOrdering[1] = planeTileOrdering[7];
+			// Move 8 to 2
+			environmentPlaneTiles[planeTileOrdering[8]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[8]] = environmentPlaneTileRenderers[planeTileOrdering[8]].bounds;
+			planeTileOrdering[2] = planeTileOrdering[8];
+			
+			planeTileOrdering[3] = old0;
+			planeTileOrdering[4] = old1;
+			planeTileOrdering[5] = old2;
+			planeTileOrdering[6] = old3;
+			planeTileOrdering[7] = old4;
+			planeTileOrdering[8] = old5;
+			break;
+		case (2) :
+			// reposition 0,3,6,7,8 to 0,1,2,5,8
+			
+			// Move 0 to 0
+			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[0]] = environmentPlaneTileRenderers[planeTileOrdering[0]].bounds;
+			// Move 3 to 1
+			environmentPlaneTiles[planeTileOrdering[3]].transform.position = centralPlaneTilePos + new Vector3(0, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[3]] = environmentPlaneTileRenderers[planeTileOrdering[3]].bounds;
+			planeTileOrdering[1] = planeTileOrdering[3];
+			// Move 6 to 2
+			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[6]] = environmentPlaneTileRenderers[planeTileOrdering[6]].bounds;
+			planeTileOrdering[2] = planeTileOrdering[6];
+			// Move 7 to 5
+			environmentPlaneTiles[planeTileOrdering[7]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, 0, 0);
+			environmentPlaneTileBounds[planeTileOrdering[7]] = environmentPlaneTileRenderers[planeTileOrdering[7]].bounds;
+			planeTileOrdering[5] = planeTileOrdering[7];
+			// Move 8 to 8
+			environmentPlaneTiles[planeTileOrdering[8]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[8]] = environmentPlaneTileRenderers[planeTileOrdering[8]].bounds;
+			
+			planeTileOrdering[3] = old1;
+			planeTileOrdering[4] = old2;
+			planeTileOrdering[6] = old4;
+			planeTileOrdering[7] = old5;
+			break;
+		case (3) :
+			// reposition 2,5,8 to 0,3,6
+			
+			// Move 2 to 0
+			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[2]] = environmentPlaneTileRenderers[planeTileOrdering[2]].bounds;
+			planeTileOrdering[0] = planeTileOrdering[2];
+			// Move 5 to 3
+			environmentPlaneTiles[planeTileOrdering[5]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, 0, 0);
+			environmentPlaneTileBounds[planeTileOrdering[5]] = environmentPlaneTileRenderers[planeTileOrdering[5]].bounds;
+			planeTileOrdering[3] = planeTileOrdering[5];
+			// Move 8 to 6
+			environmentPlaneTiles[planeTileOrdering[8]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[8]] = environmentPlaneTileRenderers[planeTileOrdering[8]].bounds;
+			planeTileOrdering[6] = planeTileOrdering[8];
+			
+			planeTileOrdering[1] = old0;
+			planeTileOrdering[2] = old1;
+			planeTileOrdering[4] = old3;
+			planeTileOrdering[5] = old4;
+			planeTileOrdering[7] = old6;
+			planeTileOrdering[8] = old7;
+			break;
+		case (5) :
+			// reposition 0,3,6 to 2,5,8
+			
+			// Move 0 to 2
+			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[0]] = environmentPlaneTileRenderers[planeTileOrdering[0]].bounds;
+			planeTileOrdering[2] = planeTileOrdering[0];
+			// Move 3 to 5
+			environmentPlaneTiles[planeTileOrdering[3]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, 0, 0);
+			environmentPlaneTileBounds[planeTileOrdering[3]] = environmentPlaneTileRenderers[planeTileOrdering[3]].bounds;
+			planeTileOrdering[5] = planeTileOrdering[3];
+			// Move 6 to 8
+			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[6]] = environmentPlaneTileRenderers[planeTileOrdering[6]].bounds;
+			planeTileOrdering[8] = planeTileOrdering[6];
+			
+			planeTileOrdering[0] = old1;
+			planeTileOrdering[1] = old2;
+			planeTileOrdering[3] = old4;
+			planeTileOrdering[4] = old5;
+			planeTileOrdering[6] = old7;
+			planeTileOrdering[7] = old8;
+			break;
+		case (6) :
+			// reposition 0,1,2,5,8 to 0,3,6,7,8
+			
+			// Move 0 to 0
+			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[0]] = environmentPlaneTileRenderers[planeTileOrdering[0]].bounds;
+			// Move 1 to 3
+			environmentPlaneTiles[planeTileOrdering[1]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, 0, 0);
+			environmentPlaneTileBounds[planeTileOrdering[1]] = environmentPlaneTileRenderers[planeTileOrdering[1]].bounds;
+			planeTileOrdering[3] = planeTileOrdering[1];
+			// Move 2 to 6
+			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[2]] = environmentPlaneTileRenderers[planeTileOrdering[2]].bounds;
+			planeTileOrdering[6] = planeTileOrdering[2];
+			// Move 5 to 7
+			environmentPlaneTiles[planeTileOrdering[5]].transform.position = centralPlaneTilePos + new Vector3(0, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[5]] = environmentPlaneTileRenderers[planeTileOrdering[5]].bounds;
+			planeTileOrdering[7] = planeTileOrdering[5];
+			// Move 8 to 8
+			environmentPlaneTiles[planeTileOrdering[8]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[8]] = environmentPlaneTileRenderers[planeTileOrdering[8]].bounds;
+			
+			planeTileOrdering[1] = old3;
+			planeTileOrdering[2] = old4;
+			planeTileOrdering[4] = old6;
+			planeTileOrdering[5] = old7;
+			break;
+		case (7) :
+			// reposition 0,1,2 to 6,7,8
+			
+			// Move 0 to 6
+			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[0]] = environmentPlaneTileRenderers[planeTileOrdering[0]].bounds;
+			planeTileOrdering[6] = planeTileOrdering[0];
+			// Move 1 to 7
+			environmentPlaneTiles[planeTileOrdering[1]].transform.position = centralPlaneTilePos + new Vector3(0, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[1]] = environmentPlaneTileRenderers[planeTileOrdering[1]].bounds;
+			planeTileOrdering[7] = planeTileOrdering[1];
+			// Move 2 to 8
+			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[2]] = environmentPlaneTileRenderers[planeTileOrdering[2]].bounds;
+			planeTileOrdering[8] = planeTileOrdering[2];
+			
+			planeTileOrdering[0] = old3;
+			planeTileOrdering[1] = old4;
+			planeTileOrdering[2] = old5;
+			planeTileOrdering[3] = old6;
+			planeTileOrdering[4] = old7;
+			planeTileOrdering[5] = old8;
+			break;
+		case (8) :
+			// reposition 0,1,2,3,6 to 2,5,6,7,8
+			
+			// Move 0 to 8
+			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[0]] = environmentPlaneTileRenderers[planeTileOrdering[0]].bounds;
+			planeTileOrdering[8] = planeTileOrdering[0];
+			// Move 1 to 7
+			environmentPlaneTiles[planeTileOrdering[1]].transform.position = centralPlaneTilePos + new Vector3(0, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[1]] = environmentPlaneTileRenderers[planeTileOrdering[1]].bounds;
+			planeTileOrdering[7] = planeTileOrdering[1];
+			// Move 2 to 2
+			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[2]] = environmentPlaneTileRenderers[planeTileOrdering[2]].bounds;
+			// Move 3 to 5
+			environmentPlaneTiles[planeTileOrdering[3]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, 0, 0);
+			environmentPlaneTileBounds[planeTileOrdering[3]] = environmentPlaneTileRenderers[planeTileOrdering[3]].bounds;
+			planeTileOrdering[5] = planeTileOrdering[3];
+			// Move 6 to 6
+			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[6]] = environmentPlaneTileRenderers[planeTileOrdering[6]].bounds;
+			
+			planeTileOrdering[0] = old4;
+			planeTileOrdering[1] = old5;
+			planeTileOrdering[3] = old7;
+			planeTileOrdering[4] = old8;
+			break;
+		default :
+			break;
+		};
 	}
 
 	// Calculates a texture for each environment component that acts as mask for high resolution textures
@@ -249,8 +578,10 @@ public class environmentManager : MonoBehaviour {
 					float waveHeight = generateWaterSurface(x*distancePerPixel.x + xOffset, y*distancePerPixel.y + yOffset, currentTime);
 					bumpMapColor[y*(int)bumpMapTextureResolution.x + x] = new Color(0,0,waveHeight);
 				}  */
-				
+
+
 				mainTextureColor[y*(int)mainTextureResolution.x + x] = new Color(terrainSample,terrainSample,terrainSample);
+				mainTextureColor[y*(int)mainTextureResolution.x + x] = new Color(0.5f,0.5f,0.5f);
 				environmentalHazardMask[y*(int)mainTextureResolution.x + x] = terrainSample;
 			}
 		}
@@ -612,8 +943,10 @@ public class environmentManager : MonoBehaviour {
 		{   
 			// Transform the vertices of the plane into world space
 			Vector3 vertexPoint = environmentPlanes[planeIndex].transform.TransformPoint(vertices[i]);
-			float xCoord = vertexPoint.x;
-			float yCoord = vertexPoint.y;
+			if(i == 1)
+				Debug.Log (vertexPoint);
+			float xCoord = vertexPoint.x + Time.time*0.3f;
+			float yCoord = vertexPoint.y + Time.time*0.3f;
 			// Generate smooth hills (z-offset)
 			vertexPoint.z = addUpOctaves (terrainFormingOctaves, terrainFormingFrequency, terrainFormingPersistence, xCoord, yCoord) * maxTerrainHeight;
 			// Transform the manipulated vertex back into object space and store it
@@ -625,6 +958,33 @@ public class environmentManager : MonoBehaviour {
 		currentEnvironmentMesh.RecalculateBounds();
 		// Recalculate surface normals
 		currentEnvironmentMesh.RecalculateNormals();
+	}
+
+	private void distortBackgroundPlane(int index, bool moveOverTime, float timeMultiplier, float xMultiplier, float yMultiplier) 
+	{
+		// Get the vertices of the plane (in object space)
+		Vector3[] vertices = environmentPlaneTileMeshes[index].vertices;
+		float timeOffset = 0.0f;
+		if (moveOverTime) {
+			timeOffset = Time.time*timeMultiplier;
+		}
+		for (int i = 0; i < vertices.Length; i++)
+		{   
+			// Transform the vertices of the plane into world space
+			Vector3 vertexPoint = environmentPlaneTiles[index].transform.TransformPoint(vertices[i]);
+			float xCoord = (vertexPoint.x + timeOffset)*xMultiplier;
+			float yCoord = (vertexPoint.y + timeOffset)*yMultiplier;
+			// Generate smooth hills (z-offset)
+			vertexPoint.z = addUpOctaves (terrainFormingOctaves, terrainFormingFrequency, terrainFormingPersistence, xCoord, yCoord) * maxTerrainHeight;
+			// Transform the manipulated vertex back into object space and store it
+			vertices[i] = environmentPlaneTiles[index].transform.InverseTransformPoint(vertexPoint);
+		}
+		// Set manipulated vertices
+		environmentPlaneTileMeshes[index].vertices = vertices;
+		// Recalculate the boundaries
+		environmentPlaneTileMeshes[index].RecalculateBounds();
+		// Recalculate surface normals
+		environmentPlaneTileMeshes[index].RecalculateNormals();
 	}
 
 	private float generateWaterSurface(float x, float y, float currentTime)

@@ -676,12 +676,12 @@ public class enemy : MonoBehaviour {
 	void OnTriggerEnter(Collider other)
 	{
 		// This is handled in the player script
-		if (other.gameObject == player) { 
+	/*	if (other.gameObject == player) { 
 			if(isHuntingPlayer) {
 				playerScript.size -= 0.08f*transform.localScale.x/other.transform.localScale.x;
 			}
 			return;
-		}
+		}*/
 
 		// If 2 enemies collide during idle action, let them search a new idle target
 		if (!isIdleAnimationComplete) {
@@ -691,7 +691,7 @@ public class enemy : MonoBehaviour {
 
 		// If the enemy is hunting the player and collides with a different enemy, then the smaller enemy
 		// gets eaten
-		if (isHuntingPlayer) 
+	/*	if (isHuntingPlayer) 
 		{
 			enemy enemyScript = (enemy)other.gameObject.GetComponent(typeof(enemy));
 			if(enemyScript && size > enemyScript.size) {
@@ -703,6 +703,7 @@ public class enemy : MonoBehaviour {
 				enemyMngr.respawnEnemy(other.gameObject);
 			}
 		}
+		*/
 	}
 
 	// Sets a random walking target for this enemy

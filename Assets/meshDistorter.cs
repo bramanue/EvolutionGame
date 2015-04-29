@@ -68,10 +68,15 @@ public class meshDistorter : MonoBehaviour {
 		Vector3[] vertices = mesh.vertices;
 
 		for (int i = 0; i < vertices.Length; i++) {
-			vertices[i] = originalVertices[i] + vertex2NormalMap[i]*0.15f*parentBlob.transform.localScale.x*(Mathf.PerlinNoise(vertices[i].x*frequency + Time.time,vertices[i].y*frequency + Time.time)-0.7f);
+			vertices[i] = originalVertices[i] + vertex2NormalMap[i]*0.2f*parentBlob.transform.localScale.x*(Mathf.PerlinNoise(vertices[i].x*parentBlob.transform.localScale.x*frequency + Time.time,vertices[i].y*parentBlob.transform.localScale.x*frequency + Time.time)-0.6f);
 		}
 		mesh.vertices = vertices;
 		mesh.RecalculateBounds ();
+	}
+
+	public void activateShield(EAbilityType abilityType) 
+	{
+
 	}
 
 

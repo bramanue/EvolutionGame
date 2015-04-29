@@ -338,7 +338,7 @@ public class player : MonoBehaviour
 	void OnTriggerEnter(Collider other)
 	{
 		// Check whether the player collided with an enemy or with something else
-		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
+	/*	enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
 		if (enemyScript != null)
 		{
 			// If player is bigger than enemy, then eat it
@@ -352,7 +352,7 @@ public class player : MonoBehaviour
 			{ 	// If the player's creature is smaller than the enemy, then reduce player's size
 				// size -= 0.1f;
 			}
-		}
+		} */
 	}
 
 	// Makes the blob grow/shrink smoothly
@@ -375,7 +375,7 @@ public class player : MonoBehaviour
 	}
 
 	// Function called, when eating another blob, to grow in size and to acquire its abilities
-	private void eatBlob(enemy enemyScript, GameObject enemyObject)
+	public void eatBlob(enemy enemyScript, GameObject enemyObject)
 	{
 		if(enemyScript.hasAbilities())
 		{
