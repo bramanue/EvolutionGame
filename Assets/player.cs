@@ -91,6 +91,8 @@ public class player : MonoBehaviour
 
 	public Material defaultMaterial;
 
+	public abilityLoot nearbyAbilityLoot;
+
 
 	// Use this for initialization
 	void Start()
@@ -113,8 +115,26 @@ public class player : MonoBehaviour
 	{
 		if (!dead) {
 
-			ability oldShield = shieldInUse;
-			shieldInUse = null;
+			if(nearbyAbilityLoot != null) {
+				// Show display to press RB or LB if player wants to acquire the ability
+				string abilityName = nearbyAbilityLoot.abilityName;
+				if(Input.GetButtonDown ("PauseForAbilityGatheringLB") || Input.GetButtonDown ("PauseForAbilityGatheringRB")) {
+					if(!abilityModificationScript.isActiveAndEnabled) {
+						// Show abilityModificationPanel
+
+						return;
+					}
+					else
+					{
+						// Close modification panel again
+					}
+					
+				}
+
+				if(abilityModificationScript.isActiveAndEnabled && abilityModificationScript.isInChosingState) {
+
+				}
+			}
 
 			// If the user is about to chose whether to keep a new ability or not
 			if(abilityModificationScript.isActiveAndEnabled && abilityModificationScript.isInChosingState) {
@@ -212,6 +232,9 @@ public class player : MonoBehaviour
 				}
 				return;
 			}
+
+			ability oldShield = shieldInUse;
+			shieldInUse = null;
 
 			// Get the viewing range
 			abilities [7].useAbility ();
@@ -335,25 +358,14 @@ public class player : MonoBehaviour
 		currentEnvironment = null;
 	}
 
+
 	void OnTriggerEnter(Collider other)
 	{
 		// Check whether the player collided with an enemy or with something else
-	/*	enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
-		if (enemyScript != null)
-		{
-			// If player is bigger than enemy, then eat it
-			if (enemyScript.transform.localScale.x < transform.localScale.x) 
-			{
-				// If enemy has not been eaten yet, eat him
-				if(enemyScript.size > 0)
-					eatBlob (enemyScript, other.gameObject);
-			} 
-			else 
-			{ 	// If the player's creature is smaller than the enemy, then reduce player's size
-				// size -= 0.1f;
-			}
-		} */
+
 	}
+
+
 
 	// Makes the blob grow/shrink smoothly
 	private void grow()
@@ -434,6 +446,23 @@ public class player : MonoBehaviour
 		}
 		abilityObjects [slot] = ability;
 		abilities[slot] = (ability)abilityObjects [slot].GetComponent (typeof(ability));
+	}
+
+	public void improveAbility(int slot, int levelUp) 
+	{
+		int currentLevel = abilities [slot].level;
+		int levelIncrease = (int)Mathf.Max (1, (levelUp - currentLevel) * 0.5f);
+		int actualIncrease = abilities [slot].increaseLevel (levelIncrease);
+	}
+
+	public void improveAbility(EAbilityType abilityType, int levelUp) 
+	{
+		int slot = hasAbility (abilityType);
+		if(slot == -1)
+			return;
+		int currentLevel = abilities [slot].level;
+		int levelIncrease = (int)Mathf.Max (1, (levelUp - currentLevel) * 0.5f);
+		int actualIncrease = abilities [slot].increaseLevel (levelIncrease);
 	}
 
 	public void removeAndDestroyAbility(int slot) {

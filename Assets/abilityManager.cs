@@ -126,9 +126,16 @@ public class abilityManager : MonoBehaviour {
 
 	public void addAbilityToEnemy(GameObject parent, EAbilityType abilityType, int slot, int level)
 	{
+		enemy enemyScript = (enemy)parent.GetComponent(typeof(enemy));
+		// Check whether enemy already has this ability
+		int existingSlot = enemyScript.hasAbility (abilityType);
+		if (existingSlot != -1) {
+			return;
+		}
+
 		// Get the corresponding prefab
 		GameObject abilityObject = getPrefab(abilityType);
-
+		
 		if (!abilityObject) {
 			Debug.Log ("Could not resolve ability enum : " + abilityType);
 			return;
@@ -138,7 +145,6 @@ public class abilityManager : MonoBehaviour {
 		ability abilityScript = (ability)abilityObject.GetComponent(typeof(ability));
 		abilityScript.level = level;
 
-		enemy enemyScript = (enemy)parent.GetComponent(typeof(enemy));
 		// Passive abilities have a specific predefined index
 		if (EAbilityType.ERunAbility == abilityType)
 			slot = 6;

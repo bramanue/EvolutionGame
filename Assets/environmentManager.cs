@@ -62,11 +62,6 @@ public class environmentManager : MonoBehaviour {
 
 
 	// Datastructures
-	public GameObject[] environmentPlanes = new GameObject[4];
-
-	private Renderer[] environmentPlaneRenderers = new Renderer[4];
-
-	private Mesh currentEnvironmentMesh;
 
 	private Texture2D environmentTexture;
 
@@ -117,8 +112,23 @@ public class environmentManager : MonoBehaviour {
 	public Vector2 mainTextureSize;
 
 
+	GameObject waterPrefab;
+
+	GameObject iceFieldPrefab;
+
+	GameObject thornBushPrefab;
+
+	GameObject lavaFieldPrefab;
+
+	GameObject dustStormPrefab;
+
+	GameObject lightingStormPrefab;
+
+
+
 	// Use this for initialization
-	void Start () {
+	void Start () 
+	{
 		player = GameObject.Find ("Blob");
 		playerScript = (player)player.GetComponent (typeof(player));
 
@@ -143,11 +153,11 @@ public class environmentManager : MonoBehaviour {
 			}
 		}
 
-		// Get the renderer of the environment planes
+		// Get the renderer of the environment plane tiles
 		for (int i = 0; i < environmentPlaneTileRenderers.Length; i++) {
 			environmentPlaneTileRenderers[i] = (Renderer)environmentPlaneTiles[i].GetComponent (typeof(Renderer));
 		}
-		// Get the bounds from the renderers
+		// Get the bounds of the scaled meshes from the renderers
 		for (int i = 0; i < environmentPlaneTileBounds.Length; i++) {
 			environmentPlaneTileBounds[i] = environmentPlaneTileRenderers[i].bounds;
 		}
@@ -163,15 +173,6 @@ public class environmentManager : MonoBehaviour {
 		}
 
 
-		// Instantiate all background planes
-	/*	for (int i = 0; i < environmentPlaneRenderers.Length; i++) {
-			environmentPlanes[i] = (GameObject)GameObject.Instantiate(environmentPlanes[i]);
-		}
-		// Get the renderer of the environment planes
-		for (int i = 0; i < environmentPlaneRenderers.Length; i++) {
-			environmentPlaneRenderers[i] = (Renderer)environmentPlanes[i].GetComponent (typeof(Renderer));
-		}
-*/
 		// Initialize the main texture
 		environmentTexture = new Texture2D ((int)mainTextureResolution.x, (int)mainTextureResolution.y);
 		// Initialize the array, that holds the colors for the texture
@@ -187,36 +188,7 @@ public class environmentManager : MonoBehaviour {
 		// Initialize the array, that holds the colors for the cube map
 		cubeMapColor = new Color[(int)cubeMapTextureResolution.x * (int)cubeMapTextureResolution.y];
 
-		// Instantiate all background planes
-	/*	for (int i = 0; i < environmentPlaneRenderers.Length; i++) {
-			environmentPlanes[i] = (GameObject)GameObject.Instantiate(environmentPlanes[i]);
-		}
-		// Get the renderer of the environment planes
-		for (int i = 0; i < environmentPlaneRenderers.Length; i++) {
-			environmentPlaneRenderers[i] = (Renderer)environmentPlanes[i].GetComponent (typeof(Renderer));
-		}
-		// Bind the environment texture to the environment planes
-		for (int i = 0; i < environmentPlaneRenderers.Length; i++) {
-			environmentPlaneRenderers[i].material.SetTexture("_MainTex", environmentTexture);
-			environmentPlaneRenderers[i].material.SetTextureScale("_MainTex", new Vector2(-1,-1));	// Invert texture due to uv mapping of the plane
-			environmentPlaneRenderers[i].material.SetTexture("_BumpMap", environmentBumpMap);
-			environmentPlaneRenderers[i].material.SetTextureScale("_MainTex", new Vector2(-1,-1));	// Invert texture due to uv mapping of the plane
-		}
-		// Deactivate all planes
-		for (int i = 0; i < environmentPlaneRenderers.Length; i++) {
-			environmentPlanes[i].SetActive(false);
-		}
-		environmentPlanes[planeIndex].SetActive(true);
-*/
-		// Activate current background plane
-	//	environmentPlanes[planeIndex].SetActive(true);
-		// Get the mesh of the currently active background plane
-	//	currentEnvironmentMesh = ((MeshFilter)environmentPlanes[planeIndex].GetComponent (typeof(MeshFilter))).mesh;
-		// Mark the mesh as dynamic, since it will be changed in every frame
-	//	currentEnvironmentMesh.MarkDynamic ();
-		// Get the extends of the currently active mesh
-	//	meshSize = environmentPlaneRenderers[planeIndex].bounds.max - environmentPlaneRenderers[planeIndex].bounds.min;
-		// Get a random initial start point on the map
+	
 		randomInitialValue = Random.Range ((float)int.MinValue/10000.0f,(float)int.MaxValue/10000.0f);
 
 		environmentalHazards = new GameObject[(int)(environmentalHazardResolution.x*environmentalHazardResolution.y*0.5f)];
@@ -228,6 +200,9 @@ public class environmentManager : MonoBehaviour {
 			environmentalHazards[i].AddComponent<BoxCollider>();
 			environmentalHazards[i].GetComponent<BoxCollider>().isTrigger = true;
 			environmentalHazards[i].AddComponent(typeof(thornBush));
+			thornBush t = (thornBush)environmentalHazards[i].GetComponent(typeof(thornBush));
+			t.damagePerSecond = 0.1f;
+			t.slowDownFactor = 0.6f;
 			environmentalHazards[i].SetActive(false);
 		}
 
@@ -235,42 +210,36 @@ public class environmentManager : MonoBehaviour {
 	}
 	
 	// Update is called once per frame
-	void Update () {
+	void Update () 
+	{
+		float t0 = System.DateTime.Now.Millisecond;
 
 		float viewingRange = playerScript.viewingRange*2.0f;
 		Vector3 playerPos = player.transform.position;
 		mainTextureSize = new Vector2 (2.0f*(viewingRange+player.transform.localScale.x), 2.0f*(viewingRange+player.transform.localScale.y));
 
-		// Loop over the 9 planes from the bottom left row-wise to the top
+		// Loop over the 9 plane tiles from the bottom left row-wise to the top right
 		for (int i = 0; i < 9; i++) {
 			Vector3 distance = playerPos - environmentPlaneTileBounds[planeTileOrdering[i]].center;
-			// Set the plane active if player is within its bounds or players viewingRange reaches the closest point of this planes boundaries
+			// Set the plane active if player is within its bounds 
 			if(Mathf.Abs(distance.x) < environmentPlaneTileBounds[planeTileOrdering[i]].extents.x && Mathf.Abs(distance.y) < environmentPlaneTileBounds[planeTileOrdering[i]].extents.y) {
 				environmentPlaneTiles[planeTileOrdering[i]].SetActive(true);
-				// If player has entered a new tile, reposition the planes furthest away
+				// If player has entered a new tile, reposition the planes, such that the current tile is the center of the 9 tiles
 				if(i != 4) {
 					setNewCenterTile(i);
 				}
 			}
+			// Set the plane active if player's viewingRange reaches the closest point of this plane tile's boundaries
 			else if( (environmentPlaneTileBounds[planeTileOrdering[i]].ClosestPoint(playerPos) - playerPos).magnitude <= 2.0f*viewingRange)
 			{
 				environmentPlaneTiles[planeTileOrdering[i]].SetActive(true);
 			}
+			// Otherwise we set it inactive
 			else 
 			{
 				environmentPlaneTiles[planeTileOrdering[i]].SetActive(false);
 			}
 		}
-
-		// Create terrain elevation for all active planes
-
-		float t0 = System.DateTime.Now.Millisecond;
-
-		// Scale the mesh according to the player's viewing range
-	//	environmentPlanes [planeIndex].transform.localScale = new Vector3((playerScript.transform.localScale.x + playerScript.viewingRange)*2.5f, 1, (playerScript.size + playerScript.viewingRange)*2.5f);
-
-		// Get the current size of the mesh (we need to take it from the renderer in order to get world coordinates - the mesh has bounds in untransformed coordinates)
-	//	meshSize = environmentPlaneRenderers[planeIndex].bounds.max - environmentPlaneRenderers[planeIndex].bounds.min;
 
 
 		// TODO update perlin noise parameters according to time
@@ -278,6 +247,7 @@ public class environmentManager : MonoBehaviour {
 		// Calculate current environment texture
 		calculateEnvironmentTexture ();
 
+		// Calculate terrain elevation for all active planes
 		for (int i = 0; i < 9; i++) {
 			if (environmentPlaneTiles[planeTileOrdering[i]].activeSelf) {
 				distortBackgroundPlane(planeTileOrdering[i],moveBackground,backgroundTimeMultiplier,backgroundMultiplierX,backgroundMultiplierY);
@@ -287,14 +257,10 @@ public class environmentManager : MonoBehaviour {
 	//	Debug.Log ("Total time for environment update on CPU : " + (System.DateTime.Now.Millisecond - t0) + "ms");
 
 	}
-	
-	void LateUpdate() {
-		// Move the environment plane along with the player
-		environmentPlanes[planeIndex].transform.position = player.transform.position;
-	}
 
-	// Is called, when the player enters a new plane tile and reorders the plane tiles such that 'index' is the new central tile
-	// Following are the indices of the tiles (4 is alwas the central plane)
+
+	// Is called, when the player enters a new plane tile. This function reorders the plane tiles such that 'index' is the new central tile
+	// Following are the indices of the tiles (4 is always the central plane)
 	// 6 7 8
 	// 3 4 5
 	// 0 1 2
@@ -312,9 +278,10 @@ public class environmentManager : MonoBehaviour {
 		old7 = planeTileOrdering[7];
 		old8 = planeTileOrdering[8];
 		Debug.Log ("Switched to plane" + index);
+
 		switch(index) {
 		case (0) :
-			// reposition 2,5,6,7,8 to 0,1,2,3,6
+			// reposition tiles 2,5,6,7,8 to positions 0,1,2,3,6
 			
 			// Move 2 to 2
 			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
@@ -341,7 +308,7 @@ public class environmentManager : MonoBehaviour {
 			planeTileOrdering[8] = old4;
 			break;
 		case (1) :
-			// reposition 6,7,8 to 0,1,2
+			// reposition tiles 6,7,8 to positions 0,1,2
 			
 			// Move 6 to 0
 			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
@@ -364,7 +331,7 @@ public class environmentManager : MonoBehaviour {
 			planeTileOrdering[8] = old5;
 			break;
 		case (2) :
-			// reposition 0,3,6,7,8 to 0,1,2,5,8
+			// reposition tiles 0,3,6,7,8 to positions 0,1,2,5,8
 			
 			// Move 0 to 0
 			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
@@ -391,7 +358,7 @@ public class environmentManager : MonoBehaviour {
 			planeTileOrdering[7] = old5;
 			break;
 		case (3) :
-			// reposition 2,5,8 to 0,3,6
+			// reposition tiles 2,5,8 to positions 0,3,6
 			
 			// Move 2 to 0
 			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
@@ -414,7 +381,7 @@ public class environmentManager : MonoBehaviour {
 			planeTileOrdering[8] = old7;
 			break;
 		case (5) :
-			// reposition 0,3,6 to 2,5,8
+			// reposition tiles 0,3,6 to positions 2,5,8
 			
 			// Move 0 to 2
 			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
@@ -437,7 +404,7 @@ public class environmentManager : MonoBehaviour {
 			planeTileOrdering[7] = old8;
 			break;
 		case (6) :
-			// reposition 0,1,2,5,8 to 0,3,6,7,8
+			// reposition tiles 0,1,2,5,8 to positions 0,3,6,7,8
 			
 			// Move 0 to 0
 			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
@@ -464,7 +431,7 @@ public class environmentManager : MonoBehaviour {
 			planeTileOrdering[5] = old7;
 			break;
 		case (7) :
-			// reposition 0,1,2 to 6,7,8
+			// reposition tiles 0,1,2 to positions 6,7,8
 			
 			// Move 0 to 6
 			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
@@ -487,7 +454,7 @@ public class environmentManager : MonoBehaviour {
 			planeTileOrdering[5] = old8;
 			break;
 		case (8) :
-			// reposition 0,1,2,3,6 to 2,5,6,7,8
+			// reposition tiles 0,1,2,3,6 to positions 2,5,6,7,8
 			
 			// Move 0 to 8
 			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
@@ -536,19 +503,18 @@ public class environmentManager : MonoBehaviour {
 		// Calculate on how many rows of the texture each thread has to work on.
 		int rowsPerThread = (int)Mathf.Floor(mainTextureResolution.y / nofThreads);
 
-
 		// Start working threads
 		for (int threadIndex = 0; threadIndex < nofThreads-1; threadIndex++)
 		{
 			int startRow = threadIndex*rowsPerThread;
 			// Give the thread the function it needs to work on
-			threads[threadIndex] = new System.Threading.Thread(() => parallelCalculation(startRow, startRow + rowsPerThread, xOffset, yOffset, distancePerPixel, currentTime));
+			threads[threadIndex] = new System.Threading.Thread(() => calculateTextureMask(startRow, startRow + rowsPerThread, xOffset, yOffset, distancePerPixel, currentTime));
 			// Start the working thread
 			threads[threadIndex].Start();
 		}
 
 		// Main thread calculates rest of the texture
-		parallelCalculation((nofThreads-1)*rowsPerThread, (int)mainTextureResolution.y, xOffset, yOffset, distancePerPixel, currentTime);
+		calculateTextureMask((nofThreads-1)*rowsPerThread, (int)mainTextureResolution.y, xOffset, yOffset, distancePerPixel, currentTime);
 
 		// Main thread waits for the other threads to finish
 		for (int threadIndex = 0; threadIndex < nofThreads-1; threadIndex++)
@@ -565,7 +531,7 @@ public class environmentManager : MonoBehaviour {
 
 	}
 
-	private void parallelCalculation(int startRow, int endRow, float xOffset, float yOffset, Vector2 distancePerPixel, float currentTime)
+	private void calculateTextureMask(int startRow, int endRow, float xOffset, float yOffset, Vector2 distancePerPixel, float currentTime)
 	{
 		for (int y = startRow; y < endRow; y++) 
 		{
@@ -934,33 +900,6 @@ public class environmentManager : MonoBehaviour {
 	}
 
 
-
-	// Calculates a height map for the terrain (y offset for the vertices)
-	private void calculateTerrainMap()
-	{
-		// Get the vertices of the plane (in object space)
-		Vector3[] vertices = currentEnvironmentMesh.vertices;
-		for (int i = 0; i < vertices.Length; i++)
-		{   
-			// Transform the vertices of the plane into world space
-			Vector3 vertexPoint = environmentPlanes[planeIndex].transform.TransformPoint(vertices[i]);
-			if(i == 1)
-				Debug.Log (vertexPoint);
-			float xCoord = vertexPoint.x + Time.time*0.3f;
-			float yCoord = vertexPoint.y + Time.time*0.3f;
-			// Generate smooth hills (z-offset)
-			vertexPoint.z = addUpOctaves (terrainFormingOctaves, terrainFormingFrequency, terrainFormingPersistence, xCoord, yCoord) * maxTerrainHeight;
-			// Transform the manipulated vertex back into object space and store it
-			vertices[i] = environmentPlanes[planeIndex].transform.InverseTransformPoint(vertexPoint);
-		}
-		// Set manipulated vertices
-		currentEnvironmentMesh.vertices = vertices;
-		// Recalculate the boundaries
-		currentEnvironmentMesh.RecalculateBounds();
-		// Recalculate surface normals
-		currentEnvironmentMesh.RecalculateNormals();
-	}
-
 	private void distortBackgroundPlane(int index, bool moveOverTime, float timeMultiplier, float xMultiplier, float yMultiplier) 
 	{
 		// Get the vertices of the plane (in object space)
@@ -988,10 +927,12 @@ public class environmentManager : MonoBehaviour {
 		environmentPlaneTileMeshes[index].RecalculateNormals();
 	}
 
+
 	private float generateWaterSurface(float x, float y, float currentTime)
 	{
 		return addUpOctaves(waterBumpMapOctaves, waterBumpMapFrequency, waterBumpMapPersistence, x + currentTime, y + currentTime);
 	}
+
 
 	// A high persistence leads to only a small variation in amplitude, whereas a low persistence leads to high variation in amplitude
 	// A low frequency leads to only few value changes over a large area, whereas a high frequency leads to lots of details over a small area

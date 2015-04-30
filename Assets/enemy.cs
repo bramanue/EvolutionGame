@@ -174,6 +174,8 @@ public class enemy : MonoBehaviour {
 
 	public Material defaultMaterial;
 
+	private lootManager lootManager;
+
 
 	// Use this for initialization
 	void Start () 
@@ -184,6 +186,8 @@ public class enemy : MonoBehaviour {
 		player = GameObject.Find("Blob");
 		// Get access to the player script
 		playerScript = (player)player.GetComponent(typeof(player));
+		// Get the loot manager
+		lootManager = (lootManager)GameObject.Find ("LootManager").GetComponent (typeof(lootManager));
 		// Get the current viewing direction
 		viewingDirection = transform.up;
 		// Set the idle viewing angle of this enemy
@@ -456,6 +460,12 @@ public class enemy : MonoBehaviour {
 				abilities[mostProbableIndex].useAbility();
 			}
 
+			if (environmentProximityData != null) {
+				bool carryOnAsUsual = avoidEnvironmentalHazard();
+				if(!carryOnAsUsual)
+					return;
+			}
+
 			// Calculate rotation target (the viewing direction this enemy strives for, i.e. towards player)
 			Vector3 rotationTarget = toPlayer.normalized;
 			// Perform rotation towards player
@@ -469,17 +479,24 @@ public class enemy : MonoBehaviour {
 	// Function called when this blob is running away from the player
 	private void runAwayFromPlayer() 
 	{
-		if (canMove) {
+		if (stunned)
+			return;
+
+		if (canMove) 
+		{
 			if (environmentProximityData != null) {
-				avoidEnvironmentalHazard ();
-			} else {
-				// Calculate rotation target (the target viewing direction, i.e. look away from player)
-				Vector3 rotationTarget = -toPlayer.normalized;
-				// Perform rotation away from the player
-				performRotation (rotationTarget);
-				// Run away from player
-				transform.position += viewingDirection * currentSpeed * Time.deltaTime;
+				bool carryOnAsUsual = avoidEnvironmentalHazard();
+				if(!carryOnAsUsual)
+					return;
 			}
+
+			// Calculate rotation target (the target viewing direction, i.e. look away from player)
+			Vector3 rotationTarget = -toPlayer.normalized;
+			// Perform rotation away from the player
+			performRotation (rotationTarget);
+			// Run away from player
+			transform.position += viewingDirection * currentSpeed * Time.deltaTime;
+
 
 		} else if (!stunned) {
 
@@ -487,9 +504,10 @@ public class enemy : MonoBehaviour {
 	}
 
 	// Function called to evade environmental hazards
-	private void avoidEnvironmentalHazard()
+	// Returns true, if calling procedure can act as usual. Returns false, if calling procedure should not perform any additional movements.
+	private bool avoidEnvironmentalHazard()
 	{
-		// If we have just entered a dangerous environment try to get out again
+		// If we have just entered a dangerous environment try to get out again unless you're on the run
 		if (closeToEnvironmentBoundary || (currentEnvironment != null && previousEnvironment == null)) 
 		{
 			Debug.Log ("Just entered hazardous environment. Turn around");
@@ -497,28 +515,33 @@ public class enemy : MonoBehaviour {
 			if(currentEnvironment != null)
 			{
 				int abilityIndex = hasAbility(currentEnvironment.requiredAbility);
-				if(abilityIndex != -1)
+				if(abilityIndex != -1) {
 					abilities[abilityIndex].useAbility();
+					// If we have the ability and are hunted, then don't turn around!
+					if(isRunningAwayFromPlayer || isHuntingPlayer)
+						return true;
+				}
+
 			}
 
 			if (!closeToEnvironmentBoundary) {
 				// Initialize the rotation
 				idleRotationTarget = -viewingDirection;
 				closeToEnvironmentBoundary = true;
-				return;
+				return false;
 			} 
 			else 
 			{
 				if (currentEnvironment == null){
 					// We safely got out
 					closeToEnvironmentBoundary = false;
-					return;	
+					return true;	
 				} else {
 					// Perform rotation and moving with max speed
 					currentSpeed = (baseVelocity + runVelocityBoost)*environmentalSlowDown;
 					performRotation (idleRotationTarget);
 					transform.position += viewingDirection * currentSpeed * Time.deltaTime;
-					return;
+					return false;
 				}
 			}
 		} 
@@ -529,51 +552,62 @@ public class enemy : MonoBehaviour {
 			if(abilityIndex != -1)
 				abilities[abilityIndex].useAbility();
 
+			// If we are hunting or running away, then simply carry on as usual
+			if(isHuntingPlayer || isRunningAwayFromPlayer)
+				return true;
+
+			// If we are in idle, then move straight on to get out
 			Debug.Log ("Inside hazardous environment. Get out straight on");
 			// Perform rotation and moving with max speed
 			currentSpeed = (baseVelocity + runVelocityBoost)*environmentalSlowDown;
 			transform.position += viewingDirection * currentSpeed * Time.deltaTime;
-			return;
+			return false;
 		}
 		else  // If we are close to a boundary, but not inside, then:
-			  // Idle: try to avoid the environmental hazard
-			  // Hunting: enter, if ability available, stop if not available
-			  // Running: enter, if ability available, evade if not available
 		{
 			if(isRunningAwayFromPlayer || isHuntingPlayer)
 			{
 				int abilityIndex = hasAbility(environmentProximityData.requiredAbility);
-				if(abilityIndex != -1) {
-					abilities[abilityIndex].useAbility();
-					return;
-				}
-			}
-			if(!isHuntingPlayer)
-			{
-				// Get a vector that points away from the dangerous object
-				Vector3 rotationTarget = environmentProximityData.getSafestDirection();
-				Vector3 closestObstacle = environmentProximityData.getClosestDirection();
-				float distance = closestObstacle.magnitude;
-				float rotationDampening = Mathf.Min(1.0f, 1.0f - distance/(2.0f*currentSpeed));
-				Debug.Log ("Rotate towards " + rotationTarget);
-				//	Debug.Log ("Towards" + rotationTarget);
-				transform.position += Time.deltaTime * currentSpeed * viewingDirection;
-				// If the safest direction is along the viewingDirection, then no special rotation is required - simply walk on
-				if (Mathf.Abs (Vector3.Dot (rotationTarget, viewingDirection)) <= 0.01f /*1.0f - Vector3.Dot (rotationTarget, viewingDirection) <= 0.01f*/) {
-					return;
-				}
-				else
+				if(abilityIndex != -1) 
 				{
-					// Perform the rotation
-					performRotation (rotationTarget,rotationDampening);
-					return;
+					abilities[abilityIndex].useAbility();
+					if(isRunningAwayFromPlayer) 
+					{
+						// turn towards environment to hide in there
+						transform.position += Time.deltaTime * currentSpeed * viewingDirection;
+						performRotation (environmentProximityData.getClosestDirection().normalized);
+						return false;
+					}
+					else // If is hunting player, then carry on as usual
+					{
+						return true;
+					}
 				}
+
 			}
-			else  // If is hunting player
+
+			// Get a vector that points away from the dangerous object
+			Vector3 rotationTarget = (environmentProximityData.getSafestDirection() + viewingDirection).normalized;
+			Vector3 closestObstacle = environmentProximityData.getClosestDirection();
+			float distance = closestObstacle.magnitude;
+			// We should be able to perform half the rotation (i.e. 90°) within one second
+	//		float angleBetween = Mathf.Sign (Vector3.Cross (viewingDirection, rotationTarget).z) * Vector3.Angle (viewingDirection, rotationTarget);
+			float rotationDampening = Mathf.Min(1.0f, 1.0f - distance/(2.0f*currentSpeed));
+			Debug.Log ("Rotate towards " + rotationTarget);
+			//	Debug.Log ("Towards" + rotationTarget);
+
+			// If the safest direction is along the viewingDirection, then no special rotation is required - simply walk on
+			if (Mathf.Abs (Vector3.Dot (rotationTarget, viewingDirection)) <= 0.01f /*1.0f - Vector3.Dot (rotationTarget, viewingDirection) <= 0.01f*/) {
+				return true;
+			}
+			else
 			{
-
-
+				// Perform the rotation
+				transform.position += Time.deltaTime * currentSpeed * viewingDirection;
+				performRotation (rotationTarget,rotationDampening);
+				return false;
 			}
+
 		}
 	}
 
@@ -585,7 +619,7 @@ public class enemy : MonoBehaviour {
 		// Target rotation Quaternion
 		Quaternion rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
 		// Interpolate rotation for the current time step
-		transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * Mathf.Min (currentSpeed,1.0f) * rotationDampener);
+		transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed * rotationDampener);
 	}
 
 
@@ -597,9 +631,9 @@ public class enemy : MonoBehaviour {
 
 		// If enemy has walked/turned close to a dangerous environment, then turn away from this object
 		if (environmentProximityData != null) {
-		//	resetIdleStates();
-			avoidEnvironmentalHazard();
-			return;
+			bool carryOnAsUsual = avoidEnvironmentalHazard();
+			if(!carryOnAsUsual)
+				return;
 		}
 
 		if (isIdleAnimationComplete) {
@@ -745,10 +779,10 @@ public class enemy : MonoBehaviour {
 
 	public void addAbility(GameObject ability, int slot)
 	{
-		nofAbilities++;
 		if (abilities [slot] != null) {
 			removeAndDestroyAbility(slot);
 		}
+		nofAbilities++;
 		abilityObjects [slot] = ability;
 		abilities[slot] = (ability)abilityObjects [slot].GetComponent (typeof(ability));
 	}
@@ -778,7 +812,9 @@ public class enemy : MonoBehaviour {
 	// Returns a random ability of this enemy (for the case when the player eats this enemy)
 	public ability getRandomAbility()
 	{
-		if (nofAbilities > 0) {
+		if (nofAbilities > 0) 
+		{
+			Debug.Log (nofAbilities);
 			int index = Random.Range (0, nofAbilities);
 			int counter = 0;
 			for(int i = 0; i < 8; i++) {
@@ -884,6 +920,45 @@ public class enemy : MonoBehaviour {
 	public void addCourseCorrection(Vector3 correction)
 	{
 		environmentalCourseCorrection += correction;
+	}
+
+	public void inflictAbilityDamage(float damage) 
+	{
+		if (damage > 0.1f * size) 
+		{
+			damage = Mathf.Min (damage,size);
+			int nofLootChances = (int)(damage / (0.1f*size));
+			for(int i = 0; i < nofLootChances; i++)
+			{
+				float rnd = Random.value;
+				if(rnd > 0.5f) 
+				{
+					if(rnd > 0.75) 
+					{
+						// throw sizeLoot
+					//	lootManager.throwSizeLoot(damage*0.5f);
+					}
+					else
+					{
+						// throw ability loot
+						ability rndAbility = getRandomAbility();
+						float radius = 2.0f*this.transform.localScale.x;
+						float theta = Random.Range(0.0f,2.0f*Mathf.PI);
+						Vector3 throwTo = new Vector3(radius*Mathf.Cos(theta), radius*Mathf.Sin (theta), 0);
+					//	lootManager.throwAbilityLoot(rndAbility, this.transform.position, throwTo);
+						rndAbility.increaseLevel(-(int)(0.1f*rndAbility.maxLevel));
+
+						// Probability that enemy looses that ability
+						float loseChance = Random.value;
+						if(loseChance > 0.9) {
+							removeAndDestroyAbility(hasAbility(rndAbility.abilityEnum));
+						}
+					}
+				}
+			}
+		}
+		// Probability to lose loot
+		size -= damage;
 	}
 
 }

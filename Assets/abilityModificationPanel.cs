@@ -87,7 +87,7 @@ public class abilityModificationPanel : MonoBehaviour {
 	{
 		if (active) 
 		{
-			Time.timeScale = 0.1f;
+			Time.timeScale = 0.0f;
 			// Make sure that if the fade animation is active, that the panel has not been opened again
 			if(fadeAnimationId == id)
 			{
@@ -144,7 +144,7 @@ public class abilityModificationPanel : MonoBehaviour {
 	{
 		// Keep UI panel from rotating with the player's blob
 		transform.rotation = originalRotation;
-		float size = 0.1f/player.transform.localScale.x;
+		float size = 0.0f/player.transform.localScale.x;
 		if(!float.IsInfinity(size))
 			transform.localScale = new Vector3 (size, size, size);
 		if(isInChosingState)
@@ -157,7 +157,7 @@ public class abilityModificationPanel : MonoBehaviour {
 		isInChosingState = true;
 		id = Random.value;	// Random value as id
 
-		Time.timeScale = 0.1f;
+		Time.timeScale = 0.0f;
 		this.enemyScript = enemyScript;
 		this.newAbility = newAbility;
 

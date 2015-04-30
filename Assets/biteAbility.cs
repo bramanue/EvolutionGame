@@ -34,7 +34,7 @@ public class biteAbility : ability {
 		abilitySuperClassEnum = EAbilityClass.EActiveAbility;
 
 		// Put ability on blob
-		transform.localPosition = new Vector3 (0, 1.3f, 0);
+		transform.localPosition = new Vector3 (0, 1.28f, 0);
 	}
 	
 	void Update()
@@ -44,6 +44,8 @@ public class biteAbility : ability {
 
 	void LateUpdate()
 	{
+		transform.localRotation = new Quaternion (0, 0, 0, 1);
+		transform.localScale = new Vector3(1,2,1);
 		transform.localPosition = new Vector3(0,1.28f,0);
 		otherBlob = null;
 		blobInReach = false;

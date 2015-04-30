@@ -30,12 +30,13 @@ public class thornBush : hazardousEnvironment {
 			else
 			{
 				// Player takes damager
-				playerScript.inflictEnvironmentalDamage(0.1f);
+				playerScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				playerScript.addEnvironmentPushBackForce(playerScript.viewingDirection);
+				playerScript.applyEnvironmentalSlowDown(slowDownFactor);
+			//	playerScript.addEnvironmentPushBackForce(playerScript.viewingDirection);
 				// Disable player for a short time
-				playerScript.setStunned(0.3f);
+			//	playerScript.setStunned(0.3f);
 			}
 				
 		}
@@ -48,13 +49,14 @@ public class thornBush : hazardousEnvironment {
 			}
 			else
 			{
-				// Enemy takes damager
-				enemyScript.inflictEnvironmentalDamage(0.1f);
+				// Enemy takes damage over time
+				enemyScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				enemyScript.addEnvironmentPushBackForce(enemyScript.viewingDirection);
+				enemyScript.applyEnvironmentalSlowDown(slowDownFactor);
+				// enemyScript.addEnvironmentPushBackForce(enemyScript.viewingDirection);
 				// Disable enemy for a short time
-				enemyScript.setStunned(0.3f);
+				// enemyScript.setStunned(0.3f);
 			}
 		}
 	}
@@ -64,7 +66,7 @@ public class thornBush : hazardousEnvironment {
 	{
 		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
 		player playerScript = (player)other.gameObject.GetComponent(typeof(player));
-		
+
 		if (playerScript) 
 		{
 			playerScript.currentEnvironment = this;
@@ -76,12 +78,14 @@ public class thornBush : hazardousEnvironment {
 			else
 			{
 				// Player takes damager
-				playerScript.size -= 0.1f;
+				playerScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= playerScript.viewingDirection;
+				Debug.Log (slowDownFactor);
+				playerScript.applyEnvironmentalSlowDown(slowDownFactor);
+				//	playerScript.addEnvironmentPushBackForce(playerScript.viewingDirection);
 				// Disable player for a short time
-				playerScript.setStunned(0.3f);
+				//	playerScript.setStunned(0.3f);
 			}
 			
 		}
@@ -95,13 +99,14 @@ public class thornBush : hazardousEnvironment {
 			}
 			else
 			{
-				// Enemy takes damager
-				enemyScript.size -= 0.1f;
+				// Enemy takes damage over time
+				enemyScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
 				// TODO throw back in normal direction of the thorn bush
-				other.gameObject.transform.position -= enemyScript.viewingDirection;
+				enemyScript.applyEnvironmentalSlowDown(slowDownFactor);
+				// enemyScript.addEnvironmentPushBackForce(enemyScript.viewingDirection);
 				// Disable enemy for a short time
-				enemyScript.setStunned(0.3f);
+				// enemyScript.setStunned(0.3f);
 			}
 		}
 	}

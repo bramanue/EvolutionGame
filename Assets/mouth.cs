@@ -43,19 +43,44 @@ public class mouth : MonoBehaviour {
 			enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
 			if (enemyScript != null) {
 				// If player is bigger than enemy, then eat it
-				if (enemyScript.transform.localScale.x < parentBlob.transform.localScale.x) {
+				if (other.gameObject.transform.localScale.x < parentBlob.transform.localScale.x) {
 					// If enemy has not been eaten yet, eat him
 					if (enemyScript.size > 0)
 						parentPlayerScript.eatBlob (enemyScript, other.gameObject);
-				} else { 	// If the player's creature is smaller than the enemy, then reduce player's size
-					// size -= 0.1f;
+				} 
+				return;
+			}
+			loot loot = (loot)other.gameObject.GetComponent(typeof(loot));
+			if(loot != null) {
+				ELootType lootType = loot.lootType;
+				if(lootType == ELootType.ESizeLoot)
+					loot.acquire(playerScript);
+				else
+				{
+					abilityLoot abilityLoot = (abilityLoot)loot;
+					EAbilityClass abilityClass = abilityLoot.abilityClass;
+					if(abilityClass == EAbilityClass.EPassiveAbility)
+						// Passive abilities are no problem to acquire
+						abilityLoot.acquire(parentPlayerScript);
+					else
+					{
+						// Otherwise check if player already has this ability -> then it is no problem to acquire
+						EAbilityType abilityType = abilityLoot.abilityType;
+						if(parentPlayerScript.hasAbility(abilityType) != -1)
+							abilityLoot.acquire (parentPlayerScript);
+						else
+						{
+							// Show the player, that there is a new ability he could acquire
+						}
+					}
 				}
 			}
+
 		} else {
-			// This is handled in the player script
+
 			if (other.gameObject == player) { 
 				if(parentEnemyScript.isHuntingPlayer) {
-					playerScript.size -= 0.05f*transform.localScale.x/other.transform.localScale.x;
+					playerScript.inflictDamage(0.05f*parentBlob.transform.localScale.x/other.gameObject.transform.localScale.x);
 				}
 				return;
 			}
@@ -66,7 +91,7 @@ public class mouth : MonoBehaviour {
 			{
 				enemy enemyScript = (enemy)other.gameObject.GetComponent(typeof(enemy));
 				if(enemyScript != null && parentBlob.transform.localScale.x > other.gameObject.transform.localScale.x) {
-					// Define by how much the player's blob grows
+					// Define by how much the enemy blob grows
 					float growFactor = enemyScript.size / parentEnemyScript.size;
 					// Set scaling of the blob
 					parentEnemyScript.size += 0.1f*growFactor*growFactor;
@@ -84,12 +109,18 @@ public class mouth : MonoBehaviour {
 			enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
 			if (enemyScript != null) {
 				// If player is bigger than enemy, then eat it
-				if (enemyScript.transform.localScale.x < transform.localScale.x) {
+				if (other.gameObject.transform.localScale.x < parentBlob.transform.localScale.x) {
 					// If enemy has not been eaten yet, eat him
 					if (enemyScript.size > 0)
 						parentPlayerScript.eatBlob (enemyScript, other.gameObject);
 				} 
 			}
 		}
+		if (other.gameObject == player) { 
+			if (parentEnemyScript.isHuntingPlayer) {
+				playerScript.inflictDamage(0.02f*parentBlob.transform.localScale.x/other.gameObject.transform.localScale.x);
+			}
+			return;
+		} 
 	}
 }

@@ -121,7 +121,7 @@ public class proximitySensor : MonoBehaviour {
 		Vector3 intersection = hazard.bounds.ClosestPoint (parentBlob.transform.position);
 
 		proximityData.registerIntersection (intersection-parentBlob.transform.position);
-		Debug.Log ("Collision in " + (intersection-parentBlob.transform.position));
+	//	Debug.Log ("Collision in " + (intersection-parentBlob.transform.position));
 
 		// Shoot a ray into that direction to make sure the distance is not shorter
 		RaycastHit hit;
