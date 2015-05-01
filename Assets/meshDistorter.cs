@@ -31,6 +31,8 @@ public class meshDistorter : MonoBehaviour {
 		meshFilter = parentBlob.GetComponent<MeshFilter> ();
 		mesh = meshFilter.mesh;
 
+		Debug.Log (parentBlob);
+
 		originalVertices = mesh.vertices;
 		vertex2NormalMap = new Vector3[originalVertices.Length];
 		Vector3[] normals = mesh.normals;
