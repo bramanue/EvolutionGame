@@ -43,8 +43,11 @@ public class runAbility : ability {
 		abilitySuperClassEnum = EAbilityClass.EPassiveAbility;
 	}
 	
-	void Update () {
-		transform.localPosition = new Vector3 (0, 0, 0);
+	void Update () 
+	{
+		transform.localRotation = new Quaternion ();
+		transform.localScale = new Vector3(1,1,1);
+		transform.localPosition = new Vector3(0,0,0);
 
 		// Set current speed back to default value if it is not used for some time
 		if (!inUse) {
@@ -83,7 +86,8 @@ public class runAbility : ability {
 		if (isPlayer) 
 			parentPlayerScript.runVelocityBoost = currentSpeed;
 		else
-			parentEnemyScript.runVelocityBoost = currentSpeed;
+			if(parentEnemyScript)
+				parentEnemyScript.runVelocityBoost = currentSpeed;
 		return true;
 	}
 

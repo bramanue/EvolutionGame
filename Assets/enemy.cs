@@ -924,28 +924,32 @@ public class enemy : MonoBehaviour {
 
 	public void inflictAbilityDamage(float damage) 
 	{
-		if (damage > 0.1f * size) 
+		if (damage > 0) 
 		{
 			damage = Mathf.Min (damage,size);
 			int nofLootChances = (int)(damage / (0.1f*size));
 			for(int i = 0; i < nofLootChances; i++)
 			{
 				float rnd = Random.value;
-				if(rnd > 0.5f) 
+				if(rnd > 0.0f) 
 				{
-					if(rnd > 0.75) 
+					if(rnd > 0.75 || !hasAbilities()) 
 					{
 						// throw sizeLoot
-					//	lootManager.throwSizeLoot(damage*0.5f);
+						float radius = Random.Range(1.0f,2.5f)*transform.localScale.x;
+						float theta = Random.Range(0.0f,2.0f*Mathf.PI);
+						Vector3 throwTo = transform.position + new Vector3(radius*Mathf.Cos(theta), radius*Mathf.Sin (theta), 0);
+						Debug.Log ("Throw size loot");
+						lootManager.throwSizeLoot(damage*0.5f,transform.position,throwTo);
 					}
 					else
 					{
 						// throw ability loot
 						ability rndAbility = getRandomAbility();
-						float radius = 2.0f*this.transform.localScale.x;
+						float radius = Random.Range(1.0f,2.5f)*transform.localScale.x;
 						float theta = Random.Range(0.0f,2.0f*Mathf.PI);
-						Vector3 throwTo = new Vector3(radius*Mathf.Cos(theta), radius*Mathf.Sin (theta), 0);
-					//	lootManager.throwAbilityLoot(rndAbility, this.transform.position, throwTo);
+						Vector3 throwTo = transform.position + new Vector3(radius*Mathf.Cos(theta), radius*Mathf.Sin (theta), 0);
+					//	lootManager.throwAbilityLoot(rndAbility, transform.position, throwTo);
 						rndAbility.increaseLevel(-(int)(0.1f*rndAbility.maxLevel));
 
 						// Probability that enemy looses that ability

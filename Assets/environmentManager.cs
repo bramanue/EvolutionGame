@@ -214,7 +214,7 @@ public class environmentManager : MonoBehaviour {
 	{
 		float t0 = System.DateTime.Now.Millisecond;
 
-		float viewingRange = playerScript.viewingRange*2.0f;
+		float viewingRange = playerScript.currentViewingRange*2.0f;
 		Vector3 playerPos = player.transform.position;
 		mainTextureSize = new Vector2 (2.0f*(viewingRange+player.transform.localScale.x), 2.0f*(viewingRange+player.transform.localScale.y));
 

@@ -23,8 +23,6 @@ public class biteAbility : ability {
 
 		maxLevel = 10;
 		damage = baseDamage + level * 0.1f;
-		abilityName = "BiteAbility";
-		cooldownTime = 3.0f;
 		cooldownTimer = 0.0f;
 
 		blobInReach = false;
@@ -34,7 +32,7 @@ public class biteAbility : ability {
 		abilitySuperClassEnum = EAbilityClass.EActiveAbility;
 
 		// Put ability on blob
-		transform.localPosition = new Vector3 (0, 1.28f, 0);
+		transform.localPosition = new Vector3 (0, 0, 0);
 	}
 	
 	void Update()
@@ -45,8 +43,8 @@ public class biteAbility : ability {
 	void LateUpdate()
 	{
 		transform.localRotation = new Quaternion (0, 0, 0, 1);
-		transform.localScale = new Vector3(1,2,1);
-		transform.localPosition = new Vector3(0,1.28f,0);
+		transform.localScale = new Vector3(1,1,1);
+		transform.localPosition = new Vector3(0,0,0);
 		otherBlob = null;
 		blobInReach = false;
 	}
@@ -59,7 +57,7 @@ public class biteAbility : ability {
 				if(isPlayer) {
 					enemy enemyScript = (enemy)otherBlob.GetComponent (typeof(enemy));
 					float oldSize = enemyScript.size;
-					enemyScript.size -= damage;
+					enemyScript.inflictAbilityDamage(damage);
 					// A quarter of the inflicted damage is added to the player's size
 					parentPlayerScript.size += 0.25f*Mathf.Min (damage, oldSize);
 					Debug.Log ("Bite ability inflicted " + 0.25f*Mathf.Min (damage, oldSize) + " damage.");

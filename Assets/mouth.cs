@@ -51,7 +51,7 @@ public class mouth : MonoBehaviour {
 				return;
 			}
 			loot loot = (loot)other.gameObject.GetComponent(typeof(loot));
-			if(loot != null) {
+			if(loot != null && loot.readyToEat) {
 				ELootType lootType = loot.lootType;
 				if(lootType == ELootType.ESizeLoot)
 					loot.acquire(playerScript);

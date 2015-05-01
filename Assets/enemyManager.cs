@@ -74,7 +74,7 @@ public class enemyManager : MonoBehaviour {
 	void Update () {
 
 		// Make sure the radius increases with the player's size
-		radius = 5.0f*playerScript.viewingRange + nofEnemies/2.0f*1.28f*player.transform.localScale.x + 2.0f*playerScript.maxVelocity;
+		radius = 4.0f*playerScript.currentViewingRange + nofEnemies*player.transform.localScale.x + 2.0f*playerScript.maxVelocity;
 
 		// Get the current position of the player
 		Vector3 playerPosition = player.transform.position;
@@ -96,7 +96,7 @@ public class enemyManager : MonoBehaviour {
 			}
 
 			// Deactivate enemies if they are too far from the player
-			if(distance > 2.2f*(playerScript.viewingRange + player.transform.localScale.x + enemyGameObjects[i].transform.localScale.x))
+			if(distance > 2.2f*(playerScript.currentViewingRange + player.transform.localScale.x + enemyGameObjects[i].transform.localScale.x))
 				enemyGameObjects[i].SetActive(false);
 			else
 				enemyGameObjects[i].SetActive(true);
@@ -243,7 +243,7 @@ public class enemyManager : MonoBehaviour {
 	{
 		// Find a new place for this enemy object to spawn
 		float theta = Random.Range (0.0f, 2.0f * Mathf.PI);
-		float r = Random.Range ((2.0f*(playerScript.viewingRange + playerScript.size)), radius);
+		float r = Random.Range ((2.0f*(playerScript.currentViewingRange + playerScript.size)), radius);
 		Vector3 offset = new Vector3(r*Mathf.Cos(theta), r*Mathf.Sin(theta), 0);
 		return player.transform.position + offset;
 	}

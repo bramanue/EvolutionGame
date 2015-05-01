@@ -76,7 +76,8 @@ public class ramAbility : ability {
 	{
 		cooldownTimer -= Time.deltaTime;
 		transform.localPosition = new Vector3 (0, 0, 0);
-	//	transform.localScale = new Vector3 (1, 1, 1);
+		transform.localScale = new Vector3 (1, 1, 1);
+		transform.rotation = new Quaternion ();
 
 		// Update range and damage
 		damage = internalDamage*parentBlob.transform.localScale.x;
@@ -94,7 +95,7 @@ public class ramAbility : ability {
 					inTargetMode = false;
 					inChargeMode = true;
 					// Ram attack is only executed after a 0.5s delay
-					attackTimer = 0.5f;
+					attackTimer = 0.3f;
 					// Get the angle between the target viewing direction and the current viewing direction
 					float angleBetween = Mathf.Sign (Vector3.Cross (parentPlayerScript.viewingDirection, targetDirection).z) * Vector3.Angle (parentPlayerScript.viewingDirection, targetDirection);
 					// Calculate the necessary rotation speed to perform rotation within 0.5s
@@ -310,7 +311,7 @@ public class ramAbility : ability {
 			if (enemyScript != null || playerScript != null) {
 				if (isPlayer) {
 					// TODO reduce damage if dust shield / thorn shield used
-					enemyScript.size -= damage;
+					enemyScript.inflictAbilityDamage(damage);
 				} else {
 					if (playerScript) {
 
@@ -332,7 +333,7 @@ public class ramAbility : ability {
 								return;
 							}
 						} 
-						enemyScript.size -= damage;
+						enemyScript.inflictAbilityDamage(damage);
 					}
 				}
 			}

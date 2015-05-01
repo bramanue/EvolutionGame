@@ -23,7 +23,7 @@ public class player : MonoBehaviour
 	public float viewingRangeBoost;
 
 	// Viewing Range of the player (depends on ability "Eyes")
-	public float viewingRange;
+	public float currentViewingRange;
 
 	// Viewing direction of the player (unit vector)
 	public Vector3 viewingDirection;
@@ -238,6 +238,7 @@ public class player : MonoBehaviour
 
 			// Get the viewing range
 			abilities [7].useAbility ();
+			currentViewingRange = baseViewingRange + viewingRangeBoost;
 			// Get the viewing direction
 			viewingDirection = transform.up;
 

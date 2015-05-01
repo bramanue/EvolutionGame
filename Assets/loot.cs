@@ -6,7 +6,9 @@ public class loot : MonoBehaviour {
 	public ELootType lootType;
 
 	// Defines whether this loot has been taken or not
-	public bool eaten;
+	public bool eaten = false;
+
+	public bool readyToEat = false;
 
 	// Use this for initialization
 	void Start () {
