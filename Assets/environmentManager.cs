@@ -245,7 +245,7 @@ public class environmentManager : MonoBehaviour {
 		// TODO update perlin noise parameters according to time
 
 		// Calculate current environment texture
-		calculateEnvironmentTexture ();
+	//	calculateEnvironmentTexture ();
 
 		// Calculate terrain elevation for all active planes
 		for (int i = 0; i < 9; i++) {
