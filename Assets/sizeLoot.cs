@@ -16,8 +16,8 @@ public class sizeLoot : loot {
 	}
 
 	public override void acquire(player playerScript, int slot = 0) {
-		playerScript.size += size;
-		size = 0;
+		if(!eaten)
+			playerScript.size += size;
 		eaten = true;
 	}
 }

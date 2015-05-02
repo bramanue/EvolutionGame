@@ -64,13 +64,15 @@ public class mouth : MonoBehaviour {
 						abilityLoot.acquire(parentPlayerScript);
 					else
 					{
-						// Otherwise check if player already has this ability -> then it is no problem to acquire
+						// Otherwise check if player already has this ability -> if so, then it is no problem to acquire
 						EAbilityType abilityType = abilityLoot.abilityType;
 						if(parentPlayerScript.hasAbility(abilityType) != -1)
 							abilityLoot.acquire (parentPlayerScript);
 						else
 						{
 							// Show the player, that there is a new ability he could acquire
+							parentPlayerScript.nearbyAbilityLoot = abilityLoot;
+							Debug.Log ("Nearby ability loot");
 						}
 					}
 				}
@@ -114,6 +116,35 @@ public class mouth : MonoBehaviour {
 					if (enemyScript.size > 0)
 						parentPlayerScript.eatBlob (enemyScript, other.gameObject);
 				} 
+			}
+
+			loot loot = (loot)other.gameObject.GetComponent(typeof(loot));
+			if(loot != null && loot.readyToEat) 
+			{
+				ELootType lootType = loot.lootType;
+				if(lootType == ELootType.ESizeLoot)
+					loot.acquire(playerScript);
+				else
+				{
+					abilityLoot abilityLoot = (abilityLoot)loot;
+					EAbilityClass abilityClass = abilityLoot.abilityClass;
+					if(abilityClass == EAbilityClass.EPassiveAbility)
+						// Passive abilities are no problem to acquire
+						abilityLoot.acquire(parentPlayerScript);
+					else
+					{
+						// Otherwise check if player already has this ability -> if so, then it is no problem to acquire
+						EAbilityType abilityType = abilityLoot.abilityType;
+						if(parentPlayerScript.hasAbility(abilityType) != -1)
+							abilityLoot.acquire (parentPlayerScript);
+						else
+						{
+							// Show the player, that there is a new ability he could acquire
+							parentPlayerScript.nearbyAbilityLoot = abilityLoot;
+							Debug.Log ("Nearby ability loot");
+						}
+					}
+				}
 			}
 		}
 		if (other.gameObject == player) { 

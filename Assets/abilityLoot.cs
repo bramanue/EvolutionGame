@@ -23,6 +23,9 @@ public class abilityLoot : loot {
 
 	public override void acquire(player playerScript, int slot = 0) 
 	{
+		if (eaten)
+			return;
+
 		int existingSlot = playerScript.hasAbility (abilityType);
 		if (existingSlot == -1) 
 		{
@@ -34,5 +37,6 @@ public class abilityLoot : loot {
 		{
 			playerScript.improveAbility(abilityType,level);
 		}
+		eaten = true;
 	}
 }

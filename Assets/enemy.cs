@@ -22,6 +22,9 @@ public class enemy : MonoBehaviour {
 	// Viewing direction of this enemy (normalized)
 	public Vector3 viewingDirection;
 
+	// Used to detect course corrections done by the envrionmentEvader
+	private Vector3 previousViewingDirection;
+
 	// The base viewing range without any eye ability
 	public float baseViewingRange;
 	
@@ -174,6 +177,8 @@ public class enemy : MonoBehaviour {
 
 	public Material defaultMaterial;
 
+
+
 	private lootManager lootManager;
 
 
@@ -250,9 +255,6 @@ public class enemy : MonoBehaviour {
 			blinded = false;
 		}
 
-		// Calculate the current maximally achievable speed
-		currentSpeed = (baseVelocity + runVelocityBoost)*environmentalSlowDown;
-
 		// Move and use abilities if not stunned
 		if (!stunned) {
 
@@ -263,11 +265,10 @@ public class enemy : MonoBehaviour {
 				// TODO: Camouflage, darkness, scene geometry, etc...
 
 				// Enemy can see player
-				Debug.Log ("Player spotted");
+			//	Debug.Log ("Player spotted");
 				if (size > playerScript.size) {
 
 					if (!isHuntingPlayer) {
-						Debug.Log ("Begin hunt -> set new originalPosition");
 						// When the hunt begins, mark the starting position as originalPosition
 						originalPosition = transform.position;
 					}
@@ -278,11 +279,6 @@ public class enemy : MonoBehaviour {
 						// TODO aggressivity level -> some may take the pursuit never the less
 						if(playerScript.currentEnvironment == null || hasAbility(playerScript.currentEnvironment.requiredAbility) != -1)
 						{
-							Debug.Log ("Player is in empty environment or enemy has required ability");
-							// Use running
-							if(abilities[6] != null)
-								abilities[6].useAbility();
-
 							isHuntingPlayer = true;
 							// Increase awareness
 							setAlertedState();
@@ -299,16 +295,12 @@ public class enemy : MonoBehaviour {
 					if(size < 2.0f * playerScript.size) {
 						isHuntingPlayer = false;
 						isRunningAwayFromPlayer = false;
-						resetIdleStates ();
 						// Proceed with idle behaviour
 					}
 					// Stop pursuit
 				} 
 				else  // Run away
 				{
-					// Use running
-					if(abilities[6] != null)
-						abilities[6].useAbility();
 					// Enemy is smaller than player -> run away (forever? or get slower by exhaustion?)
 					isRunningAwayFromPlayer = true;
 					isInAlertedState = false;
@@ -391,6 +383,7 @@ public class enemy : MonoBehaviour {
 		previousEnvironment = currentEnvironment;
 		currentEnvironment = null;
 		environmentProximityData = null;
+		previousViewingDirection = viewingDirection;
 	}
 
 	// Calculates whether player blob can be seen by this enemy or not TODO for 3D we need to give the rayDirection a value for the 3rd component (height)
@@ -442,6 +435,9 @@ public class enemy : MonoBehaviour {
 
 		if (canMove) 
 		{
+			// Use running
+			useRunning();
+
 			// Decide on an attack ability to use if any
 			float[] useProbabilities = new float[4];
 			for (int i = 0; i < 4; i++) {
@@ -460,7 +456,7 @@ public class enemy : MonoBehaviour {
 				abilities[mostProbableIndex].useAbility();
 			}
 
-			if (environmentProximityData != null) {
+			if (environmentProximityData != null || currentEnvironment != null) {
 				bool carryOnAsUsual = avoidEnvironmentalHazard();
 				if(!carryOnAsUsual)
 					return;
@@ -472,7 +468,6 @@ public class enemy : MonoBehaviour {
 			performRotation(rotationTarget);
 			// Run towards player
 			transform.position += viewingDirection * currentSpeed * Time.deltaTime;
-			Debug.Log ("Run towards player");
 		}
 	}
 
@@ -484,8 +479,12 @@ public class enemy : MonoBehaviour {
 
 		if (canMove) 
 		{
-			if (environmentProximityData != null) {
+			// Use running
+			useRunning();
+
+			if (environmentProximityData != null || currentEnvironment != null) {
 				bool carryOnAsUsual = avoidEnvironmentalHazard();
+				Debug.Log ("carryOnAsUsual = " + carryOnAsUsual);
 				if(!carryOnAsUsual)
 					return;
 			}
@@ -508,17 +507,15 @@ public class enemy : MonoBehaviour {
 	private bool avoidEnvironmentalHazard()
 	{
 		// If we have just entered a dangerous environment try to get out again unless you're on the run
-		if (closeToEnvironmentBoundary || (currentEnvironment != null && previousEnvironment == null)) 
-		{
+		if (closeToEnvironmentBoundary || (currentEnvironment != null && previousEnvironment == null)) {
 			Debug.Log ("Just entered hazardous environment. Turn around");
 
-			if(currentEnvironment != null)
-			{
-				int abilityIndex = hasAbility(currentEnvironment.requiredAbility);
-				if(abilityIndex != -1) {
-					abilities[abilityIndex].useAbility();
+			if (currentEnvironment != null) {
+				int abilityIndex = hasAbility (currentEnvironment.requiredAbility);
+				if (abilityIndex != -1) {
+					abilities [abilityIndex].useAbility ();
 					// If we have the ability and are hunted, then don't turn around!
-					if(isRunningAwayFromPlayer || isHuntingPlayer)
+					if (isRunningAwayFromPlayer || isHuntingPlayer)
 						return true;
 				}
 
@@ -529,16 +526,15 @@ public class enemy : MonoBehaviour {
 				idleRotationTarget = -viewingDirection;
 				closeToEnvironmentBoundary = true;
 				return false;
-			} 
-			else 
-			{
-				if (currentEnvironment == null){
+			} else {
+				if (currentEnvironment == null) {
 					// We safely got out
 					closeToEnvironmentBoundary = false;
+					resetIdleStates();
 					return true;	
 				} else {
 					// Perform rotation and moving with max speed
-					currentSpeed = (baseVelocity + runVelocityBoost)*environmentalSlowDown;
+					useRunning();
 					performRotation (idleRotationTarget);
 					transform.position += viewingDirection * currentSpeed * Time.deltaTime;
 					return false;
@@ -546,22 +542,28 @@ public class enemy : MonoBehaviour {
 			}
 		} 
 		// If we are stuck in a hazardous environment, then try to get our with max speed
-		else if (currentEnvironment != null && previousEnvironment != null) 
-		{
-			int abilityIndex = hasAbility(currentEnvironment.requiredAbility);
-			if(abilityIndex != -1)
-				abilities[abilityIndex].useAbility();
+		else if (currentEnvironment != null && previousEnvironment != null) {
+			int abilityIndex = hasAbility (currentEnvironment.requiredAbility);
+			if (abilityIndex != -1)
+				abilities [abilityIndex].useAbility ();
 
 			// If we are hunting or running away, then simply carry on as usual
-			if(isHuntingPlayer || isRunningAwayFromPlayer)
+			if (isHuntingPlayer || isRunningAwayFromPlayer) {
 				return true;
+				// Or give up hunt
+			}
 
 			// If we are in idle, then move straight on to get out
 			Debug.Log ("Inside hazardous environment. Get out straight on");
 			// Perform rotation and moving with max speed
-			currentSpeed = (baseVelocity + runVelocityBoost)*environmentalSlowDown;
+			// Perform rotation and moving with max speed
+			useRunning();
 			transform.position += viewingDirection * currentSpeed * Time.deltaTime;
 			return false;
+		} else if (currentEnvironment == null && previousEnvironment != null) {
+			// We got out safely
+			resetIdleStates();
+			return true;
 		}
 		else  // If we are close to a boundary, but not inside, then:
 		{
@@ -587,24 +589,32 @@ public class enemy : MonoBehaviour {
 			}
 
 			// Get a vector that points away from the dangerous object
-			Vector3 rotationTarget = (environmentProximityData.getSafestDirection() + viewingDirection).normalized;
+			Vector3 safestDirection = environmentProximityData.getSafestDirection();
+			Vector3 rotationTarget = (safestDirection + viewingDirection).normalized;
 			Vector3 closestObstacle = environmentProximityData.getClosestDirection();
 			float distance = closestObstacle.magnitude;
 			// We should be able to perform half the rotation (i.e. 90°) within one second
-	//		float angleBetween = Mathf.Sign (Vector3.Cross (viewingDirection, rotationTarget).z) * Vector3.Angle (viewingDirection, rotationTarget);
-			float rotationDampening = Mathf.Min(1.0f, 1.0f - distance/(2.0f*currentSpeed));
+			float angleBetween = Mathf.Sign (Vector3.Cross (viewingDirection, rotationTarget).z) * Vector3.Angle (viewingDirection, rotationTarget);
+			float rotationDampening = Mathf.Deg2Rad*(angleBetween / currentSpeed);
+		//	float rotationDampening = Mathf.Min(1.0f, 1.0f - distance/(2.0f*currentSpeed));
+		//	float rotationDampening = 1.0f;
 			Debug.Log ("Rotate towards " + rotationTarget);
-			//	Debug.Log ("Towards" + rotationTarget);
 
 			// If the safest direction is along the viewingDirection, then no special rotation is required - simply walk on
-			if (Mathf.Abs (Vector3.Dot (rotationTarget, viewingDirection)) <= 0.01f /*1.0f - Vector3.Dot (rotationTarget, viewingDirection) <= 0.01f*/) {
-				return true;
+			if (Vector3.Dot (closestObstacle, viewingDirection) <= 0.1f /*1.0f - Vector3.Dot (rotationTarget, viewingDirection) <= 0.01f*/) {
+				transform.position += Time.deltaTime * currentSpeed * viewingDirection;
+				if(closestObstacle.magnitude < 0.5*transform.localScale.x)
+					// Allow free movement if not too close to the object
+					return false;
+				else
+					return true;
 			}
 			else
 			{
 				// Perform the rotation
 				transform.position += Time.deltaTime * currentSpeed * viewingDirection;
-				performRotation (rotationTarget,rotationDampening);
+			//	transform.Rotate (new Vector3(0,0,angleBetween)*Time.deltaTime);
+				performRotation (rotationTarget);
 				return false;
 			}
 
@@ -616,22 +626,34 @@ public class enemy : MonoBehaviour {
 	{
 		// Get the angle between the current viewing direction and the target viewing direction
 		float angleBetween = Mathf.Sign (Vector3.Cross (viewingDirection, targetViewingDirection).z) * Vector3.Angle (viewingDirection, targetViewingDirection);
-		// Target rotation Quaternion
-		Quaternion rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
-		// Interpolate rotation for the current time step
-		transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed * rotationDampener);
+
+		if (isHuntingPlayer || isRunningAwayFromPlayer) {
+			// Perform a quicker rotation in active mode
+
+			// Target rotation Quaternion
+			Quaternion rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
+			// Interpolate rotation for the current time step
+			transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed * rotationDampener);
+		} 
+		else 
+		{
+			// Perform rotation within 1 second
+			transform.Rotate (new Vector3(0,0,angleBetween)*Time.deltaTime);
+		}
 	}
+
 
 
 	// This function is called when the player is not in reach and lets the enemy move around randomly
 	private void performIdleBehaviour()
 	{
 		// Reduce the blob's speed for idle behaviour
-		currentSpeed *= idleSpeedReduction;
+		currentSpeed = (baseVelocity + runVelocityBoost)*idleSpeedReduction*environmentalSlowDown;
 
 		// If enemy has walked/turned close to a dangerous environment, then turn away from this object
-		if (environmentProximityData != null) {
+		if (environmentProximityData != null  || currentEnvironment != null) {
 			bool carryOnAsUsual = avoidEnvironmentalHazard();
+			Debug.Log ("carryOnAsUsual = " + carryOnAsUsual);
 			if(!carryOnAsUsual)
 				return;
 		}
@@ -645,32 +667,31 @@ public class enemy : MonoBehaviour {
 			{
 				// Rotate at position
 				findIdleRotationTarget();	
-				Debug.Log ("Rotate");
+				isIdleRotating = true;
 			} 
 			else if (rndValue > 0.2) 
 			{
-				// Rotate and walk towards point
-				findIdleWalkingTarget();
-				Debug.Log ("Walk to " + idleWalkingTarget);
+				// Walk and rotate randomly
+				findIdleWalkingRotation();
+				idleTimer = Random.Range (2.0f,4.0f);
+				isIdleWalking = true;
 			} 
 			else 
 			{
 				// Stand still
-				idleTimer = Random.Range(0.5f,3.5f);
+				idleTimer = Random.Range(0.5f,1.0f);
 				isIdleWaiting = true;
-				Debug.Log ("Wait");
 			}
 			isIdleAnimationComplete = false;
 		} 
 		else 	// Continue animation
 		{
-			if(isIdleWaiting) {
-
+			if(isIdleWaiting) 
+			{
 				// Stop standing still animation after timer runs out.
 				idleTimer -= Time.deltaTime;
 				if(idleTimer <= 0.0f) {
-					isIdleAnimationComplete = true;
-					isIdleWaiting = false;
+					resetIdleStates();
 				}
 				return;
 			}
@@ -678,8 +699,7 @@ public class enemy : MonoBehaviour {
 
 				// Stop rotation animation, if we have reached the target value
 				if(Mathf.Abs(Vector3.Dot(viewingDirection, idleRotationTarget) - 1.0f) <= 0.01) {
-					isIdleRotating = false;
-					isIdleAnimationComplete = true;
+					resetIdleStates();
 					return;
 				} 
 				else 	// Continue rotation animation
@@ -692,22 +712,29 @@ public class enemy : MonoBehaviour {
 			}
 			else if(isIdleWalking) {
 
-				// Get the vector towards the target location
-				Vector3 toTargetLocation = idleWalkingTarget - transform.position;
-				// Stop walking, if we have reached the target location (up to a certain precision)
-				if(toTargetLocation.magnitude <= size ) {
-					isIdleWalking = false;
-					isIdleAnimationComplete = true;
-					Debug.Log ("Target reached");
+				idleTimer -= Time.deltaTime;
+				if(idleTimer <= 0) {
+					resetIdleStates();
 					return;
-				} else {
-					// Calculate rotation target (the target viewing direction, s.t. enemy looks towards target location)
-					Vector3 rotationTarget = toTargetLocation.normalized;
-					// Perform the rotation
-					performRotation(rotationTarget);
-					// Walk along viewing direction (and eventually towards target location)
-					transform.position += viewingDirection * currentSpeed * Time.deltaTime;
 				}
+				else
+				{
+					transform.position += viewingDirection * currentSpeed * Time.deltaTime;
+					if(Mathf.Abs (Vector3.Dot (viewingDirection,idleRotationTarget) - 1.0f) > Mathf.Abs (Vector3.Dot (previousViewingDirection,idleRotationTarget) - 1.0f)) {
+					    findIdleWalkingRotation();
+						Debug.Log ("New idle walking rotation due to correction");
+					}
+					else if(Mathf.Abs (Vector3.Dot (viewingDirection,idleRotationTarget) - 1.0f) <= 0.01)
+						findIdleWalkingRotation();
+					else
+						transform.rotation = Quaternion.Slerp(transform.rotation, idleRotationTargetQuaternion, Time.deltaTime * currentSpeed *0.5f);
+						
+				}
+			}
+			else
+			{
+				// Something went wrong
+				resetIdleStates();
 			}
 		}
 	}
@@ -738,8 +765,18 @@ public class enemy : MonoBehaviour {
 		float angleBetween = Mathf.Sign (Vector3.Cross(viewingDirection, idleRotationTarget).z)*Vector3.Angle(viewingDirection, idleRotationTarget);
 		// Calculate rotation target quaternion
 		idleRotationTargetQuaternion = Quaternion.Euler(new Vector3(0.0f,0.0f,transform.localEulerAngles.z + angleBetween));
-		// Set animation in progress
-		isIdleWalking = true;
+	}
+
+	private void findIdleWalkingRotation()
+	{
+		// Get random rotation angle
+		float degree = Random.Range(10.0f,90.0f)*Mathf.Sign (Random.Range(-1,1));
+		// Calculate target theta on unit circle (+90 since unit circe starts at (1,0) and Unity at (0,1))
+		float targetTheta = (transform.localEulerAngles.z + 90.0f + degree)*Mathf.Deg2Rad;
+		// Calculate target viewing direction (there where the rotation will end)
+		idleRotationTarget = new Vector3(Mathf.Cos(targetTheta), Mathf.Sin(targetTheta),0.0f);
+		// Calculate target quaternion configuration (for Slerp)
+		idleRotationTargetQuaternion = Quaternion.Euler(new Vector3(0.0f,0.0f,transform.localEulerAngles.z+degree));
 	}
 
 	// Sets a random rotation target for this enemy
@@ -753,8 +790,6 @@ public class enemy : MonoBehaviour {
 		idleRotationTarget = new Vector3(Mathf.Cos(targetTheta), Mathf.Sin(targetTheta),0.0f);
 		// Calculate target quaternion configuration (for Slerp)
 		idleRotationTargetQuaternion = Quaternion.Euler(new Vector3(0.0f,0.0f,transform.localEulerAngles.z+degree));
-		// Set animation in progress
-		isIdleRotating = true;
 	}
 
 	// Resets all idle states of this enemy to default
@@ -775,6 +810,13 @@ public class enemy : MonoBehaviour {
 		isRunningAwayFromPlayer = false;
 		isInAlertedState = false;
 		canMove = true;
+	}
+
+	private void useRunning() {
+		if (abilities [6]) {
+			abilities[6].useAbility();
+		}
+		currentSpeed = (baseVelocity + runVelocityBoost)*environmentalSlowDown;
 	}
 
 	public void addAbility(GameObject ability, int slot)
@@ -928,33 +970,36 @@ public class enemy : MonoBehaviour {
 		{
 			damage = Mathf.Min (damage,size);
 			int nofLootChances = (int)(damage / (0.1f*size));
+			float sizePerLoot = damage / nofLootChances;
 			for(int i = 0; i < nofLootChances; i++)
 			{
 				float rnd = Random.value;
-				if(rnd > 0.0f) 
+				if(rnd > 0.5f) 
 				{
 					if(rnd > 0.75 || !hasAbilities()) 
 					{
-						// throw sizeLoot
+						// Throw sizeLoot
 						float radius = Random.Range(1.0f,2.5f)*transform.localScale.x;
 						float theta = Random.Range(0.0f,2.0f*Mathf.PI);
 						Vector3 throwTo = transform.position + new Vector3(radius*Mathf.Cos(theta), radius*Mathf.Sin (theta), 0);
-						Debug.Log ("Throw size loot");
-						lootManager.throwSizeLoot(damage*0.5f,transform.position,throwTo);
+						lootManager.throwSizeLoot(sizePerLoot*Random.Range (0.2f,0.8f),transform.position,throwTo);
 					}
 					else
 					{
-						// throw ability loot
+						// Throw ability loot
 						ability rndAbility = getRandomAbility();
 						float radius = Random.Range(1.0f,2.5f)*transform.localScale.x;
 						float theta = Random.Range(0.0f,2.0f*Mathf.PI);
 						Vector3 throwTo = transform.position + new Vector3(radius*Mathf.Cos(theta), radius*Mathf.Sin (theta), 0);
-					//	lootManager.throwAbilityLoot(rndAbility, transform.position, throwTo);
+
+						Debug.Log ("Throw ability loot");
+						lootManager.throwAbilityLoot(rndAbility, 1, transform.position, throwTo);
 						rndAbility.increaseLevel(-(int)(0.1f*rndAbility.maxLevel));
 
 						// Probability that enemy looses that ability
 						float loseChance = Random.value;
 						if(loseChance > 0.9) {
+							// TODO Play sound or something
 							removeAndDestroyAbility(hasAbility(rndAbility.abilityEnum));
 						}
 					}

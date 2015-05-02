@@ -42,7 +42,13 @@ public class environmentManager : MonoBehaviour {
 	// Defines at which height the water surface is
 	public float liquidLevel = 0.2f;
 
-	// PERLIN NOISE VARIABLES FOR THE SOIL BUMP MAP
+	// PERLIN NOISE VARIABLES FOR THE ENVIRONMENTAL OBSTACLES
+
+	public int environmentOctaves = 2;
+
+	public float environmentPersistence = 0.2f;
+
+	public float environmentFrequency = 0.05f;
 
 
 	// PERLIN NOISE VARIABLES FOR THE 3D TERRAIN FORMING
@@ -124,6 +130,8 @@ public class environmentManager : MonoBehaviour {
 
 	GameObject lightingStormPrefab;
 
+	float meshResolution = 64;
+
 
 
 	// Use this for initialization
@@ -139,7 +147,7 @@ public class environmentManager : MonoBehaviour {
 		}
 
 		Bounds meshBounds = environmentPlaneTiles[0].GetComponent<MeshFilter>().mesh.bounds;
-		tileExtent = (meshBounds.max - meshBounds.min)*tileSize;
+		tileExtent = (meshBounds.max - meshBounds.min)*tileSize*(meshResolution-1)/meshResolution;
 		tileExtent.y = tileExtent.z;
 		tileExtent.z = 0;
 		Vector3 bottomLeft = player.transform.position - new Vector3 (1.0f * tileExtent.x, 1.0f * tileExtent.y, -15);
@@ -214,6 +222,10 @@ public class environmentManager : MonoBehaviour {
 	{
 		float t0 = System.DateTime.Now.Millisecond;
 
+
+		// TODO Could put this into an IEnumerable and let it run at a lower framerate to safe ressources
+		float currentTime = Time.time;
+
 		float viewingRange = playerScript.currentViewingRange*2.0f;
 		Vector3 playerPos = player.transform.position;
 		mainTextureSize = new Vector2 (2.0f*(viewingRange+player.transform.localScale.x), 2.0f*(viewingRange+player.transform.localScale.y));
@@ -250,7 +262,7 @@ public class environmentManager : MonoBehaviour {
 		// Calculate terrain elevation for all active planes
 		for (int i = 0; i < 9; i++) {
 			if (environmentPlaneTiles[planeTileOrdering[i]].activeSelf) {
-				distortBackgroundPlane(planeTileOrdering[i],moveBackground,backgroundTimeMultiplier,backgroundMultiplierX,backgroundMultiplierY);
+				distortBackgroundPlane(planeTileOrdering[i],moveBackground,backgroundTimeMultiplier,backgroundMultiplierX,backgroundMultiplierY,currentTime);
 			}
 		}
 
@@ -537,7 +549,7 @@ public class environmentManager : MonoBehaviour {
 		{
 			for(int x = 0; x < mainTextureResolution.x; x++) 
 			{
-				float terrainSample = addUpOctaves (3, 0.1f, 0.1f, x*distancePerPixel.x + xOffset, y*distancePerPixel.y + yOffset);
+				float terrainSample = addUpOctaves (environmentOctaves, environmentFrequency, environmentPersistence, x*distancePerPixel.x + xOffset, y*distancePerPixel.y + yOffset);
 				// Make it a water surface
 			/*	if(terrainSample < 0.8)
 				{
@@ -900,31 +912,32 @@ public class environmentManager : MonoBehaviour {
 	}
 
 
-	private void distortBackgroundPlane(int index, bool moveOverTime, float timeMultiplier, float xMultiplier, float yMultiplier) 
+	private void distortBackgroundPlane(int tileIndex, bool moveOverTime, float timeMultiplier, float xMultiplier, float yMultiplier, float currentTime) 
 	{
 		// Get the vertices of the plane (in object space)
-		Vector3[] vertices = environmentPlaneTileMeshes[index].vertices;
+		Vector3[] vertices = environmentPlaneTileMeshes[tileIndex].vertices;
 		float timeOffset = 0.0f;
 		if (moveOverTime) {
-			timeOffset = Time.time*timeMultiplier;
+			timeOffset = currentTime*timeMultiplier;
 		}
 		for (int i = 0; i < vertices.Length; i++)
 		{   
 			// Transform the vertices of the plane into world space
-			Vector3 vertexPoint = environmentPlaneTiles[index].transform.TransformPoint(vertices[i]);
+			Vector3 vertexPoint = environmentPlaneTiles[tileIndex].transform.TransformPoint(vertices[i]);
+
 			float xCoord = (vertexPoint.x + timeOffset)*xMultiplier;
 			float yCoord = (vertexPoint.y + timeOffset)*yMultiplier;
 			// Generate smooth hills (z-offset)
 			vertexPoint.z = addUpOctaves (terrainFormingOctaves, terrainFormingFrequency, terrainFormingPersistence, xCoord, yCoord) * maxTerrainHeight;
 			// Transform the manipulated vertex back into object space and store it
-			vertices[i] = environmentPlaneTiles[index].transform.InverseTransformPoint(vertexPoint);
+			vertices[i] = environmentPlaneTiles[tileIndex].transform.InverseTransformPoint(vertexPoint);
 		}
 		// Set manipulated vertices
-		environmentPlaneTileMeshes[index].vertices = vertices;
+		environmentPlaneTileMeshes[tileIndex].vertices = vertices;
 		// Recalculate the boundaries
-		environmentPlaneTileMeshes[index].RecalculateBounds();
+		environmentPlaneTileMeshes[tileIndex].RecalculateBounds();
 		// Recalculate surface normals
-		environmentPlaneTileMeshes[index].RecalculateNormals();
+		environmentPlaneTileMeshes[tileIndex].RecalculateNormals();
 	}
 
 

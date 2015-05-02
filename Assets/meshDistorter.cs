@@ -3,9 +3,21 @@ using System.Collections;
 
 public class meshDistorter : MonoBehaviour {
 
+	// Defines by how much the initial mesh is distorted
 	public float intensity;
 
-	public float frequency;
+	// Defines the frequency that is used for the perlin noise during update() function
+	public float wobbleFrequency = 0.9f;
+	// Defines the amplitude of the wobble effect during the update() function
+	public float wobbleIntensity = 0.1f;
+	// Let's the wobble animation go faster
+	public float timeMultiplier = 1.0f;
+
+	// SPIKE SHIELD
+	// wobbleFrequency = 100.0f;  
+	// wobbleIntensity 0.4 - 1.0; // Depending on level
+
+
 
 	public GameObject parentBlob;
 
@@ -30,8 +42,7 @@ public class meshDistorter : MonoBehaviour {
 	void Start () {
 		meshFilter = parentBlob.GetComponent<MeshFilter> ();
 		mesh = meshFilter.mesh;
-
-		Debug.Log (parentBlob);
+		mesh.MarkDynamic ();
 
 		originalVertices = mesh.vertices;
 		vertex2NormalMap = new Vector3[originalVertices.Length];
@@ -60,17 +71,14 @@ public class meshDistorter : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		float frequency;
-		if (isPlayer) {
-			frequency = parentPlayerScript.currentSpeed;
-		} else {
-			frequency = parentEnemyScript.currentSpeed;
-		}
-		frequency *= 0.1f;
+
 		Vector3[] vertices = mesh.vertices;
 
+		// TODO Could put this into an IEnumerable and let it run at a lower framerate to safe ressources
+		float currentTime = Time.time * timeMultiplier;
 		for (int i = 0; i < vertices.Length; i++) {
-			vertices[i] = originalVertices[i] + vertex2NormalMap[i]*0.2f*parentBlob.transform.localScale.x*(Mathf.PerlinNoise(vertices[i].x*parentBlob.transform.localScale.x*frequency + Time.time,vertices[i].y*parentBlob.transform.localScale.x*frequency + Time.time)-0.6f);
+			float offsetFactor = wobbleIntensity * parentBlob.transform.localScale.x * (Mathf.PerlinNoise(originalVertices[i].x*wobbleFrequency + currentTime, originalVertices[i].y*wobbleFrequency + currentTime)-0.5f);
+			vertices[i] = originalVertices[i] + vertex2NormalMap[i]*offsetFactor;
 		}
 		mesh.vertices = vertices;
 		mesh.RecalculateBounds ();

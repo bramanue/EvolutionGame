@@ -79,6 +79,8 @@ public class player : MonoBehaviour
 	// Stores in which environment the player blob currently resides in
 	public hazardousEnvironment currentEnvironment;
 
+	private abilityManager abilityManager;
+
 	private abilityModificationPanel abilityModificationScript;
 
 	public bool isAbilityModificationPanelOpen;
@@ -105,9 +107,9 @@ public class player : MonoBehaviour
 		canMove = true;
 		// Get the ability modification panel
 		abilityModificationScript = (abilityModificationPanel)(this.GetComponentInChildren (typeof(abilityModificationPanel)));
-		abilityModificationScript.gameObject.SetActive (false);
+		abilityModificationScript.gameObject.SetActive (true);
 
-	//	((meshDistorter)this.GetComponent (typeof(meshDistorter))).distortMesh ();
+		abilityManager = (abilityManager)GameObject.Find ("AbilityManager").GetComponent(typeof(abilityManager));
 	}
 	
 	// Update is called once per frame
@@ -115,24 +117,113 @@ public class player : MonoBehaviour
 	{
 		if (!dead) {
 
-			if(nearbyAbilityLoot != null) {
+			Debug.Log ("Nearby ability loot = " + nearbyAbilityLoot);
+			Debug.Log (Input.GetButtonDown ("PauseForAbilityGatheringLB") + " " + Input.GetButtonDown ("PauseForAbilityGatheringRB"));
+
+			if(nearbyAbilityLoot != null) 
+			{
 				// Show display to press RB or LB if player wants to acquire the ability
 				string abilityName = nearbyAbilityLoot.abilityName;
-				if(Input.GetButtonDown ("PauseForAbilityGatheringLB") || Input.GetButtonDown ("PauseForAbilityGatheringRB")) {
-					if(!abilityModificationScript.isActiveAndEnabled) {
-						// Show abilityModificationPanel
+				EAbilityClass abilityClass = nearbyAbilityLoot.abilityClass;
 
-						return;
+				if(Input.GetButtonDown ("PauseForAbilityGatheringLB") || Input.GetButtonDown ("PauseForAbilityGatheringRB"))
+				{
+					Debug.Log ("Button press recognized");
+
+					// Open the modification panel if it is not enabled
+					if(!abilityModificationScript.isActive()) 
+					{
+						Debug.Log ("Opening ability modification panel");
+						if(abilityClass == EAbilityClass.EActiveAbility)
+						{
+							string[] abilityNames = new string[4];
+							for(int i = 0; i < 4; i++) {
+								abilityNames[i] = (abilities[i] != null) ? (abilities[i].abilityName + " (lvl. " + abilities[i].level +")") : string.Empty;
+							}
+							abilityModificationScript.showPanel(abilityNames, abilityClass);
+							abilityModificationScript.displayTitle(nearbyAbilityLoot.abilityName);
+							abilityModificationScript.displayMessage("You found a new attack ability! \n Press the button you want to map it to. \n Press \"RB\" or \"LB\" to continue.");
+							return;
+						}
+						else if(abilityClass == EAbilityClass.EShieldAbility)
+						{
+							string[] abilityNames = new string[2];
+							for(int i = 0; i < 2; i++) {
+								abilityNames[i] = (abilities[4+i] != null) ? (abilities[4+i].abilityName + " (lvl. " + abilities[4+i].level +")") : string.Empty;
+							}
+							abilityModificationScript.showPanel(abilityNames, abilityClass);
+							abilityModificationScript.displayTitle(nearbyAbilityLoot.abilityName);
+							abilityModificationScript.displayMessage("You found a new attack ability! \n Press the button you want to map it to. \n Press \"RB\" or \"LB\" to continue.");
+							return;
+						}
 					}
 					else
 					{
-						// Close modification panel again
+						// Close modification panel if it was already enabled
+						abilityModificationScript.hidePanel();
 					}
 					
 				}
 
-				if(abilityModificationScript.isActiveAndEnabled && abilityModificationScript.isInChosingState) {
-
+				if(abilityModificationScript.isActiveAndEnabled && abilityModificationScript.isInChosingState) 
+				{
+					// Capture player input
+					if (Input.GetButtonDown ("Ability0")) {
+						if (abilities [0] != null && !selectionConfirmed[0]) {
+							selectionConfirmed[0] = true;
+							abilityModificationScript.displayMessage("Please press \"A\" again to confirm \n Press \"LB\" or \"RB\" to continue \n Press one of the other buttons to map the new ability to them");
+						} else {
+							abilityManager.addAbilityToPlayer(this.gameObject,nearbyAbilityLoot.abilityType,0,1);
+							Debug.Log("You gained a new ability : " + abilities[0].abilityName + " at level " + abilities[0].level);
+							abilityModificationScript.highlightButtonAndHide(abilities[0].abilityName, EButtonType.EAButton);
+							selectionConfirmed[0] = false;
+						}
+						// Reset the other selections
+						selectionConfirmed[1] = selectionConfirmed[2] = selectionConfirmed[3] = false;
+					}
+					else if (Input.GetButtonDown ("Ability1")) {
+						if (abilities [1] != null && !selectionConfirmed[1]) {
+							selectionConfirmed[1] = true;
+							abilityModificationScript.displayMessage("Please press \"B\" again to confirm \n Press \"LB\" or \"RB\" to continue \n Press one of the other buttons to map the new ability to them.");
+						} else {
+							abilityManager.addAbilityToPlayer(this.gameObject,nearbyAbilityLoot.abilityType,1,1);
+							Debug.Log("You gained a new ability : " + abilities[1].abilityName + " at level " + abilities[1].level);
+							abilityModificationScript.highlightButtonAndHide(abilities[1].abilityName, EButtonType.EBButton);
+							selectionConfirmed[1] = false;
+						}
+						// Reset the other selections
+						selectionConfirmed[0] = selectionConfirmed[2] = selectionConfirmed[3] = false;
+					}
+					else if (Input.GetButtonDown ("Ability2")) {
+						if (abilities [2] != null && !selectionConfirmed[2]) {
+							selectionConfirmed[2] = true;
+							abilityModificationScript.displayMessage("Please press \"X\" again to confirm \n Press \"LB\" or \"RB\" to continue \n Press one of the other buttons to map the new ability to them.");
+						} else {
+							abilityManager.addAbilityToPlayer(this.gameObject,nearbyAbilityLoot.abilityType,2,1);
+							Debug.Log("You gained a new ability : " + abilities[2].abilityName + " at level " + abilities[2].level);
+							abilityModificationScript.highlightButtonAndHide(abilities[2].abilityName, EButtonType.EXButton);
+							selectionConfirmed[2] = false;
+						}
+						// Reset the other selections
+						selectionConfirmed[0] = selectionConfirmed[1] = selectionConfirmed[3] = false;
+					}
+					else if (Input.GetButtonDown ("Ability3")) {
+						if (abilities [3] != null && !selectionConfirmed[3]) {
+							selectionConfirmed[3] = true;
+							abilityModificationScript.displayMessage("Please press \"Y\" again to confirm \n Press \"LB\" or \"RB\" to continue \n Press one of the other buttons to map the new ability to them");
+						} else {
+							abilityManager.addAbilityToPlayer(this.gameObject,nearbyAbilityLoot.abilityType,3,1);
+							Debug.Log("You gained a new ability : " + abilities[3].abilityName + " at level " + abilities[3].level);
+							abilityModificationScript.highlightButtonAndHide(abilities[3].abilityName, EButtonType.EYButton);
+							selectionConfirmed[3] = false;
+						}
+						// Reset the other selections
+						selectionConfirmed[0] = selectionConfirmed[1] = selectionConfirmed[2] = false;
+					}
+				}
+				else
+				{
+					nearbyAbilityLoot = null;
 				}
 			}
 
@@ -314,7 +405,7 @@ public class player : MonoBehaviour
 						// Get the rotation target
 						Quaternion rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
 						// Reset time scale to normal
-						transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * currentSpeed);
+						transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * Mathf.Max (10.0f,currentSpeed));
 						// Move blob according to joystick input
 						transform.position += viewingDirection*Time.deltaTime*speedFraction*currentSpeed;
 					}
