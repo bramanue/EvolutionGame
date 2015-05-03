@@ -6,40 +6,48 @@ public class meshDistorter : MonoBehaviour {
 	// Defines by how much the initial mesh is distorted
 	public float intensity;
 
-	// Defines the frequency that is used for the perlin noise during update() function
-	public float wobbleFrequency = 0.9f;
-	// Defines the amplitude of the wobble effect during the update() function
-	public float wobbleIntensity = 0.1f;
+	// Defines the frequency that is used for the perlin noise during Update(), when no shield etc is used
+	public float defaultWobbleFrequency = 0.9f;
+	// Defines the amplitude of the wobble effect during Update(), when no shield etc is used
+	public float defaultWobbleIntensity = 0.1f;
 	// Let's the wobble animation go faster
-	public float timeMultiplier = 1.0f;
+	public float defaultTimeMultiplier = 1.0f;
+
+	// Defines the frequency that is used for the perlin noise during Update()
+	private float wobbleFrequency;
+	// Defines the amplitude of the wobble effect during Update()
+	private float wobbleIntensity;
+	// Let's the wobble animation go faster
+	private float timeMultiplier;
 
 	// SPIKE SHIELD
 	// wobbleFrequency = 100.0f;  
 	// wobbleIntensity 0.4 - 1.0; // Depending on level
 
 
-
+	// Reference to the parent object (does not need to be a blob)
 	public GameObject parentBlob;
-
+	// The MeshFilter
 	private MeshFilter meshFilter;
-
+	// The mesh object
 	private Mesh mesh;
 
-	private player parentPlayerScript;
-
-	private enemy parentEnemyScript;
-
-	private bool isPlayer;
-
-	private float meshDiameter;
-
+	
+	// The original vertices before deformation, scaling, rotation
 	private Vector3[] originalVertices;
-
+	// Stores for each vertex, which shared normal it has
 	private Vector3[] vertex2NormalMap;
-
+	// A random Vector2 initialized at Start(), that is used to give an offset for the perlin noise function in Update()
 	private Vector2 initialOffset;
-
+	// The size of the undeformed, unscaled and unrotated mesh
 	private Vector3 meshExtent;
+
+
+	private player parentPlayerScript;
+	
+	private enemy parentEnemyScript;
+	
+	private bool isPlayer;
 	
 
 	// Use this for initialization
@@ -82,7 +90,6 @@ public class meshDistorter : MonoBehaviour {
 
 		Vector3[] vertices = mesh.vertices;
 
-
 		// TODO Could put this into an IEnumerable and let it run at a lower framerate to safe ressources
 		float currentTime = Time.time * timeMultiplier;
 		for (int i = 0; i < vertices.Length; i++) {
@@ -92,6 +99,7 @@ public class meshDistorter : MonoBehaviour {
 		mesh.vertices = vertices;
 		mesh.RecalculateBounds ();
 	}
+
 
 	public void activateShield(EAbilityType abilityType) 
 	{
