@@ -48,6 +48,8 @@ public class meshDistorter : MonoBehaviour {
 	private enemy parentEnemyScript;
 	
 	private bool isPlayer;
+
+	private distortionDatabase distortionDatabase;
 	
 
 	// Use this for initialization
@@ -83,6 +85,12 @@ public class meshDistorter : MonoBehaviour {
 
 		initialOffset = new Vector2(Random.Range (-32000.0f, 32000.0f), Random.Range (-32000.0f, 32000.0f));
 		distortMesh ();
+
+		distortionDatabase = (distortionDatabase)GameObject.Find ("DistortionDatabase").GetComponent(typeof(distortionDatabase));
+
+		wobbleFrequency = defaultWobbleFrequency;
+		wobbleIntensity = defaultWobbleIntensity;
+		timeMultiplier = defaultTimeMultiplier;
 	}
 	
 	// Update is called once per frame
@@ -96,14 +104,18 @@ public class meshDistorter : MonoBehaviour {
 			float offsetFactor = wobbleIntensity * meshExtent.x * (Mathf.PerlinNoise((originalVertices[i].x + initialOffset.x)*wobbleFrequency + currentTime, (originalVertices[i].y+initialOffset.y)*wobbleFrequency + currentTime)-0.5f);
 			vertices[i] = originalVertices[i] + vertex2NormalMap[i]*offsetFactor;
 		}
+		wobbleFrequency = defaultWobbleFrequency;
+		wobbleIntensity = defaultWobbleIntensity;
+		timeMultiplier = defaultTimeMultiplier;
+
 		mesh.vertices = vertices;
 		mesh.RecalculateBounds ();
 	}
 
 
-	public void activateShield(EAbilityType abilityType) 
+	public void activateShield(EDistortionType distortionType) 
 	{
-
+		distortionDatabase.getShieldDistortionParameters (distortionType, ref wobbleFrequency, ref wobbleIntensity, ref timeMultiplier);
 	}
 
 

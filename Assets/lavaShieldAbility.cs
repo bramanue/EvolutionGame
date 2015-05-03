@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class lavaShieldAbility : ability {
@@ -32,6 +32,7 @@ public class lavaShieldAbility : ability {
 		damage = 0.1f + level * 0.1f;
 
 		abilitySuperClassEnum = EAbilityClass.EShieldAbility;
+		distortionType = EDistortionType.ELavaShieldDistortion;
 	}
 	
 	// Update is called once per frame
@@ -49,7 +50,7 @@ public class lavaShieldAbility : ability {
 		{
 			// TODO change visuals
 			((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = lavaShieldMaterial;
-		//	((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = new Color(1.0f,0,0,1.0f);
+			((meshDistorter)parentBlob.GetComponent(typeof(meshDistorter))).activateShield(distortionType);
 
 			// Make sure ability is not able to be used forever unless the ability is at its max level
 			if(level < maxLevel)
@@ -71,11 +72,9 @@ public class lavaShieldAbility : ability {
 			if(isPlayer) {
 				if(parentPlayerScript.shieldInUse == null)
 					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentPlayerScript.defaultMaterial;
-					//((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentPlayerScript.defaultColor;
 			} else {
 				if(parentEnemyScript.shieldInUse == null)
 					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentEnemyScript.defaultMaterial;
-					//((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentEnemyScript.defaultColor;
 			}
 		}
 		deactivateInNextFrame = true;
@@ -95,14 +94,6 @@ public class lavaShieldAbility : ability {
 		player playerScript = (player)other.gameObject.GetComponent (typeof(player));
 		
 		if (isPlayer && enemyScript) {
-			// Enemy is hurt by player's lava shield if enemy does not have a lava shield, dust shield or water shield
-		/*	if(enemyScript.hasAbility(EAbilityType.ELavaShieldAbility) == -1 && 
-			   enemyScript.hasAbility(EAbilityType.EDustShieldAbility) == -1 && 
-			   enemyScript.hasAbility(EAbilityType.EWaterShieldAbility) == -1  )
-			{
-				enemyScript.size -= damage;
-				enemyScript.setAlertState();
-			}*/
 
 			// Enemy is hurt by player's lava shield if enemy does not have an active lava, dust or water shield
 			if(enemyScript.shieldInUse == null || (
@@ -115,13 +106,7 @@ public class lavaShieldAbility : ability {
 				enemyScript.setAlertedState();
 			}
 		} else if (!isPlayer && playerScript) {
-			// Player is hurt by enemy's lava shield if player does not have a lava, dust or water shield
-		/*	if(playerScript.hasAbility(EAbilityType.ELavaShieldAbility) == -1 && 
-			   playerScript.hasAbility(EAbilityType.EDustShieldAbility) == -1 && 
-			   playerScript.hasAbility(EAbilityType.EWaterShieldAbility) == -1 )
-			{
-				playerScript.size -= damage;
-			}*/
+
 			// Player is hurt by enemy's lava shield if player does not have an active lava, dust or water shield
 			if(playerScript.shieldInUse == null || (
 			   playerScript.shieldInUse.getAbilityEnum() != EAbilityType.ELavaShieldAbility && 

@@ -32,6 +32,7 @@ public class dustShieldAbility : ability {
 		damageMultiplier = 0.1f + level * 0.1f;
 
 		abilitySuperClassEnum = EAbilityClass.EShieldAbility;
+		distortionType = EDistortionType.EDustShieldDistortion;
 	}
 	
 	// Update is called once per frame
@@ -48,7 +49,7 @@ public class dustShieldAbility : ability {
 		if (inUse) {
 			// TODO change visuals
 			((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = dustShieldMaterial;
-		//	((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = new Color(0.8f,0.5f,0.5f,1.0f);
+			((meshDistorter)parentBlob.GetComponent(typeof(meshDistorter))).activateShield(distortionType);
 			
 			// Make sure ability is not able to be used forever unless the ability is at its max level
 			if(level < maxLevel)

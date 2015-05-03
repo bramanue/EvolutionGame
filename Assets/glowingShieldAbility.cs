@@ -32,6 +32,7 @@ public class glowingShieldAbility : ability {
 		blindnessDuration = 1.0f + level * 0.3f;
 
 		abilitySuperClassEnum = EAbilityClass.EShieldAbility;
+		distortionType = EDistortionType.EGlowingShieldDistortion;
 	}
 	
 	// Update is called once per frame
@@ -48,7 +49,7 @@ public class glowingShieldAbility : ability {
 		if (inUse) {
 			// TODO change visuals
 			((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = glowingShieldMaterial;
-		//	((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = new Color(0.0f,1.0f,0.0f,0.5f);
+			((meshDistorter)parentBlob.GetComponent(typeof(meshDistorter))).activateShield(distortionType);
 			
 			// Make sure ability is not able to be used forever unless the ability is at its max level
 			if(level < maxLevel)

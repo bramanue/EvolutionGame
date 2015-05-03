@@ -2,6 +2,7 @@
 using System.Collections;
 
 public enum EDistortionType {
+	ENoDistortion,
 	// Shield abilities
 	EIceShieldDistortion,
 	ELavaShieldDistortion,
@@ -14,6 +15,8 @@ public enum EDistortionType {
 
 public class distortionDatabase : MonoBehaviour  {
 
+	private float[] shieldDistortionIntensity = new float[7];
+
 	private float[] shieldWobbleFrequencies = new float[7];
 	
 	private float[] shieldWobbleIntensities = new float[7];
@@ -24,24 +27,46 @@ public class distortionDatabase : MonoBehaviour  {
 	void Start () 
 	{
 		// ICE SHIELD
-		shieldWobbleFrequencies [0] = 0.9f;
-		shieldWobbleIntensities [0] = 0.1f;
-		shieldTimeMultipliers [0] = 1;
+		shieldDistortionIntensity [0] = 0.3f;
+		shieldWobbleFrequencies [0] = 2.0f;
+		shieldWobbleIntensities [0] = 0.3f;
+		shieldTimeMultipliers [0] = 0.3f;
 
 		// LAVA SHIELD
+		shieldDistortionIntensity [1] = 0.1f;
 		shieldWobbleFrequencies [1] = 0.9f;
-		shieldWobbleIntensities [1] = 0.1f;
-		shieldTimeMultipliers[1] = 1;
+		shieldWobbleIntensities [1] = 0.6f;
+		shieldTimeMultipliers[1] = 0.8f;
 
 		// DUST SHIELD
-		shieldWobbleFrequencies [2] = 0.8f;
-		shieldWobbleIntensities [2] = 0.1f;
-		shieldTimeMultipliers[2] = 1;
+		shieldDistortionIntensity [2] = 0.7f;
+		shieldWobbleFrequencies [2] = 0.7f;
+		shieldWobbleIntensities [2] = 0.4f;
+		shieldTimeMultipliers[2] = 0.1f;
 
 		// THORN SHIELD
-		shieldWobbleFrequencies [2] = 0.8f;
-		shieldWobbleIntensities [2] = 0.1f;
-		shieldTimeMultipliers[2] = 1;
+		shieldDistortionIntensity [3] = 0.0f;
+		shieldWobbleFrequencies [3] = 6.0f;
+		shieldWobbleIntensities [3] = 2.4f;
+		shieldTimeMultipliers[3] = 1.0f;
+
+		// WATER SHIELD
+		shieldDistortionIntensity [4] = 0.0f;
+		shieldWobbleFrequencies [4] = 0.9f;
+		shieldWobbleIntensities [4] = 0.2f;
+		shieldTimeMultipliers[4] = 1.1f;
+
+		// GLOWING SHIELD
+		shieldDistortionIntensity [5] = 0.0f;
+		shieldWobbleFrequencies [5] = 0.95f;
+		shieldWobbleIntensities [5] = 0.05f;
+		shieldTimeMultipliers[5] = 2.0f;
+
+		// ELECTRICITY SHIELD
+		shieldDistortionIntensity [6] = 0.5f;
+		shieldWobbleFrequencies [6] = 10.0f;
+		shieldWobbleIntensities [6] = 2.0f;
+		shieldTimeMultipliers[6] = 8.0f;
 	}
 	
 	// Update is called once per frame

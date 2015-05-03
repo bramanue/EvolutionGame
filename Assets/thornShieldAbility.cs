@@ -32,6 +32,7 @@ public class thornShieldAbility : ability {
 		damage = 0.1f + level * 0.1f;
 
 		abilitySuperClassEnum = EAbilityClass.EShieldAbility;
+		distortionType = EDistortionType.EThornShieldDistortion;
 	}
 	
 	// Update is called once per frame
@@ -48,7 +49,7 @@ public class thornShieldAbility : ability {
 		if (inUse) {
 			// TODO change visuals
 			((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = thornShieldMaterial;
-		//	((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = new Color(0.9f,0,0.9f,1.0f);
+			((meshDistorter)parentBlob.GetComponent(typeof(meshDistorter))).activateShield(distortionType);
 			
 			// Make sure ability is not able to be used forever unless the ability is at its max level
 			if(level < maxLevel)

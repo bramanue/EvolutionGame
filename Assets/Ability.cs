@@ -30,9 +30,12 @@ public class ability : MonoBehaviour {
 
 	public EAbilityClass abilitySuperClassEnum;
 
+	public EDistortionType distortionType;
+
 
 	void Start () {
 		abilityEnum = EAbilityType.EEmptyAbility;
+		distortionType = EDistortionType.ENoDistortion;
 	}
 
 	void Update () {
