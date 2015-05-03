@@ -96,7 +96,7 @@ public class lootManager : MonoBehaviour {
 
 	IEnumerator throwLootCoroutine(int index, Vector3 from, Vector3 to, float flightTime) 
 	{
-		// Throw loot in a parabel slope
+		// Throw loot in a parabolic slope
 		Vector3 direction = to - from;
 		float xPerSecond = direction.x/flightTime;
 		float yPerSecond = direction.y/flightTime;
@@ -119,13 +119,15 @@ public class lootManager : MonoBehaviour {
 			// Change position and rotation
 			lootObjects[index].transform.position = from + new Vector3(x,y,z);
 			lootObjects[index].transform.Rotate(randomRotationAxis,totalDegreesOfRotationPerSecond*Time.deltaTime*Mathf.Sqrt(flightTime-time));
-			Debug.Log ("time = " + time + " Distance = " + 2.0f*halfDistance + " x2_parabelSpace = " + x_parabelSpace + "vector = " + new Vector3(x,y,z) + " Rotation = " + lootObjects[index].transform.rotation);
+		//	Debug.Log ("time = " + time + " Distance = " + 2.0f*halfDistance + " x2_parabelSpace = " + x_parabelSpace + "vector = " + new Vector3(x,y,z) + " Rotation = " + lootObjects[index].transform.rotation);
 			yield return null;
 		}
+		// Make sure the loot is really on zero level
 		Vector3 position = lootObjects [index].transform.position;
-		Debug.Log ("z at rest = " + position.z);
+	//	Debug.Log ("z at rest = " + position.z);
 		position.z = 0;
 		lootObjects [index].transform.position = position;
+		// Mark the loot as ready to be looted
 		((loot)lootObjects [index].GetComponent (typeof(loot))).readyToEat = true;
 	}
 
@@ -148,7 +150,7 @@ public class lootManager : MonoBehaviour {
 
 		// Set position of object
 		newLootObject.transform.position = from;
-		newLootObject.transform.localScale = 20.0f*new Vector3 (size, size, size);
+		newLootObject.transform.localScale = 3.0f*new Vector3 (size, size, size);
 		// Add object to the list
 		lootObjects [index] = newLootObject;
 		lootObjects [index].SetActive (true);

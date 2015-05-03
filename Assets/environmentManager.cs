@@ -118,19 +118,25 @@ public class environmentManager : MonoBehaviour {
 	public Vector2 mainTextureSize;
 
 
-	GameObject waterPrefab;
+	public GameObject waterPrefab;
 
-	GameObject iceFieldPrefab;
+	public GameObject iceFieldPrefab;
 
-	GameObject thornBushPrefab;
+	public GameObject thornBushPrefab;
 
-	GameObject lavaFieldPrefab;
+	public GameObject lavaFieldPrefab;
 
-	GameObject dustStormPrefab;
+	public GameObject dustStormPrefab;
 
-	GameObject lightingStormPrefab;
+	public GameObject lightningStormPrefab;
 
-	float meshResolution = 64;
+
+	// Nof quads of the background tiles in x and y direction (must be a square)
+	public float meshResolution = 64;
+
+
+
+	public float playerViewingRange;
 
 
 
@@ -150,7 +156,7 @@ public class environmentManager : MonoBehaviour {
 		tileExtent = (meshBounds.max - meshBounds.min)*tileSize*(meshResolution-1)/meshResolution;
 		tileExtent.y = tileExtent.z;
 		tileExtent.z = 0;
-		Vector3 bottomLeft = player.transform.position - new Vector3 (1.0f * tileExtent.x, 1.0f * tileExtent.y, -15);
+		Vector3 bottomLeft = player.transform.position - new Vector3 (1.0f * tileExtent.x, 1.0f * tileExtent.y, 0);
 
 		// Position background planes
 		Vector3 playerPos = player.transform.position;
@@ -226,9 +232,9 @@ public class environmentManager : MonoBehaviour {
 		// TODO Could put this into an IEnumerable and let it run at a lower framerate to safe ressources
 		float currentTime = Time.time;
 
-		float viewingRange = playerScript.currentViewingRange*2.0f;
+		playerViewingRange = playerScript.currentViewingRange;
 		Vector3 playerPos = player.transform.position;
-		mainTextureSize = new Vector2 (2.0f*(viewingRange+player.transform.localScale.x), 2.0f*(viewingRange+player.transform.localScale.y));
+		mainTextureSize = new Vector2 (2.1f*(playerViewingRange+player.transform.localScale.x), 2.1f*(playerViewingRange+player.transform.localScale.y));
 
 		// Loop over the 9 plane tiles from the bottom left row-wise to the top right
 		for (int i = 0; i < 9; i++) {
@@ -242,7 +248,7 @@ public class environmentManager : MonoBehaviour {
 				}
 			}
 			// Set the plane active if player's viewingRange reaches the closest point of this plane tile's boundaries
-			else if( (environmentPlaneTileBounds[planeTileOrdering[i]].ClosestPoint(playerPos) - playerPos).magnitude <= 2.0f*viewingRange)
+			else if( (environmentPlaneTileBounds[planeTileOrdering[i]].ClosestPoint(playerPos) - playerPos).magnitude <= 4.0f*playerViewingRange)
 			{
 				environmentPlaneTiles[planeTileOrdering[i]].SetActive(true);
 			}
@@ -271,232 +277,6 @@ public class environmentManager : MonoBehaviour {
 	}
 
 
-	// Is called, when the player enters a new plane tile. This function reorders the plane tiles such that 'index' is the new central tile
-	// Following are the indices of the tiles (4 is always the central plane)
-	// 6 7 8
-	// 3 4 5
-	// 0 1 2
-	private void setNewCenterTile(int index) 
-	{
-		Vector3 centralPlaneTilePos = environmentPlaneTiles[planeTileOrdering[index]].transform.position;
-		int old0, old1, old2, old3, old4, old5, old6, old7, old8;
-		old0 = planeTileOrdering[0];
-		old1 = planeTileOrdering[1];
-		old2 = planeTileOrdering[2];
-		old3 = planeTileOrdering[3];
-		old4 = planeTileOrdering[4];
-		old5 = planeTileOrdering[5];
-		old6 = planeTileOrdering[6];
-		old7 = planeTileOrdering[7];
-		old8 = planeTileOrdering[8];
-		Debug.Log ("Switched to plane" + index);
-
-		switch(index) {
-		case (0) :
-			// reposition tiles 2,5,6,7,8 to positions 0,1,2,3,6
-			
-			// Move 2 to 2
-			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[2]] = environmentPlaneTileRenderers[planeTileOrdering[2]].bounds;
-			// Move 5 to 3
-			environmentPlaneTiles[planeTileOrdering[5]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, 0, 0);
-			environmentPlaneTileBounds[planeTileOrdering[5]] = environmentPlaneTileRenderers[planeTileOrdering[5]].bounds;
-			planeTileOrdering[3] = planeTileOrdering[5];
-			// Move 6 to 6
-			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[6]] = environmentPlaneTileRenderers[planeTileOrdering[6]].bounds;
-			// Move 7 to 0
-			environmentPlaneTiles[planeTileOrdering[7]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[7]] = environmentPlaneTileRenderers[planeTileOrdering[7]].bounds;
-			planeTileOrdering[0] = planeTileOrdering[7];
-			// Move 8 to 1
-			environmentPlaneTiles[planeTileOrdering[8]].transform.position = centralPlaneTilePos + new Vector3(0, -tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[8]] = environmentPlaneTileRenderers[planeTileOrdering[8]].bounds;
-			planeTileOrdering[1] = planeTileOrdering[8];
-			
-			planeTileOrdering[4] = old0;
-			planeTileOrdering[5] = old1;
-			planeTileOrdering[7] = old3;
-			planeTileOrdering[8] = old4;
-			break;
-		case (1) :
-			// reposition tiles 6,7,8 to positions 0,1,2
-			
-			// Move 6 to 0
-			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[6]] = environmentPlaneTileRenderers[planeTileOrdering[6]].bounds;
-			planeTileOrdering[0] = planeTileOrdering[6];
-			// Move 7 to 1
-			environmentPlaneTiles[planeTileOrdering[7]].transform.position = centralPlaneTilePos + new Vector3(0, -tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[7]] = environmentPlaneTileRenderers[planeTileOrdering[7]].bounds;
-			planeTileOrdering[1] = planeTileOrdering[7];
-			// Move 8 to 2
-			environmentPlaneTiles[planeTileOrdering[8]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[8]] = environmentPlaneTileRenderers[planeTileOrdering[8]].bounds;
-			planeTileOrdering[2] = planeTileOrdering[8];
-			
-			planeTileOrdering[3] = old0;
-			planeTileOrdering[4] = old1;
-			planeTileOrdering[5] = old2;
-			planeTileOrdering[6] = old3;
-			planeTileOrdering[7] = old4;
-			planeTileOrdering[8] = old5;
-			break;
-		case (2) :
-			// reposition tiles 0,3,6,7,8 to positions 0,1,2,5,8
-			
-			// Move 0 to 0
-			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[0]] = environmentPlaneTileRenderers[planeTileOrdering[0]].bounds;
-			// Move 3 to 1
-			environmentPlaneTiles[planeTileOrdering[3]].transform.position = centralPlaneTilePos + new Vector3(0, -tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[3]] = environmentPlaneTileRenderers[planeTileOrdering[3]].bounds;
-			planeTileOrdering[1] = planeTileOrdering[3];
-			// Move 6 to 2
-			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[6]] = environmentPlaneTileRenderers[planeTileOrdering[6]].bounds;
-			planeTileOrdering[2] = planeTileOrdering[6];
-			// Move 7 to 5
-			environmentPlaneTiles[planeTileOrdering[7]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, 0, 0);
-			environmentPlaneTileBounds[planeTileOrdering[7]] = environmentPlaneTileRenderers[planeTileOrdering[7]].bounds;
-			planeTileOrdering[5] = planeTileOrdering[7];
-			// Move 8 to 8
-			environmentPlaneTiles[planeTileOrdering[8]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[8]] = environmentPlaneTileRenderers[planeTileOrdering[8]].bounds;
-			
-			planeTileOrdering[3] = old1;
-			planeTileOrdering[4] = old2;
-			planeTileOrdering[6] = old4;
-			planeTileOrdering[7] = old5;
-			break;
-		case (3) :
-			// reposition tiles 2,5,8 to positions 0,3,6
-			
-			// Move 2 to 0
-			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[2]] = environmentPlaneTileRenderers[planeTileOrdering[2]].bounds;
-			planeTileOrdering[0] = planeTileOrdering[2];
-			// Move 5 to 3
-			environmentPlaneTiles[planeTileOrdering[5]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, 0, 0);
-			environmentPlaneTileBounds[planeTileOrdering[5]] = environmentPlaneTileRenderers[planeTileOrdering[5]].bounds;
-			planeTileOrdering[3] = planeTileOrdering[5];
-			// Move 8 to 6
-			environmentPlaneTiles[planeTileOrdering[8]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[8]] = environmentPlaneTileRenderers[planeTileOrdering[8]].bounds;
-			planeTileOrdering[6] = planeTileOrdering[8];
-			
-			planeTileOrdering[1] = old0;
-			planeTileOrdering[2] = old1;
-			planeTileOrdering[4] = old3;
-			planeTileOrdering[5] = old4;
-			planeTileOrdering[7] = old6;
-			planeTileOrdering[8] = old7;
-			break;
-		case (5) :
-			// reposition tiles 0,3,6 to positions 2,5,8
-			
-			// Move 0 to 2
-			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[0]] = environmentPlaneTileRenderers[planeTileOrdering[0]].bounds;
-			planeTileOrdering[2] = planeTileOrdering[0];
-			// Move 3 to 5
-			environmentPlaneTiles[planeTileOrdering[3]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, 0, 0);
-			environmentPlaneTileBounds[planeTileOrdering[3]] = environmentPlaneTileRenderers[planeTileOrdering[3]].bounds;
-			planeTileOrdering[5] = planeTileOrdering[3];
-			// Move 6 to 8
-			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[6]] = environmentPlaneTileRenderers[planeTileOrdering[6]].bounds;
-			planeTileOrdering[8] = planeTileOrdering[6];
-			
-			planeTileOrdering[0] = old1;
-			planeTileOrdering[1] = old2;
-			planeTileOrdering[3] = old4;
-			planeTileOrdering[4] = old5;
-			planeTileOrdering[6] = old7;
-			planeTileOrdering[7] = old8;
-			break;
-		case (6) :
-			// reposition tiles 0,1,2,5,8 to positions 0,3,6,7,8
-			
-			// Move 0 to 0
-			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[0]] = environmentPlaneTileRenderers[planeTileOrdering[0]].bounds;
-			// Move 1 to 3
-			environmentPlaneTiles[planeTileOrdering[1]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, 0, 0);
-			environmentPlaneTileBounds[planeTileOrdering[1]] = environmentPlaneTileRenderers[planeTileOrdering[1]].bounds;
-			planeTileOrdering[3] = planeTileOrdering[1];
-			// Move 2 to 6
-			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[2]] = environmentPlaneTileRenderers[planeTileOrdering[2]].bounds;
-			planeTileOrdering[6] = planeTileOrdering[2];
-			// Move 5 to 7
-			environmentPlaneTiles[planeTileOrdering[5]].transform.position = centralPlaneTilePos + new Vector3(0, tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[5]] = environmentPlaneTileRenderers[planeTileOrdering[5]].bounds;
-			planeTileOrdering[7] = planeTileOrdering[5];
-			// Move 8 to 8
-			environmentPlaneTiles[planeTileOrdering[8]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[8]] = environmentPlaneTileRenderers[planeTileOrdering[8]].bounds;
-			
-			planeTileOrdering[1] = old3;
-			planeTileOrdering[2] = old4;
-			planeTileOrdering[4] = old6;
-			planeTileOrdering[5] = old7;
-			break;
-		case (7) :
-			// reposition tiles 0,1,2 to positions 6,7,8
-			
-			// Move 0 to 6
-			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[0]] = environmentPlaneTileRenderers[planeTileOrdering[0]].bounds;
-			planeTileOrdering[6] = planeTileOrdering[0];
-			// Move 1 to 7
-			environmentPlaneTiles[planeTileOrdering[1]].transform.position = centralPlaneTilePos + new Vector3(0, tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[1]] = environmentPlaneTileRenderers[planeTileOrdering[1]].bounds;
-			planeTileOrdering[7] = planeTileOrdering[1];
-			// Move 2 to 8
-			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[2]] = environmentPlaneTileRenderers[planeTileOrdering[2]].bounds;
-			planeTileOrdering[8] = planeTileOrdering[2];
-			
-			planeTileOrdering[0] = old3;
-			planeTileOrdering[1] = old4;
-			planeTileOrdering[2] = old5;
-			planeTileOrdering[3] = old6;
-			planeTileOrdering[4] = old7;
-			planeTileOrdering[5] = old8;
-			break;
-		case (8) :
-			// reposition tiles 0,1,2,3,6 to positions 2,5,6,7,8
-			
-			// Move 0 to 8
-			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[0]] = environmentPlaneTileRenderers[planeTileOrdering[0]].bounds;
-			planeTileOrdering[8] = planeTileOrdering[0];
-			// Move 1 to 7
-			environmentPlaneTiles[planeTileOrdering[1]].transform.position = centralPlaneTilePos + new Vector3(0, tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[1]] = environmentPlaneTileRenderers[planeTileOrdering[1]].bounds;
-			planeTileOrdering[7] = planeTileOrdering[1];
-			// Move 2 to 2
-			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[2]] = environmentPlaneTileRenderers[planeTileOrdering[2]].bounds;
-			// Move 3 to 5
-			environmentPlaneTiles[planeTileOrdering[3]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, 0, 0);
-			environmentPlaneTileBounds[planeTileOrdering[3]] = environmentPlaneTileRenderers[planeTileOrdering[3]].bounds;
-			planeTileOrdering[5] = planeTileOrdering[3];
-			// Move 6 to 6
-			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
-			environmentPlaneTileBounds[planeTileOrdering[6]] = environmentPlaneTileRenderers[planeTileOrdering[6]].bounds;
-			
-			planeTileOrdering[0] = old4;
-			planeTileOrdering[1] = old5;
-			planeTileOrdering[3] = old7;
-			planeTileOrdering[4] = old8;
-			break;
-		default :
-			break;
-		};
-	}
-
 	// Calculates a texture for each environment component that acts as mask for high resolution textures
 	private void calculateEnvironmentTexture()
 	{
@@ -505,6 +285,7 @@ public class environmentManager : MonoBehaviour {
 		// Calculate the offsets induced by the current player position for the perlin noise calculation
 		float xOffset = player.transform.position.x + randomInitialValue;
 		float yOffset = player.transform.position.y + randomInitialValue;
+
 		// Calculate for each texture what distance each pixel covers in world coordinates
 		Vector2 distancePerPixel = new Vector2 (mainTextureSize.x / mainTextureResolution.x, mainTextureSize.y / mainTextureResolution.y);
 		// Get the current time for time dependent perlin noise
@@ -550,17 +331,7 @@ public class environmentManager : MonoBehaviour {
 			for(int x = 0; x < mainTextureResolution.x; x++) 
 			{
 				float terrainSample = addUpOctaves (environmentOctaves, environmentFrequency, environmentPersistence, x*distancePerPixel.x + xOffset, y*distancePerPixel.y + yOffset);
-				// Make it a water surface
-			/*	if(terrainSample < 0.8)
-				{
-					mainTextureColor[y*(int)mainTextureResolution.x + x] = new Color(0,0,1)*(1.0f - terrainSample);
-					float waveHeight = generateWaterSurface(x*distancePerPixel.x + xOffset, y*distancePerPixel.y + yOffset, currentTime);
-					bumpMapColor[y*(int)bumpMapTextureResolution.x + x] = new Color(0,0,waveHeight);
-				}  */
-
-
 				mainTextureColor[y*(int)mainTextureResolution.x + x] = new Color(terrainSample,terrainSample,terrainSample);
-				mainTextureColor[y*(int)mainTextureResolution.x + x] = new Color(0.5f,0.5f,0.5f);
 				environmentalHazardMask[y*(int)mainTextureResolution.x + x] = terrainSample;
 			}
 		}
@@ -898,11 +669,6 @@ public class environmentManager : MonoBehaviour {
 		// Make the collider 3D (and not just flat)
 		Vector3 boxSize = environmentalHazards[gameObjectIndex].GetComponent<BoxCollider>().size;
 		environmentalHazards[gameObjectIndex].GetComponent<BoxCollider>().size = new Vector3(boxSize.x, boxSize.y, player.transform.localScale.x*2.0f);
-		//	MeshCollider meshCollider = environmentalHazards[gameObjectIndex].GetComponent<MeshCollider>();
-		// meshCollider.sharedMesh = null;
-		//	meshCollider.sharedMesh = mesh;
-		//	meshCollider.sharedMesh.RecalculateBounds();
-		//	meshCollider.sharedMesh.RecalculateNormals();
 		// Activate the collider
 		environmentalHazards [gameObjectIndex].SetActive (true);
 		gameObjectIndex++;
@@ -941,6 +707,233 @@ public class environmentManager : MonoBehaviour {
 	}
 
 
+	// Is called, when the player enters a new plane tile. This function reorders the plane tiles such that 'index' is the new central tile
+	// Following are the indices of the tiles (4 is always the central plane)
+	// 6 7 8
+	// 3 4 5
+	// 0 1 2
+	private void setNewCenterTile(int index) 
+	{
+		Vector3 centralPlaneTilePos = environmentPlaneTiles[planeTileOrdering[index]].transform.position;
+		int old0, old1, old2, old3, old4, old5, old6, old7, old8;
+		old0 = planeTileOrdering[0];
+		old1 = planeTileOrdering[1];
+		old2 = planeTileOrdering[2];
+		old3 = planeTileOrdering[3];
+		old4 = planeTileOrdering[4];
+		old5 = planeTileOrdering[5];
+		old6 = planeTileOrdering[6];
+		old7 = planeTileOrdering[7];
+		old8 = planeTileOrdering[8];
+		Debug.Log ("Switched to plane" + index);
+		
+		switch(index) {
+		case (0) :
+			// reposition tiles 2,5,6,7,8 to positions 0,1,2,3,6
+			
+			// Move 2 to 2
+			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[2]] = environmentPlaneTileRenderers[planeTileOrdering[2]].bounds;
+			// Move 5 to 3
+			environmentPlaneTiles[planeTileOrdering[5]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, 0, 0);
+			environmentPlaneTileBounds[planeTileOrdering[5]] = environmentPlaneTileRenderers[planeTileOrdering[5]].bounds;
+			planeTileOrdering[3] = planeTileOrdering[5];
+			// Move 6 to 6
+			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[6]] = environmentPlaneTileRenderers[planeTileOrdering[6]].bounds;
+			// Move 7 to 0
+			environmentPlaneTiles[planeTileOrdering[7]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[7]] = environmentPlaneTileRenderers[planeTileOrdering[7]].bounds;
+			planeTileOrdering[0] = planeTileOrdering[7];
+			// Move 8 to 1
+			environmentPlaneTiles[planeTileOrdering[8]].transform.position = centralPlaneTilePos + new Vector3(0, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[8]] = environmentPlaneTileRenderers[planeTileOrdering[8]].bounds;
+			planeTileOrdering[1] = planeTileOrdering[8];
+			
+			planeTileOrdering[4] = old0;
+			planeTileOrdering[5] = old1;
+			planeTileOrdering[7] = old3;
+			planeTileOrdering[8] = old4;
+			break;
+		case (1) :
+			// reposition tiles 6,7,8 to positions 0,1,2
+			
+			// Move 6 to 0
+			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[6]] = environmentPlaneTileRenderers[planeTileOrdering[6]].bounds;
+			planeTileOrdering[0] = planeTileOrdering[6];
+			// Move 7 to 1
+			environmentPlaneTiles[planeTileOrdering[7]].transform.position = centralPlaneTilePos + new Vector3(0, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[7]] = environmentPlaneTileRenderers[planeTileOrdering[7]].bounds;
+			planeTileOrdering[1] = planeTileOrdering[7];
+			// Move 8 to 2
+			environmentPlaneTiles[planeTileOrdering[8]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[8]] = environmentPlaneTileRenderers[planeTileOrdering[8]].bounds;
+			planeTileOrdering[2] = planeTileOrdering[8];
+			
+			planeTileOrdering[3] = old0;
+			planeTileOrdering[4] = old1;
+			planeTileOrdering[5] = old2;
+			planeTileOrdering[6] = old3;
+			planeTileOrdering[7] = old4;
+			planeTileOrdering[8] = old5;
+			break;
+		case (2) :
+			// reposition tiles 0,3,6,7,8 to positions 0,1,2,5,8
+			
+			// Move 0 to 0
+			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[0]] = environmentPlaneTileRenderers[planeTileOrdering[0]].bounds;
+			// Move 3 to 1
+			environmentPlaneTiles[planeTileOrdering[3]].transform.position = centralPlaneTilePos + new Vector3(0, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[3]] = environmentPlaneTileRenderers[planeTileOrdering[3]].bounds;
+			planeTileOrdering[1] = planeTileOrdering[3];
+			// Move 6 to 2
+			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[6]] = environmentPlaneTileRenderers[planeTileOrdering[6]].bounds;
+			planeTileOrdering[2] = planeTileOrdering[6];
+			// Move 7 to 5
+			environmentPlaneTiles[planeTileOrdering[7]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, 0, 0);
+			environmentPlaneTileBounds[planeTileOrdering[7]] = environmentPlaneTileRenderers[planeTileOrdering[7]].bounds;
+			planeTileOrdering[5] = planeTileOrdering[7];
+			// Move 8 to 8
+			environmentPlaneTiles[planeTileOrdering[8]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[8]] = environmentPlaneTileRenderers[planeTileOrdering[8]].bounds;
+			
+			planeTileOrdering[3] = old1;
+			planeTileOrdering[4] = old2;
+			planeTileOrdering[6] = old4;
+			planeTileOrdering[7] = old5;
+			break;
+		case (3) :
+			// reposition tiles 2,5,8 to positions 0,3,6
+			
+			// Move 2 to 0
+			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[2]] = environmentPlaneTileRenderers[planeTileOrdering[2]].bounds;
+			planeTileOrdering[0] = planeTileOrdering[2];
+			// Move 5 to 3
+			environmentPlaneTiles[planeTileOrdering[5]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, 0, 0);
+			environmentPlaneTileBounds[planeTileOrdering[5]] = environmentPlaneTileRenderers[planeTileOrdering[5]].bounds;
+			planeTileOrdering[3] = planeTileOrdering[5];
+			// Move 8 to 6
+			environmentPlaneTiles[planeTileOrdering[8]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[8]] = environmentPlaneTileRenderers[planeTileOrdering[8]].bounds;
+			planeTileOrdering[6] = planeTileOrdering[8];
+			
+			planeTileOrdering[1] = old0;
+			planeTileOrdering[2] = old1;
+			planeTileOrdering[4] = old3;
+			planeTileOrdering[5] = old4;
+			planeTileOrdering[7] = old6;
+			planeTileOrdering[8] = old7;
+			break;
+		case (5) :
+			// reposition tiles 0,3,6 to positions 2,5,8
+			
+			// Move 0 to 2
+			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[0]] = environmentPlaneTileRenderers[planeTileOrdering[0]].bounds;
+			planeTileOrdering[2] = planeTileOrdering[0];
+			// Move 3 to 5
+			environmentPlaneTiles[planeTileOrdering[3]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, 0, 0);
+			environmentPlaneTileBounds[planeTileOrdering[3]] = environmentPlaneTileRenderers[planeTileOrdering[3]].bounds;
+			planeTileOrdering[5] = planeTileOrdering[3];
+			// Move 6 to 8
+			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[6]] = environmentPlaneTileRenderers[planeTileOrdering[6]].bounds;
+			planeTileOrdering[8] = planeTileOrdering[6];
+			
+			planeTileOrdering[0] = old1;
+			planeTileOrdering[1] = old2;
+			planeTileOrdering[3] = old4;
+			planeTileOrdering[4] = old5;
+			planeTileOrdering[6] = old7;
+			planeTileOrdering[7] = old8;
+			break;
+		case (6) :
+			// reposition tiles 0,1,2,5,8 to positions 0,3,6,7,8
+			
+			// Move 0 to 0
+			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[0]] = environmentPlaneTileRenderers[planeTileOrdering[0]].bounds;
+			// Move 1 to 3
+			environmentPlaneTiles[planeTileOrdering[1]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, 0, 0);
+			environmentPlaneTileBounds[planeTileOrdering[1]] = environmentPlaneTileRenderers[planeTileOrdering[1]].bounds;
+			planeTileOrdering[3] = planeTileOrdering[1];
+			// Move 2 to 6
+			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[2]] = environmentPlaneTileRenderers[planeTileOrdering[2]].bounds;
+			planeTileOrdering[6] = planeTileOrdering[2];
+			// Move 5 to 7
+			environmentPlaneTiles[planeTileOrdering[5]].transform.position = centralPlaneTilePos + new Vector3(0, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[5]] = environmentPlaneTileRenderers[planeTileOrdering[5]].bounds;
+			planeTileOrdering[7] = planeTileOrdering[5];
+			// Move 8 to 8
+			environmentPlaneTiles[planeTileOrdering[8]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[8]] = environmentPlaneTileRenderers[planeTileOrdering[8]].bounds;
+			
+			planeTileOrdering[1] = old3;
+			planeTileOrdering[2] = old4;
+			planeTileOrdering[4] = old6;
+			planeTileOrdering[5] = old7;
+			break;
+		case (7) :
+			// reposition tiles 0,1,2 to positions 6,7,8
+			
+			// Move 0 to 6
+			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[0]] = environmentPlaneTileRenderers[planeTileOrdering[0]].bounds;
+			planeTileOrdering[6] = planeTileOrdering[0];
+			// Move 1 to 7
+			environmentPlaneTiles[planeTileOrdering[1]].transform.position = centralPlaneTilePos + new Vector3(0, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[1]] = environmentPlaneTileRenderers[planeTileOrdering[1]].bounds;
+			planeTileOrdering[7] = planeTileOrdering[1];
+			// Move 2 to 8
+			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[2]] = environmentPlaneTileRenderers[planeTileOrdering[2]].bounds;
+			planeTileOrdering[8] = planeTileOrdering[2];
+			
+			planeTileOrdering[0] = old3;
+			planeTileOrdering[1] = old4;
+			planeTileOrdering[2] = old5;
+			planeTileOrdering[3] = old6;
+			planeTileOrdering[4] = old7;
+			planeTileOrdering[5] = old8;
+			break;
+		case (8) :
+			// reposition tiles 0,1,2,3,6 to positions 2,5,6,7,8
+			
+			// Move 0 to 8
+			environmentPlaneTiles[planeTileOrdering[0]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[0]] = environmentPlaneTileRenderers[planeTileOrdering[0]].bounds;
+			planeTileOrdering[8] = planeTileOrdering[0];
+			// Move 1 to 7
+			environmentPlaneTiles[planeTileOrdering[1]].transform.position = centralPlaneTilePos + new Vector3(0, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[1]] = environmentPlaneTileRenderers[planeTileOrdering[1]].bounds;
+			planeTileOrdering[7] = planeTileOrdering[1];
+			// Move 2 to 2
+			environmentPlaneTiles[planeTileOrdering[2]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, -tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[2]] = environmentPlaneTileRenderers[planeTileOrdering[2]].bounds;
+			// Move 3 to 5
+			environmentPlaneTiles[planeTileOrdering[3]].transform.position = centralPlaneTilePos + new Vector3(tileExtent.x, 0, 0);
+			environmentPlaneTileBounds[planeTileOrdering[3]] = environmentPlaneTileRenderers[planeTileOrdering[3]].bounds;
+			planeTileOrdering[5] = planeTileOrdering[3];
+			// Move 6 to 6
+			environmentPlaneTiles[planeTileOrdering[6]].transform.position = centralPlaneTilePos + new Vector3(-tileExtent.x, tileExtent.y, 0);
+			environmentPlaneTileBounds[planeTileOrdering[6]] = environmentPlaneTileRenderers[planeTileOrdering[6]].bounds;
+			
+			planeTileOrdering[0] = old4;
+			planeTileOrdering[1] = old5;
+			planeTileOrdering[3] = old7;
+			planeTileOrdering[4] = old8;
+			break;
+		default :
+			break;
+		};
+	}
+
+
 	private float generateWaterSurface(float x, float y, float currentTime)
 	{
 		return addUpOctaves(waterBumpMapOctaves, waterBumpMapFrequency, waterBumpMapPersistence, x + currentTime, y + currentTime);
@@ -964,6 +957,8 @@ public class environmentManager : MonoBehaviour {
 
 		return sampleValue;
 	}
+
+
 
 	// Cross product for the case, when a has x-value of 0 and b has y-value of 0
 	// Used for normal calculation

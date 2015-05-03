@@ -36,13 +36,20 @@ public class meshDistorter : MonoBehaviour {
 	private Vector3[] originalVertices;
 
 	private Vector3[] vertex2NormalMap;
+
+	private Vector2 initialOffset;
+
+	private Vector3 meshExtent;
 	
 
 	// Use this for initialization
-	void Start () {
+	void Start () 
+	{
 		meshFilter = parentBlob.GetComponent<MeshFilter> ();
 		mesh = meshFilter.mesh;
 		mesh.MarkDynamic ();
+		Bounds bounds = mesh.bounds;
+		meshExtent = bounds.max - bounds.min;
 
 		originalVertices = mesh.vertices;
 		vertex2NormalMap = new Vector3[originalVertices.Length];
@@ -66,6 +73,7 @@ public class meshDistorter : MonoBehaviour {
 		parentPlayerScript = (player)parentBlob.GetComponent (typeof(player));
 		isPlayer = (bool)parentPlayerScript;
 
+		initialOffset = new Vector2(Random.Range (-32000.0f, 32000.0f), Random.Range (-32000.0f, 32000.0f));
 		distortMesh ();
 	}
 	
@@ -74,10 +82,11 @@ public class meshDistorter : MonoBehaviour {
 
 		Vector3[] vertices = mesh.vertices;
 
+
 		// TODO Could put this into an IEnumerable and let it run at a lower framerate to safe ressources
 		float currentTime = Time.time * timeMultiplier;
 		for (int i = 0; i < vertices.Length; i++) {
-			float offsetFactor = wobbleIntensity * parentBlob.transform.localScale.x * (Mathf.PerlinNoise(originalVertices[i].x*wobbleFrequency + currentTime, originalVertices[i].y*wobbleFrequency + currentTime)-0.5f);
+			float offsetFactor = wobbleIntensity * meshExtent.x * (Mathf.PerlinNoise((originalVertices[i].x + initialOffset.x)*wobbleFrequency + currentTime, (originalVertices[i].y+initialOffset.y)*wobbleFrequency + currentTime)-0.5f);
 			vertices[i] = originalVertices[i] + vertex2NormalMap[i]*offsetFactor;
 		}
 		mesh.vertices = vertices;

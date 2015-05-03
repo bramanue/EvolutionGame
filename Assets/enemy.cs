@@ -177,6 +177,8 @@ public class enemy : MonoBehaviour {
 
 	public Material defaultMaterial;
 
+	public bool dead;
+
 
 
 	private lootManager lootManager;
@@ -212,8 +214,23 @@ public class enemy : MonoBehaviour {
 	void Update() 
 	{
 		// If this blob is dead, then don't move anymore
-		if (size <= 0)
+		if (dead)
 			return;
+
+
+		// If enemy has just died, then throw some ability loot
+		if (size <= 0) 
+		{
+			if (hasAbilities()) {
+				// Get a random ability
+				ability rndAbility = getRandomAbility();
+				// Throw it in front of the dying enemy
+				Vector3 throwTo = transform.position + viewingDirection*transform.localScale.x;
+				lootManager.throwAbilityLoot(rndAbility, 1, transform.position, throwTo);
+			}
+			dead = true;
+			return;
+		}
 
 		// Get the viewing direction
 		viewingDirection = transform.up;
@@ -378,6 +395,7 @@ public class enemy : MonoBehaviour {
 
 	void LateUpdate() {
 		// Adapt visuals to the actual size
+		size = Mathf.Max (0.0f, size);
 		grow ();
 
 		previousEnvironment = currentEnvironment;
@@ -810,6 +828,8 @@ public class enemy : MonoBehaviour {
 		isRunningAwayFromPlayer = false;
 		isInAlertedState = false;
 		canMove = true;
+		stunned = false;
+		dead = false;
 	}
 
 	private void useRunning() {
@@ -992,7 +1012,6 @@ public class enemy : MonoBehaviour {
 						float theta = Random.Range(0.0f,2.0f*Mathf.PI);
 						Vector3 throwTo = transform.position + new Vector3(radius*Mathf.Cos(theta), radius*Mathf.Sin (theta), 0);
 
-						Debug.Log ("Throw ability loot");
 						lootManager.throwAbilityLoot(rndAbility, 1, transform.position, throwTo);
 						rndAbility.increaseLevel(-(int)(0.1f*rndAbility.maxLevel));
 
@@ -1006,7 +1025,6 @@ public class enemy : MonoBehaviour {
 				}
 			}
 		}
-		// Probability to lose loot
 		size -= damage;
 	}
 
