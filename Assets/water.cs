@@ -20,6 +20,7 @@ public class water : hazardousEnvironment {
 
 		if (playerScript) 
 		{
+			playerScript.currentEnvironment = this;
 			if(playerScript.shieldInUse != null && playerScript.shieldInUse.getAbilityEnum() == EAbilityType.EWaterShieldAbility) {
 				// Nothing to do, player can stay
 			}
@@ -34,6 +35,7 @@ public class water : hazardousEnvironment {
 		}
 		else if (enemyScript) 
 		{
+			enemyScript.currentEnvironment = this;
 			if(enemyScript.shieldInUse != null && enemyScript.shieldInUse.getAbilityEnum() == EAbilityType.EWaterShieldAbility) {
 				// Nothing to do, player can stay
 			}
@@ -54,9 +56,6 @@ public class water : hazardousEnvironment {
 		if (playerScript) 
 		{
 			playerScript.currentEnvironment = this;
-		/*	if( playerScript.hasAbility(EAbilityType.EWaterShieldAbility) != -1 ) {
-				// Nothing to do, player can stay
-			}*/
 			if(playerScript.shieldInUse != null && playerScript.shieldInUse.getAbilityEnum() == EAbilityType.EWaterShieldAbility) {
 				// Nothing to do, player can stay
 			}

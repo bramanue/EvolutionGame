@@ -20,7 +20,7 @@ public class dustStorm : hazardousEnvironment {
 		
 		if (playerScript) 
 		{
-		
+			playerScript.currentEnvironment = this;
 			if( playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.EDustShieldAbility) {
 				// Nothing to do, player can enter
 				// TODO play sound or such
@@ -37,7 +37,7 @@ public class dustStorm : hazardousEnvironment {
 		}
 		else if (enemyScript) 
 		{
-
+			enemyScript.currentEnvironment = this;
 			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum != EAbilityType.EDustShieldAbility ) {
 				// Nothing to do, enemy can enter
 				// TODO play sound or such
@@ -62,8 +62,6 @@ public class dustStorm : hazardousEnvironment {
 		if (playerScript) 
 		{
 			playerScript.currentEnvironment = this;
-
-			
 			if( playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.EDustShieldAbility) {
 				// Nothing to do, player can enter
 				// TODO play sound or such
@@ -81,7 +79,6 @@ public class dustStorm : hazardousEnvironment {
 		else if (enemyScript) 
 		{
 			enemyScript.currentEnvironment = this;
-
 			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum != EAbilityType.EDustShieldAbility ) {
 				// Nothing to do, enemy can enter
 				// TODO play sound or such

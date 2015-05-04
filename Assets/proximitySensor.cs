@@ -79,8 +79,8 @@ public class proximitySensor : MonoBehaviour {
 	void OnTriggerEnter(Collider other) 
 	{
 		// We do not care about this intersection if we already got one during this frame
-		if (alreadyCheckedEnter)
-			return;
+	//	if (alreadyCheckedEnter)
+	//		return;
 
 		// We only care about collisions with hazardous environment
 		hazardousEnvironment hazardousObject = (hazardousEnvironment)other.gameObject.GetComponent (typeof(hazardousEnvironment));
@@ -99,8 +99,8 @@ public class proximitySensor : MonoBehaviour {
 
 	void OnTriggerStay(Collider other) 
 	{
-		if (alreadyCheckedStay)
-			return;
+	//	if (alreadyCheckedStay)
+	//		return;
 
 		hazardousEnvironment hazardousObject = (hazardousEnvironment)other.gameObject.GetComponent (typeof(hazardousEnvironment));
 		if (!hazardousObject)
@@ -121,7 +121,6 @@ public class proximitySensor : MonoBehaviour {
 		Vector3 intersection = hazard.bounds.ClosestPoint (parentBlob.transform.position);
 
 		proximityData.registerIntersection (intersection-parentBlob.transform.position);
-	//	Debug.Log ("Collision in " + (intersection-parentBlob.transform.position));
 
 		// Shoot a ray into that direction to make sure the distance is not shorter
 		RaycastHit hit;
@@ -134,6 +133,8 @@ public class proximitySensor : MonoBehaviour {
 			}
 		}
 		return proximityData;
+
+
 
 		// Check how close the hazardous environment is and in which direction it resides
 	//	RaycastHit hit;

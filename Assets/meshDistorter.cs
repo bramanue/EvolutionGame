@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class meshDistorter : MonoBehaviour {
 
@@ -20,13 +21,9 @@ public class meshDistorter : MonoBehaviour {
 	// Let's the wobble animation go faster
 	private float timeMultiplier;
 
-	// SPIKE SHIELD
-	// wobbleFrequency = 100.0f;  
-	// wobbleIntensity 0.4 - 1.0; // Depending on level
-
 
 	// Reference to the parent object (does not need to be a blob)
-	public GameObject parentBlob;
+//	public GameObject parentBlob;
 	// The MeshFilter
 	private MeshFilter meshFilter;
 	// The mesh object
@@ -51,18 +48,32 @@ public class meshDistorter : MonoBehaviour {
 
 	private distortionDatabase distortionDatabase;
 	
+	private List<List<int> > vertexConnections;
+
+	private meshDatabase meshDatabase;
+	
 
 	// Use this for initialization
 	void Start () 
 	{
-		meshFilter = parentBlob.GetComponent<MeshFilter> ();
+		meshDatabase = (meshDatabase)GameObject.Find ("MeshDatabase").GetComponent (typeof(meshDatabase));
+		distortionDatabase = (distortionDatabase)GameObject.Find ("DistortionDatabase").GetComponent(typeof(distortionDatabase));
+
+		meshFilter = this.gameObject.GetComponent<MeshFilter> ();
 		mesh = meshFilter.mesh;
 		mesh.MarkDynamic ();
 		Bounds bounds = mesh.bounds;
 		meshExtent = bounds.max - bounds.min;
 
 		originalVertices = mesh.vertices;
-		vertex2NormalMap = new Vector3[originalVertices.Length];
+
+		if (!meshDatabase.hasMesh (mesh))
+			meshDatabase.addMesh (mesh);
+
+		vertex2NormalMap = meshDatabase.getVertex2Normal (mesh);
+		vertexConnections = meshDatabase.getVertexConnections (mesh);
+
+	/*	vertex2NormalMap = new Vector3[originalVertices.Length];
 		Vector3[] normals = mesh.normals;
 
 		for (int i = 0; i < originalVertices.Length; i++) {
@@ -77,16 +88,14 @@ public class meshDistorter : MonoBehaviour {
 			}
 			vertex2NormalMap[i] = sharedNormal/count;
 			vertex2NormalMap[i].Normalize();
-		}
+		}*/
 
-		parentEnemyScript = (enemy)parentBlob.GetComponent (typeof(enemy));
-		parentPlayerScript = (player)parentBlob.GetComponent (typeof(player));
+		parentEnemyScript = (enemy)this.gameObject.GetComponent (typeof(enemy));
+		parentPlayerScript = (player)this.gameObject.GetComponent (typeof(player));
 		isPlayer = (bool)parentPlayerScript;
 
 		initialOffset = new Vector2(Random.Range (-32000.0f, 32000.0f), Random.Range (-32000.0f, 32000.0f));
 		distortMesh ();
-
-		distortionDatabase = (distortionDatabase)GameObject.Find ("DistortionDatabase").GetComponent(typeof(distortionDatabase));
 
 		wobbleFrequency = defaultWobbleFrequency;
 		wobbleIntensity = defaultWobbleIntensity;
@@ -121,50 +130,82 @@ public class meshDistorter : MonoBehaviour {
 
 	public void distortMesh()
 	{
+		Debug.Log ("distort mesh of " + this.gameObject);
 		Vector3[] vertices = mesh.vertices;
-		for (int i = 0; i < vertices.Length; i++) {
-			Vector3 pos = vertices[i];
-			// If this vertex has already been modified, then continue
-			if(pos != originalVertices[i])
-				continue;
-			Vector3 rndDirection = Random.insideUnitSphere*intensity;
-			for(int j = 0; j < vertices.Length; j++)
+
+		// Distort mesh if desired (i.e. when intensity != 0)
+		if (intensity != 0.0f) 
+		{
+			for(int i = 0; i < vertexConnections.Count; i++) 
 			{
-				if(vertices[j] == pos)
-					vertices[j] += rndDirection;
-			}
-		}
-		mesh.vertices = vertices;
-		mesh.RecalculateBounds ();
-		mesh.RecalculateNormals ();
-		// Make sure the mesh stays more or less the size of a unit sphere
-		Bounds bounds = mesh.bounds;
-		float diameter = (bounds.max - bounds.min).magnitude;
-		float shrinkFactor = 4.0f / diameter;
-		for (int i = 0; i < vertices.Length; i++) {
-			vertices[i] *= shrinkFactor;
-		}
-		originalVertices = vertices;
-
-		mesh.vertices = vertices;
-		mesh.RecalculateBounds ();
-		mesh.RecalculateNormals ();
-
-		// Calculate for each vertex its shared normal
-		Vector3[] normals = mesh.normals;
-		for (int i = 0; i < originalVertices.Length; i++) {
-			Vector3 pos = originalVertices[i];
-			Vector3 sharedNormal = new Vector3(0,0,0);
-			float count = 0;
-			for(int j = 0; j < originalVertices.Length; j++) {
-				if(pos == originalVertices[j]) {
-					sharedNormal += normals[j];
-					count++;
+				Vector3 rndDirection = Random.insideUnitSphere * intensity;
+				for(int j = 0; j < vertexConnections[i].Count; j++) 
+				{
+					vertices [vertexConnections[i][j]] += rndDirection;
 				}
 			}
-			vertex2NormalMap[i] = sharedNormal/count;
-			vertex2NormalMap[i].Normalize();
+
+		/*	for (int i = 0; i < vertices.Length; i++) {
+				Vector3 pos = vertices [i];
+				// If this vertex has already been modified, then continue
+				if (pos != originalVertices [i])
+					continue;
+				Vector3 rndDirection = Random.insideUnitSphere * intensity;
+				for (int j = 0; j < vertices.Length; j++) {
+					if (vertices [j] == pos)
+						vertices [j] += rndDirection;
+				}
+			}*/
+			mesh.vertices = vertices;
+			mesh.RecalculateBounds ();
+
+			// Make sure the mesh stays more or less the size of a unit sphere
+			Bounds bounds = mesh.bounds;
+			float diameter = (bounds.max - bounds.min).magnitude;
+			float shrinkFactor = 4.0f / diameter;
+			for (int i = 0; i < vertices.Length; i++) {
+				vertices [i] *= shrinkFactor;
+			}
+			originalVertices = vertices;
+
+			mesh.vertices = vertices;
+			mesh.RecalculateBounds ();
+			mesh.RecalculateNormals ();
+
+			// Calculate for each vertex its shared normal
+		/*	Vector3[] normals = mesh.normals;
+
+			for(int i = 0; i < vertexConnections.Count; i++) 
+			{
+				Vector3 sharedNormal = new Vector3(0,0,0);
+				int nofSiblings = vertexConnections[i].Count;
+				for(int j = 0; j < nofSiblings; j++) {
+					sharedNormal += normals[vertexConnections[i][j]];
+				}
+				sharedNormal /= nofSiblings;
+				sharedNormal.Normalize();
+				for(int j = 0; j < nofSiblings; j++) {
+					vertex2NormalMap[vertexConnections[i][j]] = sharedNormal;
+				}
+			}
+*/
+
+		/*	for (int i = 0; i < originalVertices.Length; i++) {
+				Vector3 pos = originalVertices[i];
+				Vector3 sharedNormal = new Vector3(0,0,0);
+				float count = 0;
+				for(int j = 0; j < originalVertices.Length; j++) {
+					if(pos == originalVertices[j]) {
+						sharedNormal += normals[j];
+						count++;
+					}
+				}
+				vertex2NormalMap[i] = sharedNormal/count;
+				vertex2NormalMap[i].Normalize();
+			}*/
 		}
+
+
 	}
 
 	public void replaceMesh(Mesh newMesh) {

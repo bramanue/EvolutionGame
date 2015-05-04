@@ -7,6 +7,7 @@ public class thornBush : hazardousEnvironment {
 
 	// Use this for initialization
 	void Start () {
+		Debug.Log ("Starting thornBush");
 		requiredAbility = EAbilityType.EThornShieldAbility;
 	}
 	
@@ -22,7 +23,7 @@ public class thornBush : hazardousEnvironment {
 
 		if (playerScript) 
 		{
-		
+			playerScript.currentEnvironment = this;
 			if( playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.EThornShieldAbility ) {
 				// Nothing to do, player can enter
 				// TODO play sound or such
@@ -42,7 +43,7 @@ public class thornBush : hazardousEnvironment {
 		}
 		else if (enemyScript) 
 		{
-
+			enemyScript.currentEnvironment = this;
 			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum == EAbilityType.EThornShieldAbility ) {
 				// Nothing to do, enemy can enter
 				// TODO play sound or such
@@ -84,8 +85,6 @@ public class thornBush : hazardousEnvironment {
 				Debug.Log (slowDownFactor);
 				playerScript.applyEnvironmentalSlowDown(slowDownFactor);
 				//	playerScript.addEnvironmentPushBackForce(playerScript.viewingDirection);
-				// Disable player for a short time
-				//	playerScript.setStunned(0.3f);
 			}
 			
 		}
@@ -105,8 +104,6 @@ public class thornBush : hazardousEnvironment {
 				// TODO throw back in normal direction of the thorn bush
 				enemyScript.applyEnvironmentalSlowDown(slowDownFactor);
 				// enemyScript.addEnvironmentPushBackForce(enemyScript.viewingDirection);
-				// Disable enemy for a short time
-				// enemyScript.setStunned(0.3f);
 			}
 		}
 	}

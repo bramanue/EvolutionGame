@@ -22,6 +22,7 @@ public class lightningStorm : hazardousEnvironment {
 		
 		if (playerScript) 
 		{
+			playerScript.currentEnvironment = this;
 			if( playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.EElectricityShieldAbility ) {
 				// Nothing to do, player can enter
 				// TODO play sound or such
@@ -38,7 +39,7 @@ public class lightningStorm : hazardousEnvironment {
 		}
 		else if (enemyScript) 
 		{
-
+			enemyScript.currentEnvironment = this;
 			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum == EAbilityType.EElectricityShieldAbility ) {
 				// Nothing to do, enemy can enter
 				// TODO play sound or such
@@ -62,7 +63,6 @@ public class lightningStorm : hazardousEnvironment {
 		if (playerScript) 
 		{
 			playerScript.currentEnvironment = this;
-
 			if( playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.EElectricityShieldAbility ) {
 				// Nothing to do, player can enter
 				// TODO play sound or such
@@ -80,7 +80,6 @@ public class lightningStorm : hazardousEnvironment {
 		else if (enemyScript) 
 		{
 			enemyScript.currentEnvironment = this;
-
 			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum == EAbilityType.EElectricityShieldAbility ) {
 				// Nothing to do, enemy can enter
 				// TODO play sound or such

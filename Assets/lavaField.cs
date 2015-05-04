@@ -22,6 +22,7 @@ public class lavaField : hazardousEnvironment {
 		
 		if (playerScript) 
 		{
+			playerScript.currentEnvironment = this;
 			if( playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.ELavaShieldAbility ) {
 				// Nothing to do, player can enter
 				// TODO play sound or such
@@ -38,6 +39,7 @@ public class lavaField : hazardousEnvironment {
 		}
 		else if (enemyScript) 
 		{
+			enemyScript.currentEnvironment = this;
 			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum == EAbilityType.ELavaShieldAbility ) {
 				// Nothing to do, enemy can enter
 				// TODO play sound or such
@@ -61,7 +63,6 @@ public class lavaField : hazardousEnvironment {
 		if (playerScript) 
 		{
 			playerScript.currentEnvironment = this;
-
 			if( playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.ELavaShieldAbility ) {
 				// Nothing to do, player can enter
 				// TODO play sound or such
@@ -79,7 +80,6 @@ public class lavaField : hazardousEnvironment {
 		else if (enemyScript) 
 		{
 			enemyScript.currentEnvironment = this;
-
 			if( enemyScript.shieldInUse != null && enemyScript.shieldInUse.abilityEnum == EAbilityType.ELavaShieldAbility ) {
 				// Nothing to do, enemy can enter
 				// TODO play sound or such

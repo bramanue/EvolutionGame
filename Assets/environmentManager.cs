@@ -94,6 +94,9 @@ public class environmentManager : MonoBehaviour {
 	private Texture2D[] environmentPlaneTileTextures = new Texture2D[9];
 
 	private int[] planeTileOrdering = new int[9];
+	// Stores the extent of all combined active tiles Vector4(Min_x, Min_y, Max_x, Max_y)
+	private Vector4 currentBackgroundExtent;
+
 
 	public float tileSize = 20;
 	
@@ -118,6 +121,7 @@ public class environmentManager : MonoBehaviour {
 	public Vector2 mainTextureSize;
 
 
+	// ENVIRONMENTAL OBJECT PREFABS
 	public GameObject waterPrefab;
 
 	public GameObject iceFieldPrefab;
@@ -131,12 +135,33 @@ public class environmentManager : MonoBehaviour {
 	public GameObject lightningStormPrefab;
 
 
+	// An array contianing all environmental obstacles on the field
+	private GameObject[] environmentalObstacles = new GameObject[1000];
+	// The next index into environmentalObstacles[] where a null object is
+	private int environmentalObstacleIndex;
+	// Defines from which index of environmentalObjects[] the current Update() iteration has to loop from
+	private int previousPatchEndIndex;
+	// Defines until which index of environmentalObjects[] the current Update() iteration has to loop
+	private int[] patchSizes = new int[10];
+	// The current Update() iteration
+	private int currentPatchIndex;
+	// How many Update() iterations are granted to update the whole environmentalObstacles[] array
+	private int nofPatches;
+
+	// Stores an index to the object of environmentalObstacles that is at that location of the texture
+	private int[] textureQuadIsOccupiedBy;
+
+
+
 	// Nof quads of the background tiles in x and y direction (must be a square)
 	public float meshResolution = 64;
 
 
+	// Current viewing range of the player
+	private float playerViewingRange;
 
-	public float playerViewingRange;
+
+	private int frameCounter = 0;
 
 
 
@@ -221,6 +246,21 @@ public class environmentManager : MonoBehaviour {
 		}
 
 		environmentalHazardMask = new float[(int)(mainTextureResolution.x * mainTextureResolution.y)];
+		textureQuadIsOccupiedBy = new int[(int)(mainTextureResolution.x * mainTextureResolution.y)];
+		// Set all spaces to unoccupied
+		for (int i = 0; i < textureQuadIsOccupiedBy.Length; i++) {
+			textureQuadIsOccupiedBy[i] = -1;
+		}
+
+		nofPatches = 10;
+		int nofStoredObstacles = environmentalObstacles.Length;
+		int patchSize = nofStoredObstacles / nofPatches;
+		for (int i = 1; i < nofPatches; i++) {
+			patchSizes[i-1] = i*patchSize;
+		}
+		environmentalObstacleIndex = 0;
+	//	environmentalObstacles[environmentalObstacleIndex] = GameObject.Instantiate(thornBushPrefab);
+		patchSizes[nofPatches-1] = nofStoredObstacles;
 	}
 	
 	// Update is called once per frame
@@ -228,13 +268,12 @@ public class environmentManager : MonoBehaviour {
 	{
 		float t0 = System.DateTime.Now.Millisecond;
 
-
 		// TODO Could put this into an IEnumerable and let it run at a lower framerate to safe ressources
 		float currentTime = Time.time;
 
-		playerViewingRange = playerScript.currentViewingRange;
+		playerViewingRange = playerScript.currentViewingRange + player.transform.localScale.x;
 		Vector3 playerPos = player.transform.position;
-		mainTextureSize = new Vector2 (2.1f*(playerViewingRange+player.transform.localScale.x), 2.1f*(playerViewingRange+player.transform.localScale.y));
+		mainTextureSize = new Vector2 (2.1f*(playerViewingRange), 2.1f*(playerViewingRange));
 
 		// Loop over the 9 plane tiles from the bottom left row-wise to the top right
 		for (int i = 0; i < 9; i++) {
@@ -246,56 +285,223 @@ public class environmentManager : MonoBehaviour {
 				if(i != 4) {
 					setNewCenterTile(i);
 				}
+				// Calculate terrain elevation for all active planes
+				distortBackgroundPlane(planeTileOrdering[planeTileOrdering[i]],moveBackground,backgroundTimeMultiplier,backgroundMultiplierX,backgroundMultiplierY,currentTime);
 			}
 			// Set the plane active if player's viewingRange reaches the closest point of this plane tile's boundaries
 			else if( (environmentPlaneTileBounds[planeTileOrdering[i]].ClosestPoint(playerPos) - playerPos).magnitude <= 4.0f*playerViewingRange)
 			{
-				environmentPlaneTiles[planeTileOrdering[i]].SetActive(true);
+				if(!environmentPlaneTiles[planeTileOrdering[i]].activeSelf) 
+				{
+					environmentPlaneTiles[planeTileOrdering[i]].SetActive(true);
+				}
+				// Calculate terrain elevation for all active planes
+				distortBackgroundPlane(planeTileOrdering[planeTileOrdering[i]],moveBackground,backgroundTimeMultiplier,backgroundMultiplierX,backgroundMultiplierY,currentTime);
 			}
-			// Otherwise we set it inactive
+			// Otherwise set it inactive
 			else 
 			{
-				environmentPlaneTiles[planeTileOrdering[i]].SetActive(false);
+				if(environmentPlaneTiles[planeTileOrdering[i]].activeSelf) 
+				{
+					environmentPlaneTiles[planeTileOrdering[i]].SetActive(false);
+				}
+			}
+		}
+		// Calculate the bottom left and top right point of the combination of all active plane tiles
+		currentBackgroundExtent = new Vector4 (float.MaxValue, float.MaxValue, float.MinValue, float.MinValue);
+		for (int i = 0; i < 9; i++) {
+			if (environmentPlaneTiles[i].activeSelf) {
+				currentBackgroundExtent.x = Mathf.Min (currentBackgroundExtent.x, environmentPlaneTileBounds[i].min.x);
+				currentBackgroundExtent.y = Mathf.Min (currentBackgroundExtent.y, environmentPlaneTileBounds[i].min.y);
+				currentBackgroundExtent.z = Mathf.Max (currentBackgroundExtent.z, environmentPlaneTileBounds[i].max.x);
+				currentBackgroundExtent.w = Mathf.Max (currentBackgroundExtent.w, environmentPlaneTileBounds[i].max.y);
 			}
 		}
 
+		// Loop over the current patch of environmental obstacles
+		int obstacleIndex = previousPatchEndIndex;
+		for (; obstacleIndex < patchSizes [currentPatchIndex]; obstacleIndex++) 
+		{
+			if(environmentalObstacles[obstacleIndex] == null)
+				continue;
 
-		// TODO update perlin noise parameters according to time
+			Bounds obstacleBounds = environmentalObstacles[obstacleIndex].GetComponent<MeshRenderer>().bounds;
+			Vector3 distance = playerPos - obstacleBounds.center;
+			// Set the obstacle to active if player's viewingRange reaches the closest point of this obstacle's boundaries
+			if( (obstacleBounds.ClosestPoint(playerPos) - playerPos).magnitude <= 4.0f*playerViewingRange)
+			{
+				environmentalObstacles[obstacleIndex].SetActive(true);
+			}
+			// Otherwise set it inactive
+			else 
+			{
+				environmentalObstacles[obstacleIndex].SetActive(false);
+			}
+		}
+		// Prepare next iteration over environmental obstacles
+		if (obstacleIndex >= environmentalObstacles.Length) {
+			currentPatchIndex = 0;
+			previousPatchEndIndex = 0;
+		} else {
+			currentPatchIndex++;
+			previousPatchEndIndex = obstacleIndex;
+		}
+
+
+		// TODO update perlin noise parameters according to time and plyer's size
 
 		// Calculate current environment texture
-	//	calculateEnvironmentTexture ();
-
-		// Calculate terrain elevation for all active planes
-		for (int i = 0; i < 9; i++) {
-			if (environmentPlaneTiles[planeTileOrdering[i]].activeSelf) {
-				distortBackgroundPlane(planeTileOrdering[i],moveBackground,backgroundTimeMultiplier,backgroundMultiplierX,backgroundMultiplierY,currentTime);
-			}
-		}
+		calculateEnvironmentTextureNew ();
 
 	//	Debug.Log ("Total time for environment update on CPU : " + (System.DateTime.Now.Millisecond - t0) + "ms");
-
+		frameCounter++;
 	}
 
+	IEnumerator removeEnvironmentalObstacle(int index, float destructionTime = 1.0f) 
+	{
+		Vector3 initialSize = environmentalObstacles [index].transform.localScale;
+		Vector3 sizeReductionPerSecond = initialSize / destructionTime;
+
+		for (float time = 0.0f; time < destructionTime; time += Time.deltaTime) {
+			environmentalObstacles [index].transform.localScale -= sizeReductionPerSecond*Time.deltaTime;
+			yield return null;
+		}
+		environmentalObstacles [index].transform.localScale = new Vector3 (0, 0, 0);
+		GameObject.Destroy(environmentalObstacles [index]);
+	}
+
+
+	private void calculateEnvironmentTextureNew()
+	{
+		Vector2 bottomLeftOfBackground = new Vector2 (currentBackgroundExtent.x, currentBackgroundExtent.y);
+		Vector2 currentExtents = new Vector2 (currentBackgroundExtent.z, currentBackgroundExtent.w) - bottomLeftOfBackground;
+		Vector2 topRightOfBackground = bottomLeftOfBackground + new Vector2 (Mathf.Max (currentExtents.x, currentExtents.y), Mathf.Max (currentExtents.x, currentExtents.y));
+		Vector2 textureExtent = topRightOfBackground - bottomLeftOfBackground;
+
+		Vector2 bottomLeftOfViewingRange = new Vector2 (player.transform.position.x - playerViewingRange, player.transform.position.y - playerViewingRange);
+		Vector2 viewingRangeExtent = 8.0f * new Vector2(playerViewingRange, playerViewingRange);
+
+		// Calculate what distance each pixel of the texture covers in world space
+		Vector2 worldDistancePerPixel = new Vector2 (textureExtent.x / mainTextureResolution.x, textureExtent.y / mainTextureResolution.y);
+		// Get the current time for time dependent perlin noise
+		float currentTime = Time.time;
+
+		int startRow = (int)(mainTextureResolution.y - (textureExtent.y - (bottomLeftOfViewingRange.y - bottomLeftOfBackground.y)) / worldDistancePerPixel.y);
+		startRow = (int)Mathf.Max (0, startRow - 1);
+		int endRow = (int)(startRow + viewingRangeExtent.y / worldDistancePerPixel.y + 1);
+		endRow = (int)Mathf.Min (endRow + 1, mainTextureResolution.y);
+
+		int startColumn = (int)(mainTextureResolution.x - (textureExtent.x - (bottomLeftOfViewingRange.x - bottomLeftOfBackground.x)) / worldDistancePerPixel.x);
+		startColumn = (int)Mathf.Max (0, startColumn - 1);
+		int endColumn = (int)(startColumn + viewingRangeExtent.x / worldDistancePerPixel.x + 1);
+		endColumn = (int)Mathf.Min (endColumn + 1, mainTextureResolution.y);
+
+		calculateTextureMaskNew(startRow, endRow, startColumn, endColumn, bottomLeftOfBackground.x, bottomLeftOfBackground.y, worldDistancePerPixel, currentTime);
+
+		float threshold = 0.75f;
+		generateEnvironmentalHazardsNew (startRow, endRow, startColumn, endColumn, bottomLeftOfBackground, worldDistancePerPixel, threshold);
+	}
+
+	private void calculateTextureMaskNew(int startRow, int endRow, int startColumn, int endColumn, float xOffset, float yOffset, Vector2 distancePerPixel, float currentTime)
+	{
+		for (int y = startRow; y < endRow; y++) 
+		{
+			for(int x = startColumn; x < endColumn; x++) 
+			{
+				float terrainSample = addUpOctaves (environmentOctaves, environmentFrequency, environmentPersistence, x*distancePerPixel.x + xOffset, y*distancePerPixel.y + yOffset);
+				environmentalHazardMask[y*(int)mainTextureResolution.x + x] = terrainSample;
+			}
+		}
+	}
+
+	private void generateEnvironmentalHazardsNew (int startRow, int endRow, int startColumn, int endColumn, Vector2 bottomLeftOfBackground, Vector2 worldDistancePerPixel, float threshold)
+	{
+		Vector2 extentToCenterOfPixel = worldDistancePerPixel * 0.5f;
+		int count = 0;
+		for (int y = startRow; y < endRow; y++) 
+		{
+			for(int x = startColumn; x < endColumn; x++) 
+			{
+				// Continue only if this texture quad is not yet occupied by some structure
+				if(textureQuadIsOccupiedBy[y*(int)mainTextureResolution.x + x] == -1)
+				{
+					if(environmentalHazardMask[y*(int)mainTextureResolution.x + x] > threshold) 
+					{
+						environmentalObstacles[environmentalObstacleIndex] = instantiateRandomPrefab();
+
+						float rndValue = Random.Range(0.5f,1.0f);
+						float size = rndValue * extentToCenterOfPixel.x;
+						environmentalObstacles[environmentalObstacleIndex].transform.localScale *= size;
+
+						Vector2 displacement = Random.insideUnitCircle * 0.5f;
+						displacement.x *= extentToCenterOfPixel.x;
+						displacement.y *= extentToCenterOfPixel.y;
+						Vector3 position = new Vector3(bottomLeftOfBackground.x + x*worldDistancePerPixel.x + extentToCenterOfPixel.x + displacement.x, 
+						                               bottomLeftOfBackground.y + y*worldDistancePerPixel.y + extentToCenterOfPixel.y + displacement.y, 
+						                               0);
+
+						environmentalObstacles[environmentalObstacleIndex].transform.position = position;
+						textureQuadIsOccupiedBy[y*(int)mainTextureResolution.x + x] = environmentalObstacleIndex;
+
+						environmentalObstacleIndex++;
+						count++;
+					}
+				}
+				else
+				{
+					// TODO Maybe check whether it can be combined with neighboring obstacles
+				}
+			}
+		}
+	}
+
+	private GameObject instantiateRandomPrefab()
+	{
+		int rndValue = (int)Random.Range (0, 7);
+
+		switch (rndValue) {
+		case (0) :
+			return GameObject.Instantiate(waterPrefab);
+			break;
+		case (1) :
+			return GameObject.Instantiate(iceFieldPrefab);
+			break;
+		case (2) :
+			return GameObject.Instantiate(thornBushPrefab);
+			break;
+		case (3) :
+			return GameObject.Instantiate(lavaFieldPrefab);
+			break;
+		case (4) :
+			return GameObject.Instantiate(dustStormPrefab);
+			break;
+		case (5) :
+			return GameObject.Instantiate(lightningStormPrefab);
+			break;
+		default:
+			return GameObject.Instantiate(thornBushPrefab);
+		}
+	}
 
 	// Calculates a texture for each environment component that acts as mask for high resolution textures
 	private void calculateEnvironmentTexture()
 	{
 		float t0 = System.DateTime.Now.Millisecond;
-
+		
 		// Calculate the offsets induced by the current player position for the perlin noise calculation
 		float xOffset = player.transform.position.x + randomInitialValue;
 		float yOffset = player.transform.position.y + randomInitialValue;
-
+		
 		// Calculate for each texture what distance each pixel covers in world coordinates
 		Vector2 distancePerPixel = new Vector2 (mainTextureSize.x / mainTextureResolution.x, mainTextureSize.y / mainTextureResolution.y);
 		// Get the current time for time dependent perlin noise
 		float currentTime = Time.time;
-
+		
 		// Generate thread array to store the working threads
 		System.Threading.Thread[] threads = new System.Threading.Thread[nofThreads];
 		// Calculate on how many rows of the texture each thread has to work on.
 		int rowsPerThread = (int)Mathf.Floor(mainTextureResolution.y / nofThreads);
-
+		
 		// Start working threads
 		for (int threadIndex = 0; threadIndex < nofThreads-1; threadIndex++)
 		{
@@ -305,23 +511,23 @@ public class environmentManager : MonoBehaviour {
 			// Start the working thread
 			threads[threadIndex].Start();
 		}
-
+		
 		// Main thread calculates rest of the texture
 		calculateTextureMask((nofThreads-1)*rowsPerThread, (int)mainTextureResolution.y, xOffset, yOffset, distancePerPixel, currentTime);
-
+		
 		// Main thread waits for the other threads to finish
 		for (int threadIndex = 0; threadIndex < nofThreads-1; threadIndex++)
 			threads [threadIndex].Join();
-
+		
 		generateEnvironmentalHazards(0.8f,environmentalHazardMask);
-
+		
 		// Apply the texture to the mesh renderer
 		environmentTexture.SetPixels (mainTextureColor);
 		environmentTexture.Apply();
-
+		
 		Debug.Log ("Total time for tex calculation " + (System.DateTime.Now.Millisecond - t0) + "ms");
 		return;
-
+		
 	}
 
 	private void calculateTextureMask(int startRow, int endRow, float xOffset, float yOffset, Vector2 distancePerPixel, float currentTime)
