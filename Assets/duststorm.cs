@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class dustStorm : hazardousEnvironment {
+public class duststorm : hazardousEnvironment {
 	
 	// Use this for initialization
 	void Start () {
@@ -30,7 +30,6 @@ public class dustStorm : hazardousEnvironment {
 				// Player takes damager
 				playerScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
 				playerScript.applyEnvironmentalSlowDown(slowDownFactor);
 			}
 			
@@ -47,7 +46,6 @@ public class dustStorm : hazardousEnvironment {
 				// Player takes damager
 				enemyScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
 				enemyScript.applyEnvironmentalSlowDown(slowDownFactor);
 			}
 		}
@@ -88,7 +86,6 @@ public class dustStorm : hazardousEnvironment {
 				// Player takes damager
 				enemyScript.inflictEnvironmentalDamage(damagePerSecond*Time.deltaTime);
 				// Throw back approacher
-				// TODO throw back in normal direction of the thorn bush
 				enemyScript.applyEnvironmentalSlowDown(slowDownFactor);
 			}
 		}

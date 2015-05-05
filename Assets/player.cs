@@ -286,11 +286,11 @@ public class player : MonoBehaviour
 				{
 					// Get the target direction from user input
 					Vector3 targetDirection = new Vector3 (Input.GetAxis ("Horizontal"), Input.GetAxis ("Vertical"), 0.0f).normalized;
+					// Get the desired speed fraction
+					float speedFraction =  targetDirection.magnitude;
 					// Calculate the current maximally achievable speed
 					currentSpeed = (baseVelocity + runVelocityBoost)*environmentalSlowDown;
 					environmentalSlowDown = 1.0f;
-					// Get the desired speed fraction
-					float speedFraction =  targetDirection.magnitude;
 
 					// If the player is moving
 					if (speedFraction > 0) {

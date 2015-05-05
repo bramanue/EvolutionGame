@@ -1,5 +1,16 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+
+public enum EEnvironmentClass {
+	EEmptyEnvironment,
+	EIceEnvironment,
+	EWaterEinviornment,
+	ELavaEnvironment,
+	EDesertEnvironment,
+	EElectricityEnvironment,
+	EThornEnvironment,
+}
 
 public class environmentManager : MonoBehaviour {
 
@@ -135,6 +146,9 @@ public class environmentManager : MonoBehaviour {
 	public GameObject lightningStormPrefab;
 
 
+	public List<EEnvironmentClass> possibleEnvironemnts = new List<EEnvironmentClass>();
+
+
 	// An array contianing all environmental obstacles on the field
 	private GameObject[] environmentalObstacles = new GameObject[1000];
 	// The next index into environmentalObstacles[] where a null object is
@@ -222,15 +236,10 @@ public class environmentManager : MonoBehaviour {
 		// Initialize the array, that holds the colors for the bump map
 		bumpMapColor = new Color[(int)bumpMapTextureResolution.x * (int)bumpMapTextureResolution.y];
 
-		// Initialize the cube map texture
-		environmentCubeMap = new Texture2D ((int)cubeMapTextureResolution.x, (int)cubeMapTextureResolution.y);
-		// Initialize the array, that holds the colors for the cube map
-		cubeMapColor = new Color[(int)cubeMapTextureResolution.x * (int)cubeMapTextureResolution.y];
-
 	
 		randomInitialValue = Random.Range ((float)int.MinValue/10000.0f,(float)int.MaxValue/10000.0f);
 
-		environmentalHazards = new GameObject[(int)(environmentalHazardResolution.x*environmentalHazardResolution.y*0.5f)];
+	/*	environmentalHazards = new GameObject[(int)(environmentalHazardResolution.x*environmentalHazardResolution.y*0.5f)];
 		for (int i = 0; i < environmentalHazards.Length; i++) {
 			environmentalHazards[i] = new GameObject();
 			environmentalHazards[i].AddComponent<MeshFilter>();
@@ -244,7 +253,7 @@ public class environmentManager : MonoBehaviour {
 			t.slowDownFactor = 0.6f;
 			environmentalHazards[i].SetActive(false);
 		}
-
+*/
 		environmentalHazardMask = new float[(int)(mainTextureResolution.x * mainTextureResolution.y)];
 		textureQuadIsOccupiedBy = new int[(int)(mainTextureResolution.x * mainTextureResolution.y)];
 		// Set all spaces to unoccupied
@@ -259,7 +268,6 @@ public class environmentManager : MonoBehaviour {
 			patchSizes[i-1] = i*patchSize;
 		}
 		environmentalObstacleIndex = 0;
-	//	environmentalObstacles[environmentalObstacleIndex] = GameObject.Instantiate(thornBushPrefab);
 		patchSizes[nofPatches-1] = nofStoredObstacles;
 	}
 	
@@ -427,9 +435,30 @@ public class environmentManager : MonoBehaviour {
 				{
 					if(environmentalHazardMask[y*(int)mainTextureResolution.x + x] > threshold) 
 					{
-						environmentalObstacles[environmentalObstacleIndex] = instantiateRandomPrefab();
+						// Look at neighboring environment spots to figure out which environment should be placed here
+						bool instantiated = false;
+						for(int y2 = -1; y2 <= 1; y2++) {
+							if(y + y2 < 0 || y+y2 >= mainTextureResolution.y)
+								continue;
+							for(int x2 = -1; x2 <= 1; x2++) {
+								if(x + x2 < 0 || x+x2 >= mainTextureResolution.x)
+									continue;
+								int gameObjectIndex = textureQuadIsOccupiedBy[(y+y2)*(int)mainTextureResolution.x + x + x2];
+								if(gameObjectIndex != -1) {
+									environmentalObstacles[environmentalObstacleIndex] = instantiatePrefab(((hazardousEnvironment)environmentalObstacles[gameObjectIndex].GetComponent(typeof(hazardousEnvironment))).environmentClass);
+									instantiated = true;
+									break;
+								}
+							}
+						}
+						if(!instantiated) {
+							// If there were no surrounding obstacles, then pick one at random to instantiate
+							environmentalObstacles[environmentalObstacleIndex] = instantiateRandomPrefab();
+						}
 
-						float rndValue = Random.Range(0.5f,1.0f);
+						hazardousEnvironment environmentalHazard = (hazardousEnvironment)environmentalObstacles[environmentalObstacleIndex].GetComponent(typeof(hazardousEnvironment));
+
+						float rndValue = Random.Range(environmentalHazard.minScaleFactor, environmentalHazard.maxScaleFactor);
 						float size = rndValue * extentToCenterOfPixel.x;
 						environmentalObstacles[environmentalObstacleIndex].transform.localScale *= size;
 
@@ -457,29 +486,50 @@ public class environmentManager : MonoBehaviour {
 
 	private GameObject instantiateRandomPrefab()
 	{
-		int rndValue = (int)Random.Range (0, 7);
+		int rndIndex = (int)Random.Range (0, possibleEnvironemnts.Count);
+		EEnvironmentClass environmentClass = possibleEnvironemnts [rndIndex];
 
-		switch (rndValue) {
-		case (0) :
+		return instantiatePrefab (environmentClass);
+	}
+
+	private GameObject instantiatePrefab(EEnvironmentClass environmentClass) 
+	{
+		switch (environmentClass) {
+		case (EEnvironmentClass.EWaterEinviornment) :
 			return GameObject.Instantiate(waterPrefab);
 			break;
-		case (1) :
+		case (EEnvironmentClass.EIceEnvironment) :
 			return GameObject.Instantiate(iceFieldPrefab);
 			break;
-		case (2) :
+		case (EEnvironmentClass.EThornEnvironment) :
 			return GameObject.Instantiate(thornBushPrefab);
 			break;
-		case (3) :
+		case (EEnvironmentClass.ELavaEnvironment) :
 			return GameObject.Instantiate(lavaFieldPrefab);
 			break;
-		case (4) :
+		case (EEnvironmentClass.EDesertEnvironment) :
 			return GameObject.Instantiate(dustStormPrefab);
 			break;
-		case (5) :
+		case (EEnvironmentClass.EElectricityEnvironment) :
 			return GameObject.Instantiate(lightningStormPrefab);
 			break;
 		default:
+			Debug.Log ("Bad environment type");
 			return GameObject.Instantiate(thornBushPrefab);
+		}
+	}
+
+	public void addPossibleEnvrionment(EEnvironmentClass environmentClass)
+	{
+		if (!possibleEnvironemnts.Contains (environmentClass)) {
+			possibleEnvironemnts.Add(environmentClass);
+		}
+	}
+
+	public void removePossibleEnvironemnt(EEnvironmentClass environmentClass)
+	{
+		if (possibleEnvironemnts.Contains (environmentClass)) {
+			possibleEnvironemnts.Remove(environmentClass);
 		}
 	}
 

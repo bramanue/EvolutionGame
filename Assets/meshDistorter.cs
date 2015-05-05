@@ -110,7 +110,7 @@ public class meshDistorter : MonoBehaviour {
 		// TODO Could put this into an IEnumerable and let it run at a lower framerate to safe ressources
 		float currentTime = Time.time * timeMultiplier;
 		for (int i = 0; i < vertices.Length; i++) {
-			float offsetFactor = wobbleIntensity * meshExtent.x * (Mathf.PerlinNoise((originalVertices[i].x + initialOffset.x)*wobbleFrequency + currentTime, (originalVertices[i].y+initialOffset.y)*wobbleFrequency + currentTime)-0.5f);
+			float offsetFactor = wobbleIntensity * meshExtent.x * (Mathf.PerlinNoise((originalVertices[i].x + originalVertices[i].z + initialOffset.x)*wobbleFrequency + currentTime, (originalVertices[i].y + originalVertices[i].z + initialOffset.y)*wobbleFrequency + currentTime)-0.5f);
 			vertices[i] = originalVertices[i] + vertex2NormalMap[i]*offsetFactor;
 		}
 		wobbleFrequency = defaultWobbleFrequency;

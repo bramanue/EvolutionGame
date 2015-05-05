@@ -49,14 +49,16 @@ public class runAbility : ability {
 		transform.localScale = new Vector3(1,1,1);
 		transform.localPosition = new Vector3(0,0,0);
 
+		maxSpeed = 0.5f*level;
+
 		// Set current speed back to default value if it is not used for some time
 		if (!inUse) {
 			currentSpeed = Mathf.Max(0.0f, currentSpeed - maxSpeed / timeToTopSpeed * Time.deltaTime);
-			if (isPlayer) 
-				parentPlayerScript.maxVelocity = currentSpeed;
-			else
-				parentEnemyScript.maxVelocity = currentSpeed;
 		}
+		if (isPlayer) 
+			parentPlayerScript.runVelocityBoost = currentSpeed;
+		else
+			parentEnemyScript.runVelocityBoost = currentSpeed;
 		inUse = false;
 
 	}
@@ -68,12 +70,6 @@ public class runAbility : ability {
 		level = Mathf.Max (0, Mathf.Min(level + x, maxLevel));
 		maxSpeed = 0.5f*level;
 		Debug.Log (x + " to run ability");
-
-		
-		if (isPlayer) 
-			parentPlayerScript.maxVelocity = parentPlayerScript.baseVelocity + maxSpeed;
-		else
-			parentEnemyScript.maxVelocity = parentEnemyScript.baseVelocity + maxSpeed;
 
 		return level - previousLevel;
 	}

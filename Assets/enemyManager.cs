@@ -60,9 +60,9 @@ public class enemyManager : MonoBehaviour {
 			// Calculate a random spawn position
 			Vector3 spawnPoint = calculateSpawnPosition();
 			// Calculate random initial rotation
-			Quaternion q = Quaternion.Euler(new Vector3(0.0f,0.0f,Random.Range(-180,180)));
+			Quaternion rotation = Quaternion.Euler(new Vector3(0.0f,0.0f,Random.Range(-180,180)));
 			// Create new enemy GameObject
-			enemyGameObjects[i] = ((GameObject)GameObject.Instantiate(basicEnemy,spawnPoint,q));
+			enemyGameObjects[i] = ((GameObject)GameObject.Instantiate(basicEnemy,spawnPoint,rotation));
 			// Add enemy script to the array
 			enemyScripts[i] = (enemy)enemyGameObjects[i].GetComponent(typeof(enemy));
 			// Set values for this script
@@ -74,8 +74,8 @@ public class enemyManager : MonoBehaviour {
 	void Update () {
 
 		// Make sure the radius increases with the player's size
-		radius = 4.0f*playerScript.currentViewingRange + nofEnemies*player.transform.localScale.x + 2.0f*playerScript.maxVelocity;
-
+		radius = 4.0f*Mathf.Max (5.0f,playerScript.currentViewingRange) + 2.0f*nofEnemies*player.transform.localScale.x + 2.0f*playerScript.currentSpeed;
+		Debug.Log ("Radius = " + radius + " currentViewingRange = " + playerScript.currentViewingRange + " local scale = " + player.transform.localScale.x);
 		// Get the current position of the player
 		Vector3 playerPosition = player.transform.position;
 		// Loop over all enemies and check whether they need to be repositioned (out of the radius)
@@ -145,51 +145,51 @@ public class enemyManager : MonoBehaviour {
 			break;
 		case 1: 
 			if (rndValue > 0.5)
-				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 40 - (int)Mathf.Floor (2*difficulty)));
+				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 40 - (int)Mathf.Floor (4*difficulty)));
 			else
 				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 4, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			break;
 		case 2:
 			if (rndValue > 0.5) {
-				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 40 - (int)Mathf.Floor (2*difficulty)));
+				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 40 - (int)Mathf.Floor (4*difficulty)));
 				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 4, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			} else {
-				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 40 - (int)Mathf.Floor (2*difficulty)));
+				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 40 - (int)Mathf.Floor (4*difficulty)));
 				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 0, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			}
 			break;
 		case 3:
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 0, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
-			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 40 - (int)Mathf.Floor (2*difficulty)));
+			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 40 - (int)Mathf.Floor (4*difficulty)));
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 4, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			break;
 		case 4:
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 0, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
-			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 40 - (int)Mathf.Floor (2*difficulty)));
+			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 40 - (int)Mathf.Floor (4*difficulty)));
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 4, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			if (rndValue > 0.7) {
 				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 1, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			} else if (rndValue > 0.3) {
 				if(enemyScript.hasAbility(EAbilityType.ERunAbility) != -1)
-					abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.EViewAbility, 0, Random.Range (0, 40 - (int)Mathf.Floor (2*difficulty)));
+					abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.EViewAbility, 0, Random.Range (0, 40 - (int)Mathf.Floor (4*difficulty)));
 				else
-					abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.ERunAbility, 0, Random.Range (0, 45 - (int)Mathf.Floor (2*difficulty)));
+					abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.ERunAbility, 0, Random.Range (0, 45 - (int)Mathf.Floor (4*difficulty)));
 			} else {
 				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 5, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			}
 			break;
 		case 5:
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 0, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
-			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 40 - (int)Mathf.Floor (2*difficulty)));
+			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 40 - (int)Mathf.Floor (4*difficulty)));
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 4, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			if (rndValue > 0.7) {
 				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 1, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 2, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			} else if (rndValue > 0.3) {
 				if(enemyScript.hasAbility(EAbilityType.ERunAbility) != -1)
-					abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.EViewAbility, 0, Random.Range (0, 40 - (int)Mathf.Floor (2*difficulty)));
+					abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.EViewAbility, 0, Random.Range (0, 40 - (int)Mathf.Floor (4*difficulty)));
 				else
-					abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.ERunAbility, 0, Random.Range (0, 45 - (int)Mathf.Floor (2*difficulty)));
+					abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.ERunAbility, 0, Random.Range (0, 45 - (int)Mathf.Floor (4*difficulty)));
 				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 5, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			} else {
 				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 1, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
@@ -199,16 +199,16 @@ public class enemyManager : MonoBehaviour {
 		case 6:
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 0, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 0, Random.Range (1, 10 - (int)Mathf.Floor (difficulty)));
-			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 40 - (int)Mathf.Floor (2*difficulty)));
+			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomPassiveAbility (), 0, Random.Range (0, 40 - (int)Mathf.Floor (4*difficulty)));
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 4, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			if (rndValue > 0.7) {
 				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 2, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 5, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			} else if (rndValue > 0.3) {
 				if(enemyScript.hasAbility(EAbilityType.ERunAbility) != -1)
-					abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.EViewAbility, 0, Random.Range (0, 45 - (int)Mathf.Floor (2*difficulty)));
+					abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.EViewAbility, 0, Random.Range (0, 45 - (int)Mathf.Floor (4*difficulty)));
 				else
-					abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.ERunAbility, 0, Random.Range (0, 40 - (int)Mathf.Floor (2*difficulty)));
+					abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.ERunAbility, 0, Random.Range (0, 40 - (int)Mathf.Floor (4*difficulty)));
 				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 5, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			} else {
 				abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 1, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
@@ -219,8 +219,8 @@ public class enemyManager : MonoBehaviour {
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 0, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 1, Random.Range (1, 10 - (int)Mathf.Floor (difficulty)));
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 2, Random.Range (1, 10 - (int)Mathf.Floor (difficulty)));
-			abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.ERunAbility, 0, Random.Range (0, 40 - (int)Mathf.Floor (2*difficulty)));
-			abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.EViewAbility, 0, Random.Range (0, 45 - (int)Mathf.Floor (2*difficulty)));
+			abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.ERunAbility, 0, Random.Range (0, 40 - (int)Mathf.Floor (4*difficulty)));
+			abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.EViewAbility, 0, Random.Range (0, 45 - (int)Mathf.Floor (4*difficulty)));
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 4, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 4, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			break;
@@ -229,8 +229,8 @@ public class enemyManager : MonoBehaviour {
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 1, Random.Range (1, 10 - (int)Mathf.Floor (difficulty)));
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 2, Random.Range (1, 10 - (int)Mathf.Floor (difficulty)));
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomActiveAbility (), 3, Random.Range (1, 10 - (int)Mathf.Floor (difficulty)));
-			abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.ERunAbility, 0, Random.Range (0, 40 - (int)Mathf.Floor (2*difficulty)));
-			abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.EViewAbility, 0, Random.Range (0, 45 - (int)Mathf.Floor (2*difficulty)));
+			abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.ERunAbility, 0, Random.Range (0, 40 - (int)Mathf.Floor (4*difficulty)));
+			abilityManagerScript.addAbilityToEnemy (enemyObject, EAbilityType.EViewAbility, 0, Random.Range (0, 45 - (int)Mathf.Floor (4*difficulty)));
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 4, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			abilityManagerScript.addAbilityToEnemy (enemyObject, abilityManagerScript.getRandomShieldAbility (), 4, Random.Range (0, 10 - (int)Mathf.Floor (difficulty)));
 			break;
@@ -243,7 +243,7 @@ public class enemyManager : MonoBehaviour {
 	{
 		// Find a new place for this enemy object to spawn
 		float theta = Random.Range (0.0f, 2.0f * Mathf.PI);
-		float r = Random.Range ((2.0f*(playerScript.currentViewingRange + playerScript.size)), radius);
+		float r = Random.Range ((2.5f*(Mathf.Max(5.0f,playerScript.currentViewingRange) + playerScript.size)), radius);
 		Vector3 offset = new Vector3(r*Mathf.Cos(theta), r*Mathf.Sin(theta), 0);
 		return player.transform.position + offset;
 	}

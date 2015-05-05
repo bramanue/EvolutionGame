@@ -68,13 +68,15 @@ public class lootManager : MonoBehaviour {
 		StopCoroutine(cleanUpIEnumerator);
 	}
 
+	// Removes all loot that has been eaten by the player (10 times per second)
 	IEnumerator cleanUpRoutine()
 	{
 		while (true) 
 		{
 			Vector3 playerPos = player.transform.position;
 			float radius = 3.0f * (player.transform.localScale.x + playerScript.currentViewingRange);
-			for (int i = 0; i < lootObjects.Length; i++) {
+			for (int i = 0; i < lootObjects.Length; i++) 
+			{
 				if (lootObjects [i] == null)
 					continue;
 			
@@ -93,7 +95,7 @@ public class lootManager : MonoBehaviour {
 		}
 	}
 
-
+	// Throws the loot at index 'index' in a parabolic shape from position 'from' to position 'to'
 	IEnumerator throwLootCoroutine(int index, Vector3 from, Vector3 to, float flightTime) 
 	{
 		// Throw loot in a parabolic slope
@@ -124,9 +126,9 @@ public class lootManager : MonoBehaviour {
 		}
 		// Make sure the loot is really on zero level
 		Vector3 position = lootObjects [index].transform.position;
-	//	Debug.Log ("z at rest = " + position.z);
 		position.z = 0;
 		lootObjects [index].transform.position = position;
+
 		// Mark the loot as ready to be looted
 		((loot)lootObjects [index].GetComponent (typeof(loot))).readyToEat = true;
 	}
@@ -183,7 +185,7 @@ public class lootManager : MonoBehaviour {
 
 		// Set the appearance of the loot
 		newLootObject.transform.position = from;
-		float size = Mathf.Min(0.5f,0.5f*player.transform.localScale.x);
+		float size = Mathf.Max(0.5f,0.2f*player.transform.localScale.x);
 		newLootObject.transform.localScale = 2.0f*new Vector3 (size, size, size);
 
 		lootObjects [index] = newLootObject;

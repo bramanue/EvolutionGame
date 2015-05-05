@@ -988,12 +988,18 @@ public class enemy : MonoBehaviour {
 	{
 		if (damage > 0) 
 		{
+			setAlertedState();
+			// We can only inflict as much damage as the enemy has health
 			damage = Mathf.Min (damage,size);
+			// For each 10% of size lost through the attack, there is some chance that the enmy drops loot
 			int nofLootChances = (int)(damage / (0.1f*size));
+			// Each loot would have the following size
 			float sizePerLoot = damage / nofLootChances;
+
 			for(int i = 0; i < nofLootChances; i++)
 			{
 				float rnd = Random.value;
+				// 50% chance for loot
 				if(rnd > 0.5f) 
 				{
 					if(rnd > 0.75 || !hasAbilities()) 
