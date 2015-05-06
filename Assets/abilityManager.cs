@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public enum EAbilityType {
 	// Default ability
@@ -55,11 +56,23 @@ public class abilityManager : MonoBehaviour {
 
 	public GameObject electricityShieldAbility;
 
+	public Dictionary<EAbilityType, float> abilityMaxScores = new Dictionary<EAbilityType, float>();
 
 
 	// Use this for initialization
 	void Start () {
-
+		abilityMaxScores.Add (EAbilityType.ERunAbility, 1000);
+		abilityMaxScores.Add (EAbilityType.EViewAbility, 1000);
+		abilityMaxScores.Add (EAbilityType.ERamAbility, 2000);
+		abilityMaxScores.Add (EAbilityType.EBiteAbility, 2000);
+		abilityMaxScores.Add (EAbilityType.EJumpAbility, 100);
+		abilityMaxScores.Add (EAbilityType.EIceShieldAbility, 2000);
+		abilityMaxScores.Add (EAbilityType.ELavaShieldAbility, 2000);
+		abilityMaxScores.Add (EAbilityType.EDustShieldAbility, 3000);
+		abilityMaxScores.Add (EAbilityType.EThornShieldAbility, 2000);
+		abilityMaxScores.Add (EAbilityType.EWaterShieldAbility, 1000);
+		abilityMaxScores.Add (EAbilityType.EGlowingShieldAbility, 1000);
+		abilityMaxScores.Add (EAbilityType.EElectricityShieldAbility, 300);
 	}
 	
 	// Update is called once per frame
@@ -124,13 +137,13 @@ public class abilityManager : MonoBehaviour {
 		abilityScript.level = level;
 	}
 
-	public void addAbilityToEnemy(GameObject parent, EAbilityType abilityType, int slot, int level)
+	public float addAbilityToEnemy(GameObject parent, EAbilityType abilityType, int slot, int level)
 	{
 		enemy enemyScript = (enemy)parent.GetComponent(typeof(enemy));
 		// Check whether enemy already has this ability
 		int existingSlot = enemyScript.hasAbility (abilityType);
 		if (existingSlot != -1) {
-			return;
+			return 0;
 		}
 
 		// Get the corresponding prefab
@@ -138,7 +151,7 @@ public class abilityManager : MonoBehaviour {
 		
 		if (!abilityObject) {
 			Debug.Log ("Could not resolve ability enum : " + abilityType);
-			return;
+			return 0;
 		}
 
 		abilityObject.transform.parent = parent.transform;
@@ -152,6 +165,9 @@ public class abilityManager : MonoBehaviour {
 			slot = 7;
 
 		enemyScript.addAbility(abilityObject, slot);
+		float score;
+		abilityMaxScores.TryGetValue (abilityType, out score);
+		return score*(float)(level/abilityScript.maxLevel);
 	}
 
 	public EAbilityType getRandomPassiveAbility()

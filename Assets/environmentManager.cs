@@ -20,14 +20,8 @@ public class environmentManager : MonoBehaviour {
 	// The resolution of the environment texture
 	public Vector2 mainTextureResolution;
 
-	// The resolution of the environment bump map texture
-	public Vector2 bumpMapTextureResolution;
-
 	// The resolution for the single environmental hazard blocks
 	public Vector2 environmentalHazardResolution;
-
-	// The resolution of the environment reflection cube map
-	public Vector2 cubeMapTextureResolution;
 
 	// Stores reference to the player game object	
 	private GameObject player;
@@ -231,12 +225,7 @@ public class environmentManager : MonoBehaviour {
 		// Initialize the array, that holds the colors for the texture
 		mainTextureColor = new Color[(int)mainTextureResolution.x * (int)mainTextureResolution.y];
 
-		// Initialize the bump map texture
-		environmentBumpMap = new Texture2D ((int)bumpMapTextureResolution.x, (int)bumpMapTextureResolution.y);
-		// Initialize the array, that holds the colors for the bump map
-		bumpMapColor = new Color[(int)bumpMapTextureResolution.x * (int)bumpMapTextureResolution.y];
 
-	
 		randomInitialValue = Random.Range ((float)int.MinValue/10000.0f,(float)int.MaxValue/10000.0f);
 
 	/*	environmentalHazards = new GameObject[(int)(environmentalHazardResolution.x*environmentalHazardResolution.y*0.5f)];
@@ -297,7 +286,7 @@ public class environmentManager : MonoBehaviour {
 				distortBackgroundPlane(planeTileOrdering[planeTileOrdering[i]],moveBackground,backgroundTimeMultiplier,backgroundMultiplierX,backgroundMultiplierY,currentTime);
 			}
 			// Set the plane active if player's viewingRange reaches the closest point of this plane tile's boundaries
-			else if( (environmentPlaneTileBounds[planeTileOrdering[i]].ClosestPoint(playerPos) - playerPos).magnitude <= 4.0f*playerViewingRange)
+			else if( (environmentPlaneTileBounds[planeTileOrdering[i]].ClosestPoint(playerPos) - playerPos).magnitude <= 3.0f*playerViewingRange)
 			{
 				if(!environmentPlaneTiles[planeTileOrdering[i]].activeSelf) 
 				{
@@ -336,7 +325,7 @@ public class environmentManager : MonoBehaviour {
 			Bounds obstacleBounds = environmentalObstacles[obstacleIndex].GetComponent<MeshRenderer>().bounds;
 			Vector3 distance = playerPos - obstacleBounds.center;
 			// Set the obstacle to active if player's viewingRange reaches the closest point of this obstacle's boundaries
-			if( (obstacleBounds.ClosestPoint(playerPos) - playerPos).magnitude <= 4.0f*playerViewingRange)
+			if( (obstacleBounds.ClosestPoint(playerPos) - playerPos).magnitude <= 6.0f*playerViewingRange)
 			{
 				environmentalObstacles[obstacleIndex].SetActive(true);
 			}
@@ -425,7 +414,6 @@ public class environmentManager : MonoBehaviour {
 	private void generateEnvironmentalHazardsNew (int startRow, int endRow, int startColumn, int endColumn, Vector2 bottomLeftOfBackground, Vector2 worldDistancePerPixel, float threshold)
 	{
 		Vector2 extentToCenterOfPixel = worldDistancePerPixel * 0.5f;
-		int count = 0;
 		for (int y = startRow; y < endRow; y++) 
 		{
 			for(int x = startColumn; x < endColumn; x++) 
@@ -435,6 +423,9 @@ public class environmentManager : MonoBehaviour {
 				{
 					if(environmentalHazardMask[y*(int)mainTextureResolution.x + x] > threshold) 
 					{
+						if(environmentalObstacles[environmentalObstacleIndex] != null) {
+							GameObject.Destroy(environmentalObstacles[environmentalObstacleIndex]);
+						}
 						// Look at neighboring environment spots to figure out which environment should be placed here
 						bool instantiated = false;
 						for(int y2 = -1; y2 <= 1; y2++) {
@@ -470,10 +461,11 @@ public class environmentManager : MonoBehaviour {
 						                               0);
 
 						environmentalObstacles[environmentalObstacleIndex].transform.position = position;
+						environmentalObstacles[environmentalObstacleIndex].SetActive(true);
 						textureQuadIsOccupiedBy[y*(int)mainTextureResolution.x + x] = environmentalObstacleIndex;
 
 						environmentalObstacleIndex++;
-						count++;
+						environmentalObstacleIndex %= environmentalObstacles.Length;
 					}
 				}
 				else

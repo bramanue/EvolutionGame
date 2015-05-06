@@ -45,8 +45,14 @@ public class mouth : MonoBehaviour {
 				// If player is bigger than enemy, then eat it
 				if (other.gameObject.transform.localScale.x < parentBlob.transform.localScale.x) {
 					// If enemy has not been eaten yet, eat him
-					if (enemyScript.size > 0)
-						parentPlayerScript.eatBlob (enemyScript, other.gameObject);
+					if (enemyScript.size > 0) {
+						// Define by how much the player's blob grows
+						float growFactor = other.gameObject.transform.localScale.x / parentBlob.transform.localScale.x;
+						// Set scaling of the blob (transform will be changed during next Update())
+						parentPlayerScript.size += 0.1f*growFactor*growFactor;
+						// Kill enemy, will be respawned by the emeny manager
+						enemyScript.eat();
+					}
 				} 
 				return;
 			}
@@ -113,8 +119,14 @@ public class mouth : MonoBehaviour {
 				// If player is bigger than enemy, then eat it
 				if (other.gameObject.transform.localScale.x < parentBlob.transform.localScale.x) {
 					// If enemy has not been eaten yet, eat him
-					if (enemyScript.size > 0)
-						parentPlayerScript.eatBlob (enemyScript, other.gameObject);
+					if (enemyScript.size > 0) {
+						// Define by how much the player's blob grows
+						float growFactor = other.gameObject.transform.localScale.x / parentBlob.transform.localScale.x;
+						// Set scaling of the blob (transform will be changed during next Update())
+						parentPlayerScript.size += 0.1f*growFactor*growFactor;
+						// Kill enemy, will be respawned by the emeny manager
+						enemyScript.eat();
+					}
 				} 
 			}
 
@@ -141,7 +153,6 @@ public class mouth : MonoBehaviour {
 						{
 							// Show the player, that there is a new ability he could acquire
 							parentPlayerScript.nearbyAbilityLoot = abilityLoot;
-							Debug.Log ("Nearby ability loot");
 						}
 					}
 				}

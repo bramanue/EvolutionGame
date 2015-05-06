@@ -7,7 +7,9 @@ public class waterShieldAbility : ability {
 	
 	private float maxTimeInWater = 30.0f;
 	
-	private float damage = 0.1f;
+	private float baseDamage = 0.3f;
+
+	private float damagePerSecond;
 	
 	private bool inUse;
 
@@ -30,7 +32,7 @@ public class waterShieldAbility : ability {
 
 		maxTimeInWater = 30.0f + 30.0f * level;
 		timer = maxTimeInWater;
-		damage = 0.1f + level * 0.1f;
+		damagePerSecond = baseDamage + level * 0.1f;
 
 		abilitySuperClassEnum = EAbilityClass.EShieldAbility;
 		distortionType = EDistortionType.EWaterShieldDistortion;
@@ -72,11 +74,9 @@ public class waterShieldAbility : ability {
 			if(isPlayer) {
 				if(parentPlayerScript.shieldInUse == null)
 					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentPlayerScript.defaultMaterial;
-					//((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentPlayerScript.defaultColor;
 			} else {
 				if(parentEnemyScript.shieldInUse == null)
 					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentEnemyScript.defaultMaterial;
-					//((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentEnemyScript.defaultColor;
 			}
 		}
 		deactivateInNextFrame = true;
@@ -96,33 +96,57 @@ public class waterShieldAbility : ability {
 		player playerScript = (player)other.gameObject.GetComponent (typeof(player));
 		
 		if (isPlayer && enemyScript) {
-			// Enemy is hurt by player's water shield if enemy does  have a lava shield
-		/*	if(enemyScript.hasAbility(EAbilityType.ELavaShieldAbility) >= 0 )
-			{
-				enemyScript.size -= damage;
-				enemyScript.setAlertState();
-			}*/
+
 			// Damage enemy if he has an active lava shield
 			if(enemyScript.shieldInUse != null && enemyScript.shieldInUse.getAbilityEnum() == EAbilityType.ELavaShieldAbility )
 			{
-				Debug.Log ("Enemy hurt by water shield: Damage = " + damage);
-				enemyScript.size -= damage;
+				// TODO Play "Zisch" sound
+				Debug.Log ("Enemy hurt by water shield: Damage = " + damagePerSecond*Time.deltaTime);
+				enemyScript.inflictAbilityDamage(damagePerSecond*Time.deltaTime);
 				enemyScript.setAlertedState();
 			}
 		} else if (!isPlayer && playerScript) {
-			// Player is hurt by enemy's water shield if player has a lava shield
-		/*	if(playerScript.hasAbility(EAbilityType.ELavaShieldAbility) >= 0 )
-			{
-				playerScript.size -= damage;
-			}
-*/			
+
 			// Player is damaged if lava shield active
 			if(playerScript.shieldInUse != null && playerScript.shieldInUse.getAbilityEnum() == EAbilityType.ELavaShieldAbility )
 			{
-				playerScript.size -= damage;
+				// TODO Play "Zisch" sound
+				playerScript.size -= damagePerSecond*Time.deltaTime;
 			}
 		}
+	}
 
+	void OnTriggerStay(Collider other)
+	{
+		if (!inUse)
+			return;
+		
+		// If collision with own blob, do nothing
+		if (other.gameObject == parentBlob)
+			return;
+		
+		// Check whether the teeth of the blob collided with another blob
+		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
+		player playerScript = (player)other.gameObject.GetComponent (typeof(player));
+		
+		if (isPlayer && enemyScript) {
+			
+			// Damage enemy if he has an active lava shield
+			if(enemyScript.shieldInUse != null && enemyScript.shieldInUse.getAbilityEnum() == EAbilityType.ELavaShieldAbility )
+			{
+				Debug.Log ("Enemy hurt by water shield: Damage = " + damagePerSecond*Time.deltaTime);
+				enemyScript.inflictAbilityDamage(damagePerSecond*Time.deltaTime);
+				enemyScript.setAlertedState();
+			}
+		} else if (!isPlayer && playerScript) {
+			
+			// Player is damaged if lava shield active
+			if(playerScript.shieldInUse != null && playerScript.shieldInUse.getAbilityEnum() == EAbilityType.ELavaShieldAbility )
+			{
+				playerScript.size -= damagePerSecond*Time.deltaTime;
+			}
+		}
+		
 	}
 	
 	// Increases the level of this ability by x and returns the effective change in levels
@@ -130,7 +154,7 @@ public class waterShieldAbility : ability {
 	{
 		int previousLevel = level;
 		level = Mathf.Max (0, Mathf.Min(level + x, maxLevel));
-		damage = 0.1f + level * 0.1f;
+		damagePerSecond = damagePerSecond + level * 0.1f;
 		maxTimeInWater = 30.0f + 30.0f * level;
 		return level - previousLevel;
 	}

@@ -7,7 +7,9 @@ public class iceShieldAbility : ability {
 	
 	private float maxTimeInIce = 30.0f;
 	
-	private float damage = 0.1f;
+	public float baseDamage = 0.1f;
+
+	private float damagePerSecond;
 	
 	private bool inUse;
 
@@ -27,7 +29,7 @@ public class iceShieldAbility : ability {
 		increaseLevel (0);
 		cooldownTimer = 0.0f;
 
-		damage = 0.1f + level * 0.1f;
+		damagePerSecond = baseDamage + level * 0.1f;
 		maxTimeInIce = 30.0f + 30.0f * level;
 		timer = maxTimeInIce;
 
@@ -71,11 +73,9 @@ public class iceShieldAbility : ability {
 			if(isPlayer) {
 				if(parentPlayerScript.shieldInUse == null)
 					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentPlayerScript.defaultMaterial;
-					//((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentPlayerScript.defaultColor;
 			} else {
 				if(parentEnemyScript.shieldInUse == null)
 					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentEnemyScript.defaultMaterial;
-					//((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentEnemyScript.defaultColor;
 			}
 		}
 		deactivateInNextFrame = true;
@@ -95,43 +95,66 @@ public class iceShieldAbility : ability {
 		player playerScript = (player)other.gameObject.GetComponent (typeof(player));
 		
 		if (isPlayer && enemyScript) {
-			// Enemy is hurt by player's ice shield if enemy does not have a lava shield, dust shield or thorn shield
-		/*	if(enemyScript.hasAbility(EAbilityType.ELavaShieldAbility) == -1 && 
-			   enemyScript.hasAbility(EAbilityType.EDustShieldAbility) == -1 && 
-			   enemyScript.hasAbility(EAbilityType.EThornShieldAbility) == -1  )
-			{
-				enemyScript.size -= damage;
-				enemyScript.setAlertState();
-			}*/
 
 			if(enemyScript.shieldInUse == null || ( 
 			   enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.ELavaShieldAbility && 
 			   enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EDustShieldAbility && 
 			   enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EThornShieldAbility ) )
 			{
-				Debug.Log ("Enemy hurt by ice shield: Damage = " + damage);
-				enemyScript.size -= damage;
+				Debug.Log ("Enemy hurt by ice shield: Damage = " + damagePerSecond*Time.deltaTime);
+				enemyScript.inflictAbilityDamage(damagePerSecond*Time.deltaTime);
 				enemyScript.setAlertedState();
 			}
 		} else if (!isPlayer && playerScript) {
-			// Player is hurt by enemy's thorn shield if player does not have a thorn shield or dust shield
-		/*	if(playerScript.hasAbility(EAbilityType.ELavaShieldAbility) == -1 && 
-			   playerScript.hasAbility(EAbilityType.EDustShieldAbility) == -1 && 
-			   playerScript.hasAbility(EAbilityType.EThornShieldAbility) == -1 )
-			{
-				playerScript.size -= damage;
-			}
-*/
+
 			// Player is hurt by enemy's thorn shield if player does not have a thorn shield or dust shield
 			if(playerScript.shieldInUse == null || ( 
 			   playerScript.shieldInUse.getAbilityEnum() != EAbilityType.ELavaShieldAbility && 
 			   playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EDustShieldAbility && 
 			   playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EThornShieldAbility ) )
 			{
-				playerScript.size -= damage;
+				playerScript.size -= damagePerSecond*Time.deltaTime;
 			}
 		}
 
+	}
+
+	void OnTriggerStay(Collider other)
+	{
+		if (!inUse)
+			return;
+		
+		// If collision with own blob, do nothing
+		if (other.gameObject == parentBlob)
+			return;
+		
+		// Check whether the teeth of the blob collided with another blob
+		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
+		player playerScript = (player)other.gameObject.GetComponent (typeof(player));
+		
+		if (isPlayer && enemyScript) {
+			
+			if(enemyScript.shieldInUse == null || ( 
+			                                       enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.ELavaShieldAbility && 
+			                                       enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EDustShieldAbility && 
+			                                       enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EThornShieldAbility ) )
+			{
+				Debug.Log ("Enemy hurt by ice shield: Damage = " + damagePerSecond*Time.deltaTime);
+				enemyScript.inflictAbilityDamage(damagePerSecond*Time.deltaTime);
+				enemyScript.setAlertedState();
+			}
+		} else if (!isPlayer && playerScript) {
+			
+			// Player is hurt by enemy's thorn shield if player does not have a thorn shield or dust shield
+			if(playerScript.shieldInUse == null || ( 
+			                                        playerScript.shieldInUse.getAbilityEnum() != EAbilityType.ELavaShieldAbility && 
+			                                        playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EDustShieldAbility && 
+			                                        playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EThornShieldAbility ) )
+			{
+				playerScript.size -= damagePerSecond*Time.deltaTime;
+			}
+		}
+		
 	}
 	
 	// Increases the level of this ability by x and returns the effective change in levels
@@ -141,7 +164,7 @@ public class iceShieldAbility : ability {
 		level = Mathf.Max (0, Mathf.Min(level + x, maxLevel));
 		int increase = previousLevel - level;
 		timer += increase*30.0f;
-		damage = 0.1f + level * 0.1f;
+		damagePerSecond = baseDamage + level * 0.1f;
 		maxTimeInIce = 30.0f + 30.0f * level;
 		return increase;
 	}

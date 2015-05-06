@@ -178,6 +178,14 @@ public class enemy : MonoBehaviour {
 	public Material defaultMaterial;
 
 	public bool dead;
+	// Defines how much of the damage is due to the player
+	public float scoreFraction;
+
+	private float originalSize;
+
+	private float totalDamageByPlayer;
+
+	private bool didSeePlayer;
 
 
 
@@ -208,15 +216,17 @@ public class enemy : MonoBehaviour {
 		resetAllStates ();
 		// Set flag to allow movement
 		canMove = true;
+		// Set the original size
+		originalSize = size;
+		Debug.Log ("originalsize = " + originalSize);
 	}
 	
 	// Update is called once per frame
 	void Update() 
 	{
-		// If this blob is dead, then don't move anymore
+		// If dead, then don't move anymore
 		if (dead)
 			return;
-
 
 		// If enemy has just died, then throw some ability loot
 		if (size <= 0) 
@@ -228,6 +238,7 @@ public class enemy : MonoBehaviour {
 				Vector3 throwTo = transform.position + viewingDirection*transform.localScale.x;
 				lootManager.throwAbilityLoot(rndAbility, 1, transform.position, throwTo);
 			}
+			scoreFraction = originalSize / totalDamageByPlayer;
 			dead = true;
 			return;
 		}
@@ -249,7 +260,7 @@ public class enemy : MonoBehaviour {
 			// Reduce active timer
 			isInAlertedStateTimer -= Time.deltaTime;
 			// After escape from player reduce awareness(viewing angle) only with time
-			cosViewingAngle += (originalCosViewingAngle + 1) * (Time.deltaTime/originalInAlertedStateTimer);
+			cosViewingAngle += 0.2f*(originalCosViewingAngle + 1) * (Time.deltaTime/originalInAlertedStateTimer);
 		}
 		else {
 			cosViewingAngle = originalCosViewingAngle;
@@ -257,7 +268,8 @@ public class enemy : MonoBehaviour {
 		}
 
 		// If blinded, then slowly restore viewing range
-		if (blinded && blindedTimer > 0) {
+		if (blinded && blindedTimer > 0) 
+		{
 			blindedTimer -= Time.deltaTime;
 			// Completely blinded for the first half of the blinded duration
 			if(blindedTimer <= originalBlindedTimer*0.5)
@@ -267,16 +279,18 @@ public class enemy : MonoBehaviour {
 				viewingRange += 2.0f * diff * (Time.deltaTime/originalBlindedTimer);
 			}
 		}
-		else {
+		else 
+		{
 			viewingRange = originalViewingRange;	// Restore viewing range completely
 			blinded = false;
 		}
 
 		// Move and use abilities if not stunned
-		if (!stunned) {
-
+		if (!stunned) 
+		{
 			// Check whether the player can be seen by this enemy
 			canSeePlayer = isInViewingRange (player);
+			didSeePlayer = canSeePlayer;
 
 			if (canSeePlayer) {
 				// TODO: Camouflage, darkness, scene geometry, etc...
@@ -384,6 +398,9 @@ public class enemy : MonoBehaviour {
 		transform.position += environmentalCourseCorrection;
 		environmentalCourseCorrection = new Vector3 (0, 0, 0);
 
+		if (isRunningAwayFromPlayer || isHuntingPlayer) {
+			totalDamageByPlayer += environmentalDamage;
+		}
 		size -= environmentalDamage;
 		environmentalDamage = 0.0f;
 
@@ -614,8 +631,7 @@ public class enemy : MonoBehaviour {
 			// We should be able to perform half the rotation (i.e. 90°) within one second
 			float angleBetween = Mathf.Sign (Vector3.Cross (viewingDirection, rotationTarget).z) * Vector3.Angle (viewingDirection, rotationTarget);
 			float rotationDampening = Mathf.Deg2Rad*(angleBetween / currentSpeed);
-		//	float rotationDampening = Mathf.Min(1.0f, 1.0f - distance/(2.0f*currentSpeed));
-		//	float rotationDampening = 1.0f;
+
 			Debug.Log ("Rotate towards " + rotationTarget);
 
 			// If the safest direction is along the viewingDirection, then no special rotation is required - simply walk on
@@ -830,6 +846,8 @@ public class enemy : MonoBehaviour {
 		canMove = true;
 		stunned = false;
 		dead = false;
+		totalDamageByPlayer = 0;
+		originalSize = size;
 	}
 
 	private void useRunning() {
@@ -984,10 +1002,20 @@ public class enemy : MonoBehaviour {
 		environmentalCourseCorrection += correction;
 	}
 
+	// Called when the player eats this enemy blob
+	public void eat()
+	{
+		totalDamageByPlayer += size;
+		size = 0;
+	}
+
+	// Called when player's attacks hit this enemy
 	public void inflictAbilityDamage(float damage) 
 	{
 		if (damage > 0) 
 		{
+			totalDamageByPlayer += damage;
+
 			setAlertedState();
 			// We can only inflict as much damage as the enemy has health
 			damage = Mathf.Min (damage,size);

@@ -80,31 +80,7 @@ public class dustShieldAbility : ability {
 		}
 		deactivateInNextFrame = true;
 	}
-	
-	void OnTriggerEnter(Collider other)
-	{
-		// If collision with own blob, do nothing
-	/*	if (other.gameObject == parentBlob)
-			return;
-		
-		// Check whether the teeth of the blob collided with another blob
-		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
-		player playerScript = (player)other.gameObject.GetComponent (typeof(player));
-		
-		if (isPlayer && enemyScript) {
-			// Damage dealt by player through body attacks are multiplied by the dust shield unless enemy has a dust shield as well)
-			if(enemyScript.hasAbility(EAbilityType.EDustShieldAbility) == -1 )
-			{
-				enemyScript.setAlertState();
-			}
-		} else if (!isPlayer && playerScript) {
-			// Player is hurt by enemy's thorn shield if player does not have a thorn shield or dust shield
-			if(playerScript.hasAbility(EAbilityType.EDustShieldAbility) == -1 )
-			{
 
-			}
-		}*/
-	}
 	
 	// Increases the level of this ability by x and returns the effective change in levels
 	public override int increaseLevel(int x)
@@ -118,10 +94,6 @@ public class dustShieldAbility : ability {
 	
 	public override bool useAbility() 
 	{
-	/*	if (inUse) {
-			inUse = false;
-			return true;
-		}*/
 		if (timer > 0 && cooldownTimer < 0) {
 			inUse = true;
 			deactivateInNextFrame = false;

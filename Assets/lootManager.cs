@@ -14,6 +14,10 @@ public class lootManager : MonoBehaviour {
 
 	public GameObject[] lootObjects = new GameObject[100];
 
+	public float scorePerAbilityLoot;
+
+	public float scorePerSizeLoot;
+
 	public loot[] lootScripts = new loot[100];
 
 	private int index;
@@ -26,12 +30,15 @@ public class lootManager : MonoBehaviour {
 
 	private IEnumerator cleanUpIEnumerator;
 
+	private highscoreManager highscoreManager;
+
 
 	// Use this for initialization
 	void Start () {
 		player = GameObject.Find ("Blob");
 		playerScript = (player)player.GetComponent (typeof(player));
 		abilityManager = (abilityManager)GameObject.Find ("AbilityManager").GetComponent(typeof(abilityManager));
+		highscoreManager = (highscoreManager)GameObject.Find ("HighscoreManager").GetComponent (typeof(highscoreManager));
 		index = 0;
 		cleanUpIEnumerator = cleanUpRoutine ();
 		StartCoroutine (cleanUpIEnumerator);
@@ -161,6 +168,9 @@ public class lootManager : MonoBehaviour {
 		
 		index++;
 		index %= lootObjects.Length;
+
+		// Send message to highscore
+		highscoreManager.lootDropped (size*scorePerSizeLoot);
 	}
 
 	// Instantiates and places a loot that, will let the player's ability improve or let it learn a new ability if acquired
@@ -195,6 +205,9 @@ public class lootManager : MonoBehaviour {
 		
 		index++;
 		index %= lootObjects.Length;
+
+		// Send message to highscore
+		highscoreManager.lootDropped (scorePerAbilityLoot);
 	}
 
 	private GameObject createLootGameObject(ELootType lootType) {

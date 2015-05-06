@@ -15,9 +15,6 @@ public enum EButtonType {
 public class abilityModificationPanel : MonoBehaviour {
 
 
-	private Quaternion originalRotation;
-
-
 	private EAbilityClass currentAbilityClass;
 
 	private GameObject[] buttons = new GameObject[4];
@@ -47,10 +44,6 @@ public class abilityModificationPanel : MonoBehaviour {
 	private float originalTimer;
 
 
-	public enemy enemyScript;
-
-	public ability newAbility;
-
 	private GameObject player;
 
 
@@ -60,31 +53,40 @@ public class abilityModificationPanel : MonoBehaviour {
 
 	private int highlightButton;
 
+	private int highlightTrigger;
+
 
 
 
 	// Use this for initialization
 	void Start () 
 	{
-		originalRotation = transform.rotation;
-
-		buttons = new GameObject[4];
 		buttons [0] = GameObject.Find ("AButton");
 		buttons [1] = GameObject.Find ("BButton");
 		buttons [2] = GameObject.Find ("XButton");
 		buttons [3] = GameObject.Find ("YButton");
+
+		triggers[0] = GameObject.Find ("LTrigger");
+		triggers[1] = GameObject.Find ("RTrigger");
 
 		buttonTextBoxes [0] = (Text)( GameObject.Find ("AAbility").GetComponent(typeof(Text)));
 		buttonTextBoxes [1] = (Text)( GameObject.Find ("BAbility").GetComponent(typeof(Text)));
 		buttonTextBoxes [2] = (Text)( GameObject.Find ("XAbility").GetComponent(typeof(Text)));
 		buttonTextBoxes [3] = (Text)( GameObject.Find ("YAbility").GetComponent(typeof(Text)));
 
+		triggerTextBoxes [0] = (Text)( GameObject.Find ("LShield").GetComponent(typeof(Text)));
+		triggerTextBoxes [1] = (Text)( GameObject.Find ("RShield").GetComponent(typeof(Text)));
+
 		buttonRenderers[0] = (CanvasRenderer)buttons[0].GetComponent(typeof(CanvasRenderer));
 		buttonRenderers[1] = (CanvasRenderer)buttons[1].GetComponent(typeof(CanvasRenderer));
 		buttonRenderers[2] = (CanvasRenderer)buttons[2].GetComponent(typeof(CanvasRenderer));
 		buttonRenderers[3] = (CanvasRenderer)buttons[3].GetComponent(typeof(CanvasRenderer));
 
+		triggerRenderers[0] = (CanvasRenderer)triggers[0].GetComponent(typeof(CanvasRenderer));
+		triggerRenderers[1] = (CanvasRenderer)triggers[1].GetComponent(typeof(CanvasRenderer));
+
 		highlightButton = -1;
+		highlightTrigger = -1;
 
 		messageBox = (Text)( GameObject.Find ("MessageBox").GetComponent(typeof(Text)));
 		messageBox.text = "Something";
@@ -134,12 +136,47 @@ public class abilityModificationPanel : MonoBehaviour {
 								buttonTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, alpha);
 							}
 						}
-					} else {
+					} 
+					else if(highlightTrigger != -1) 
+					{
+
+						for (int i = 0; i < 2; i++) {
+							if (i == highlightTrigger) {
+								if(timer >= 0.5*originalTimer) {
+									// Increase alpha value until one
+									float alpha = Mathf.Min (1.0f,triggerRenderers [i].GetAlpha() + Time.deltaTime*0.6f);
+									triggerRenderers [i].SetAlpha (alpha);
+									triggerTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, alpha);
+								}
+								else
+								{
+									// Decrease alpha value until 0
+									float alpha = Mathf.Max (0.0f,buttonRenderers [i].GetAlpha() - Time.deltaTime);
+									triggerRenderers [i].SetAlpha (alpha);
+									triggerTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, alpha);
+								}
+							} else {
+								// Not the changed button - Decrease alpha values until 0
+								float alpha = Mathf.Max (0.0f,buttonRenderers [i].GetAlpha() - Time.deltaTime*0.6f);
+								triggerRenderers [i].SetAlpha (alpha);
+								triggerTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, alpha);
+							}
+						}
+					} 
+					else 
+					{
 						for (int i = 0; i < 4; i++) {
 							// No buttons were changed - simply let the panel fade away
 							float alpha = Mathf.Max (0.0f,buttonRenderers [i].GetAlpha() - Time.deltaTime*0.6f);
 							buttonRenderers [i].SetAlpha (alpha);
 							buttonTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, alpha);
+						}
+
+						for (int i = 0; i < 2; i++) {
+							// No buttons were changed - simply let the panel fade away
+							float alpha = Mathf.Max (0.0f,triggerRenderers [i].GetAlpha() - Time.deltaTime*0.6f);
+							triggerRenderers [i].SetAlpha (alpha);
+							triggerTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, alpha);
 						}
 					}
 				}
@@ -149,6 +186,7 @@ public class abilityModificationPanel : MonoBehaviour {
 					{
 						active = false;
 						highlightButton = -1;
+						highlightTrigger = -1;
 						gameObject.SetActive(false);
 					}
 				}
@@ -158,9 +196,6 @@ public class abilityModificationPanel : MonoBehaviour {
 
 	void LateUpdate()
 	{
-		// Keep UI panel from rotating with the player's blob
-		transform.rotation = originalRotation;
-
 		if(isInChosingState)
 			gameObject.SetActive(true);
 	}
@@ -172,8 +207,6 @@ public class abilityModificationPanel : MonoBehaviour {
 		id = Random.value;	// Random value as id
 
 		Time.timeScale = 0.0f;
-		this.enemyScript = enemyScript;
-		this.newAbility = newAbility;
 
 		gameObject.SetActive(true);
 
@@ -231,13 +264,13 @@ public class abilityModificationPanel : MonoBehaviour {
 			for (int i = 0; i < 2; i++) {
 				if (!abilityNames[i].Equals (string.Empty)) {
 					((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.8f,1.0f,true);
-				//	triggerTextBoxes [i].text = abilityNames[i];
-				//	triggerTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, 0.8f);
+					triggerTextBoxes [i].text = abilityNames[i];
+					triggerTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, 0.8f);
 				} else {
 					buttonRenderers [i].SetAlpha (0.0f);
 					((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.5f,1.0f,true);
-				//	triggerTextBoxes [i].text = "(empty)";
-				//	triggerTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, 0.5f);
+					triggerTextBoxes [i].text = "(empty)";
+					triggerTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, 0.5f);
 				}
 			}
 		}
@@ -255,9 +288,6 @@ public class abilityModificationPanel : MonoBehaviour {
 		Time.timeScale = 1.0f;
 		originalTimer = 1.0f;
 		timer = 1.0f;
-
-		newAbility = null;
-		enemyScript = null;
 	}
 
 	public void highlightButtonAndHide(string newAbilityName, EButtonType button)
@@ -269,8 +299,22 @@ public class abilityModificationPanel : MonoBehaviour {
 		originalTimer = 1.0f;
 		highlightButton = (int)button;
 		buttonTextBoxes [highlightButton].text = newAbilityName;
-		newAbility = null;
-		enemyScript = null;
+	}
+
+	public void highlightTriggerAndHide(string newAbilityName, EButtonType trigger)
+	{
+		fadeAnimationId = id;
+		isInChosingState = false;
+		Time.timeScale = 1.0f;
+		timer = 1.5f;
+		originalTimer = 1.0f;
+		if (trigger == EButtonType.ELeftTrigger) {
+			triggerTextBoxes [0].text = newAbilityName;
+			highlightTrigger = 0;
+		} else {
+			triggerTextBoxes [1].text = newAbilityName;
+			highlightTrigger = 1;
+		}
 	}
 
 	public void displayMessage(string message) {

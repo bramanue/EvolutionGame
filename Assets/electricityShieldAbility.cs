@@ -7,8 +7,10 @@ public class electricityShieldAbility : ability {
 	
 	private float maxTimeInThunderstorm = 30.0f;
 	
-	private float damage = 0.1f;
-	
+	public float baseDamage = 0.1f;
+
+	private float damagePerSecond;
+
 	private bool inUse;
 
 	private bool deactivateInNextFrame;
@@ -29,7 +31,7 @@ public class electricityShieldAbility : ability {
 
 		maxTimeInThunderstorm = 30.0f + 30.0f * level;
 		timer = maxTimeInThunderstorm;
-		damage = 0.1f + level * 0.1f;
+		damagePerSecond = baseDamage + level * 0.1f;
 
 		abilitySuperClassEnum = EAbilityClass.EShieldAbility;
 		distortionType = EDistortionType.EElectricityShieldDistortion;
@@ -71,11 +73,9 @@ public class electricityShieldAbility : ability {
 			if(isPlayer) {
 				if(parentPlayerScript.shieldInUse == null)
 					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentPlayerScript.defaultMaterial;
-					//((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentPlayerScript.defaultColor;
 			} else {
 				if(parentEnemyScript.shieldInUse == null)
 					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentEnemyScript.defaultMaterial;
-					//((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentEnemyScript.defaultColor;
 			}
 		}
 		// Delay the deactivation (i.e. inUse = false) by one frame due to update order. Collision triggers are called before the update and therefore inUse would always be false
@@ -97,15 +97,6 @@ public class electricityShieldAbility : ability {
 		player playerScript = (player)other.gameObject.GetComponent (typeof(player));
 		
 		if (isPlayer && enemyScript) {
-			// Enemy is hurt by player's electricity shield if enemy does not have a dust shield
-		/*	if(enemyScript.hasAbility(EAbilityType.EDustShieldAbility) == -1 )
-			{
-				if(enemyScript.hasAbility(EAbilityType.EWaterShieldAbility) != -1)
-					enemyScript.size -= 2.0f*damage; 	// Very effective against water shield
-				else
-					enemyScript.size -= damage;
-				enemyScript.setAlertState();
-			}*/
 
 			// Enemy is hurt by player's electricity shield if enemy does not have an active dust or electricity shield
 			if(enemyScript.shieldInUse == null || ( 
@@ -114,22 +105,14 @@ public class electricityShieldAbility : ability {
 			{  
 				// Very effective against water shield
 				if(enemyScript.shieldInUse != null && enemyScript.shieldInUse.getAbilityEnum() == EAbilityType.EWaterShieldAbility) {
-					enemyScript.size -= 2.0f*damage; 	
+					enemyScript.inflictAbilityDamage(2.0f*damagePerSecond*Time.deltaTime); 	
 				}else{
-					enemyScript.size -= damage;
+					enemyScript.inflictAbilityDamage(damagePerSecond*Time.deltaTime); 
 				}
-				Debug.Log ("Enemy hurt by electricity shield: Damage = " + damage);
+				Debug.Log ("Enemy hurt by electricity shield: Damage = " + damagePerSecond*Time.deltaTime);
 				enemyScript.setAlertedState();
 			}
 		} else if (!isPlayer && playerScript) {
-			// Player is hurt by enemy's electricity shield if enemy does not have a dust or electricity shield
-		/*	if(playerScript.hasAbility(EAbilityType.EDustShieldAbility) == -1 )
-			{
-				if(playerScript.hasAbility(EAbilityType.EWaterShieldAbility) != -1)
-					playerScript.size -= 2.0f*damage; 	// Very effective against water shield
-				else
-					playerScript.size -= damage;
-			}*/
 
 			// Player is hurt by enemy's electricity shield if enemy does not have a dust or electricity shield
 			if(playerScript.shieldInUse == null || ( 
@@ -137,12 +120,58 @@ public class electricityShieldAbility : ability {
 			   playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EElectricityShieldAbility ) )
 			{
 				if(playerScript.shieldInUse != null && playerScript.shieldInUse.getAbilityEnum() == EAbilityType.EWaterShieldAbility)
-					playerScript.size -= 2.0f*damage; 	// Very effective against water shield
+					playerScript.size -= 2.0f*damagePerSecond*Time.deltaTime; 	// Very effective against water shield
 				else
-					playerScript.size -= damage;
+					playerScript.size -= damagePerSecond*Time.deltaTime;
 			}
 		}
 
+	}
+
+	void OnTriggerStay(Collider other)
+	{
+		if (!inUse) {
+			return;
+		}
+		
+		// If collision with own blob, do nothing
+		if (other.gameObject == parentBlob)
+			return;
+		
+		// Check whether the teeth of the blob collided with another blob
+		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
+		player playerScript = (player)other.gameObject.GetComponent (typeof(player));
+		
+		if (isPlayer && enemyScript) {
+			
+			// Enemy is hurt by player's electricity shield if enemy does not have an active dust or electricity shield
+			if(enemyScript.shieldInUse == null || ( 
+			                                       enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EDustShieldAbility &&
+			                                       enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EElectricityShieldAbility ) )
+			{  
+				// Very effective against water shield
+				if(enemyScript.shieldInUse != null && enemyScript.shieldInUse.getAbilityEnum() == EAbilityType.EWaterShieldAbility) {
+					enemyScript.inflictAbilityDamage(2.0f*damagePerSecond*Time.deltaTime); 	
+				}else{
+					enemyScript.inflictAbilityDamage(damagePerSecond*Time.deltaTime); 
+				}
+				Debug.Log ("Enemy hurt by electricity shield: Damage = " + damagePerSecond*Time.deltaTime);
+				enemyScript.setAlertedState();
+			}
+		} else if (!isPlayer && playerScript) {
+			
+			// Player is hurt by enemy's electricity shield if enemy does not have a dust or electricity shield
+			if(playerScript.shieldInUse == null || ( 
+			                                        playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EDustShieldAbility &&
+			                                        playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EElectricityShieldAbility ) )
+			{
+				if(playerScript.shieldInUse != null && playerScript.shieldInUse.getAbilityEnum() == EAbilityType.EWaterShieldAbility)
+					playerScript.size -= 2.0f*damagePerSecond*Time.deltaTime; 	// Very effective against water shield
+				else
+					playerScript.size -= damagePerSecond*Time.deltaTime;
+			}
+		}
+		
 	}
 	
 	// Increases the level of this ability by x and returns the effective change in levels
@@ -150,7 +179,7 @@ public class electricityShieldAbility : ability {
 	{
 		int previousLevel = level;
 		level = Mathf.Max (0, Mathf.Min(level + x, maxLevel));
-		damage = 0.1f + level * 0.1f;
+		damagePerSecond = baseDamage + level * 0.1f;
 		maxTimeInThunderstorm = 30.0f + 30.0f * level;
 		return level - previousLevel;
 	}

@@ -7,7 +7,9 @@ public class thornShieldAbility : ability {
 
 	private float maxTimeInThorns = 30.0f;
 
-	private float damage = 0.1f;
+	public float baseDamage = 0.1f;
+
+	private float damagePerSecond;
 
 	private bool inUse;
 
@@ -29,7 +31,7 @@ public class thornShieldAbility : ability {
 		cooldownTimer = 0.0f;
 		maxTimeInThorns = 30.0f + 30.0f * level;
 		timer = maxTimeInThorns;
-		damage = 0.1f + level * 0.1f;
+		damagePerSecond = baseDamage + level * 0.1f;
 
 		abilitySuperClassEnum = EAbilityClass.EShieldAbility;
 		distortionType = EDistortionType.EThornShieldDistortion;
@@ -70,11 +72,9 @@ public class thornShieldAbility : ability {
 			// Reset to default sprite if no other shield is active
 			if(isPlayer) {
 				if(parentPlayerScript.shieldInUse == null) 
-				//	((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentPlayerScript.defaultColor;
 					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentPlayerScript.defaultMaterial;
 			} else {
 				if(parentEnemyScript.shieldInUse == null)
-				//	((SpriteRenderer)parentBlob.GetComponent(typeof(SpriteRenderer))).color = parentEnemyScript.defaultColor;
 					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentEnemyScript.defaultMaterial;
 			}
 		}
@@ -95,14 +95,6 @@ public class thornShieldAbility : ability {
 		player playerScript = (player)other.gameObject.GetComponent (typeof(player));
 
 		if (isPlayer && enemyScript) {
-			// Enemy is hurt by player's thorn shield if enemy does not have a thorn shield, dust shield or lava shield
-		/*	if(enemyScript.hasAbility(EAbilityType.EThornShieldAbility) == -1 && 
-			   enemyScript.hasAbility(EAbilityType.EDustShieldAbility) == -1 && 
-			   enemyScript.hasAbility(EAbilityType.ELavaShieldAbility) == -1)
-			{
-				enemyScript.size -= damage;
-				enemyScript.setAlertState();
-			}*/
 
 			// Enemy is hurt by player's thorn shield if enemy does not have an active thorn, dust or lava shield
 			if(enemyScript.shieldInUse == null || (
@@ -110,22 +102,57 @@ public class thornShieldAbility : ability {
 			   enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EDustShieldAbility && 
 			   enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.ELavaShieldAbility ) )
 			{
-				Debug.Log ("Enemy hurt by thorn shield: Damage = " + damage);
-				enemyScript.size -= damage;
+				Debug.Log ("Enemy hurt by thorn shield: Damage = " + damagePerSecond*Time.deltaTime);
+				enemyScript.inflictAbilityDamage(damagePerSecond*Time.deltaTime);
 				enemyScript.setAlertedState();
 			}
 		} else if (!isPlayer && playerScript) {
-			// Player is hurt by enemy's thorn shield if player does not have a thorn shield or dust shield
-		/*	if(playerScript.hasAbility(EAbilityType.EThornShieldAbility) == -1 && playerScript.hasAbility(EAbilityType.EDustShieldAbility) == -1 )
-				playerScript.size -= damage;
-		*/
+
 			// Player is hurt by enemy's thorn shield if player does not have an active thorn, dust or lava shield
 			if(playerScript.shieldInUse == null || (
 			   playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EThornShieldAbility && 
 			   playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EDustShieldAbility && 
 			   playerScript.shieldInUse.getAbilityEnum() != EAbilityType.ELavaShieldAbility ) )
 			{
-				playerScript.size -= damage;
+				playerScript.size -= damagePerSecond*Time.deltaTime;
+			}
+		}
+	}
+
+	void OnTriggerStay(Collider other)
+	{
+		if (!inUse)
+			return;
+		
+		// If collision with own blob, do nothing
+		if (other.gameObject == parentBlob)
+			return;
+		
+		// Check whether the teeth of the blob collided with another blob
+		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
+		player playerScript = (player)other.gameObject.GetComponent (typeof(player));
+		
+		if (isPlayer && enemyScript) {
+			
+			// Enemy is hurt by player's thorn shield if enemy does not have an active thorn, dust or lava shield
+			if(enemyScript.shieldInUse == null || (
+				enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EThornShieldAbility && 
+				enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EDustShieldAbility && 
+				enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.ELavaShieldAbility ) )
+			{
+				Debug.Log ("Enemy hurt by thorn shield: Damage = " + damagePerSecond*Time.deltaTime);
+				enemyScript.inflictAbilityDamage(damagePerSecond*Time.deltaTime);
+				enemyScript.setAlertedState();
+			}
+		} else if (!isPlayer && playerScript) {
+			
+			// Player is hurt by enemy's thorn shield if player does not have an active thorn, dust or lava shield
+			if(playerScript.shieldInUse == null || (
+				playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EThornShieldAbility && 
+				playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EDustShieldAbility && 
+				playerScript.shieldInUse.getAbilityEnum() != EAbilityType.ELavaShieldAbility ) )
+			{
+				playerScript.size -= damagePerSecond*Time.deltaTime;
 			}
 		}
 	}
@@ -135,7 +162,7 @@ public class thornShieldAbility : ability {
 	{
 		int previousLevel = level;
 		level = Mathf.Max (0, Mathf.Min(level + x, maxLevel));
-		damage = 0.1f + level * 0.1f;
+		damagePerSecond = baseDamage + level * 0.1f;
 		maxTimeInThorns = 30.0f + 30.0f * level;
 		return level - previousLevel;
 	}

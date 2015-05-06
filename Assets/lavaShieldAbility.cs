@@ -7,7 +7,9 @@ public class lavaShieldAbility : ability {
 	
 	private float maxTimeInLava = 30.0f;
 	
-	private float damage = 0.1f;
+	public float baseDamage = 0.1f;
+
+	private float damagePerSecond;
 	
 	private bool inUse;
 
@@ -29,7 +31,7 @@ public class lavaShieldAbility : ability {
 
 		maxTimeInLava = 30.0f + 30.0f * level;
 		timer = maxTimeInLava;
-		damage = 0.1f + level * 0.1f;
+		damagePerSecond = baseDamage + level * 0.1f;
 
 		abilitySuperClassEnum = EAbilityClass.EShieldAbility;
 		distortionType = EDistortionType.ELavaShieldDistortion;
@@ -101,8 +103,8 @@ public class lavaShieldAbility : ability {
 			   enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EDustShieldAbility && 
 			   enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EWaterShieldAbility )  )
 			{
-				Debug.Log ("Enemy hurt by lava shield: Damage = " + damage);
-				enemyScript.size -= damage;
+				Debug.Log ("Enemy hurt by lava shield: Damage = " + damagePerSecond*Time.deltaTime);
+				enemyScript.inflictAbilityDamage(damagePerSecond*Time.deltaTime);
 				enemyScript.setAlertedState();
 			}
 		} else if (!isPlayer && playerScript) {
@@ -113,7 +115,45 @@ public class lavaShieldAbility : ability {
 			   playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EDustShieldAbility && 
 			   playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EWaterShieldAbility ) )
 			{
-				playerScript.size -= damage;
+				playerScript.size -= damagePerSecond*Time.deltaTime;
+			}
+		}
+	}
+
+	void OnTriggerStay(Collider other)
+	{
+		if (!inUse)
+			return;
+		
+		// If collision with own blob, do nothing
+		if (other.gameObject == parentBlob)
+			return;
+		
+		// Check whether the lava shield of the blob collided with another blob
+		enemy enemyScript = (enemy)other.gameObject.GetComponent (typeof(enemy));
+		player playerScript = (player)other.gameObject.GetComponent (typeof(player));
+		
+		if (isPlayer && enemyScript) {
+			
+			// Enemy is hurt by player's lava shield if enemy does not have an active lava, dust or water shield
+			if(enemyScript.shieldInUse == null || (
+				enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.ELavaShieldAbility && 
+				enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EDustShieldAbility && 
+				enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EWaterShieldAbility )  )
+			{
+				Debug.Log ("Enemy hurt by lava shield: Damage = " + damagePerSecond*Time.deltaTime);
+				enemyScript.inflictAbilityDamage(damagePerSecond*Time.deltaTime);
+				enemyScript.setAlertedState();
+			}
+		} else if (!isPlayer && playerScript) {
+			
+			// Player is hurt by enemy's lava shield if player does not have an active lava, dust or water shield
+			if(playerScript.shieldInUse == null || (
+				playerScript.shieldInUse.getAbilityEnum() != EAbilityType.ELavaShieldAbility && 
+				playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EDustShieldAbility && 
+				playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EWaterShieldAbility ) )
+			{
+				playerScript.size -= damagePerSecond*Time.deltaTime;
 			}
 		}
 	}
@@ -123,7 +163,7 @@ public class lavaShieldAbility : ability {
 	{
 		int previousLevel = level;
 		level = Mathf.Max (0, Mathf.Min(level + x, maxLevel));
-		damage = 0.1f + level * 0.1f;
+		damagePerSecond = baseDamage + level * 0.1f;
 		maxTimeInLava = 30.0f + 30.0f * level;
 		return level - previousLevel;
 	}

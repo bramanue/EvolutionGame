@@ -295,7 +295,7 @@ public class ramAbility : ability {
 				inAttackMode = false;
 				inChargeMode = false;
 				inTargetMode = true;
-				// Hit had hard -> set stunned for a few seconds TODO duration dependent on object(?)
+				// Hit head hard -> set stunned for a few seconds TODO duration dependent on object(?)
 				if(isPlayer)
 					parentPlayerScript.setStunned(2.0f);
 				else
@@ -310,16 +310,21 @@ public class ramAbility : ability {
 
 			if (enemyScript != null || playerScript != null) {
 				if (isPlayer) {
-					// TODO reduce damage if dust shield / thorn shield used
+					if(enemyScript.shieldInUse != null) {
+						if(enemyScript.shieldInUse.getAbilityEnum() == EAbilityType.EDustShieldAbility || enemyScript.shieldInUse.getAbilityEnum() == EAbilityType.EThornShieldAbility) {
+							enemyScript.shieldInUse.increaseLevel((int)(-level*0.25f));	// Reduce shield level by a quarter of the ram ability's level
+							return;
+						}
+					} 
 					enemyScript.inflictAbilityDamage(damage);
 				} else {
 					if (playerScript) {
 
-						Debug.Log ("Level = " + level + " Damage to player = " + damage);
+						Debug.Log ("Ram Level = " + level + " Damage to player = " + damage);
 						ability shieldInUse = playerScript.shieldInUse;
 						if(shieldInUse != null) {
 							if(shieldInUse.getAbilityEnum() == EAbilityType.EDustShieldAbility || shieldInUse.getAbilityEnum() == EAbilityType.EThornShieldAbility) {
-								shieldInUse.increaseLevel(-1);	// Reduce shield level by one due to impact
+								shieldInUse.increaseLevel((int)(-level*0.25f));	// Reduce shield level by one due to impact
 								return;
 							}
 						} 
@@ -329,7 +334,7 @@ public class ramAbility : ability {
 						ability shieldInUse = enemyScript.shieldInUse;
 						if(shieldInUse != null) {
 							if(shieldInUse.getAbilityEnum() == EAbilityType.EDustShieldAbility || shieldInUse.getAbilityEnum() == EAbilityType.EThornShieldAbility) {
-								shieldInUse.increaseLevel(-1);	// Reduce shield level by one due to impact
+								shieldInUse.increaseLevel((int)(-level*0.25f));	// Reduce shield level by one due to impact
 								return;
 							}
 						} 
