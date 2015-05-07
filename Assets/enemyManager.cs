@@ -80,7 +80,7 @@ public class enemyManager : MonoBehaviour {
 	void Update () {
 
 		// Make sure the radius increases with the player's size
-		radius = 4.0f*Mathf.Max (5.0f,playerScript.currentViewingRange) + 2.0f*nofEnemies*player.transform.localScale.x + 2.0f*playerScript.currentSpeed;
+		radius = 2.0f*Mathf.Max (5.0f,playerScript.currentViewingRange) + 2.0f*nofEnemies*player.transform.localScale.x + 2.0f*playerScript.currentSpeed;
 		// Get the current position of the player
 		Vector3 playerPosition = player.transform.position;
 		// Loop over all enemies and check whether they need to be repositioned (out of the radius)
@@ -123,7 +123,7 @@ public class enemyManager : MonoBehaviour {
 
 		float playerSize = player.transform.localScale.x;
 		// Define a random size
-		float size = Random.Range(playerSize - 0.5f*playerSize, playerSize + 0.5f*playerSize);
+		float size = Random.Range(1.1f*playerSize, 2.2f*playerSize) - 0.1f*difficulty*playerSize;
 		// Set size of GameObject
 		enemyObject.transform.localScale = new Vector3(size,size,size);
 		// Get spawn point...

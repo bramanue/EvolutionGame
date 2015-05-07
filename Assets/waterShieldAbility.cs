@@ -164,10 +164,6 @@ public class waterShieldAbility : ability {
 		if (timer > 0 && cooldownTimer < 0) {
 			inUse = true;
 			deactivateInNextFrame = false;
-			if(isPlayer)
-				parentPlayerScript.shieldInUse = this;
-			else
-				parentEnemyScript.shieldInUse = this;
 			return true;
 		} else {
 			return false;
