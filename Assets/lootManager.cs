@@ -32,6 +32,10 @@ public class lootManager : MonoBehaviour {
 
 	private highscoreManager highscoreManager;
 
+	public bool throwAbilityLootBool = true;
+
+	public bool throwSizeLootBool = true;
+
 
 	// Use this for initialization
 	void Start () {

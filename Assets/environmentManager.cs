@@ -36,17 +36,6 @@ public class environmentManager : MonoBehaviour {
 	private float[] environmentalHazardMask;
 
 
-	// PERLIN NOISE VARIABLES FOR THE WATER BUMP MAP
-
-	// The higher, the more details, but slower performance
-	public int waterBumpMapOctaves = 3;
-	// The higher, the flater the water surface, the smaller the bigger waves
-	public float waterBumpMapPersistence = 0.2f;
-	// The higher, the shorter the distance between the waves waves
-	public float waterBumpMapFrequency = 3.0f;
-	// Defines at which height the water surface is
-	public float liquidLevel = 0.2f;
-
 	// PERLIN NOISE VARIABLES FOR THE ENVIRONMENTAL OBSTACLES
 
 	public int environmentOctaves = 2;
@@ -54,6 +43,8 @@ public class environmentManager : MonoBehaviour {
 	public float environmentPersistence = 0.2f;
 
 	public float environmentFrequency = 0.05f;
+
+	public float environmentOccuranceProbability = 0.7f;
 
 
 	// PERLIN NOISE VARIABLES FOR THE 3D TERRAIN FORMING
@@ -144,13 +135,13 @@ public class environmentManager : MonoBehaviour {
 
 
 	// An array contianing all environmental obstacles on the field
-	private GameObject[] environmentalObstacles = new GameObject[1000];
+	private GameObject[] environmentalObstacles = new GameObject[500];
 	// The next index into environmentalObstacles[] where a null object is
 	private int environmentalObstacleIndex;
 	// Defines from which index of environmentalObjects[] the current Update() iteration has to loop from
 	private int previousPatchEndIndex;
 	// Defines until which index of environmentalObjects[] the current Update() iteration has to loop
-	private int[] patchSizes = new int[10];
+	private int[] patchSizes = new int[5];
 	// The current Update() iteration
 	private int currentPatchIndex;
 	// How many Update() iterations are granted to update the whole environmentalObstacles[] array
@@ -250,7 +241,7 @@ public class environmentManager : MonoBehaviour {
 			textureQuadIsOccupiedBy[i] = -1;
 		}
 
-		nofPatches = 10;
+		nofPatches = patchSizes.Length;
 		int nofStoredObstacles = environmentalObstacles.Length;
 		int patchSize = nofStoredObstacles / nofPatches;
 		for (int i = 1; i < nofPatches; i++) {
@@ -283,7 +274,7 @@ public class environmentManager : MonoBehaviour {
 					setNewCenterTile(i);
 				}
 				// Calculate terrain elevation for all active planes
-				distortBackgroundPlane(planeTileOrdering[planeTileOrdering[i]],moveBackground,backgroundTimeMultiplier,backgroundMultiplierX,backgroundMultiplierY,currentTime);
+			//	distortBackgroundPlane(planeTileOrdering[planeTileOrdering[i]],moveBackground,backgroundTimeMultiplier,backgroundMultiplierX,backgroundMultiplierY,currentTime);
 			}
 			// Set the plane active if player's viewingRange reaches the closest point of this plane tile's boundaries
 			else if( (environmentPlaneTileBounds[planeTileOrdering[i]].ClosestPoint(playerPos) - playerPos).magnitude <= 3.0f*playerViewingRange)
@@ -293,7 +284,7 @@ public class environmentManager : MonoBehaviour {
 					environmentPlaneTiles[planeTileOrdering[i]].SetActive(true);
 				}
 				// Calculate terrain elevation for all active planes
-				distortBackgroundPlane(planeTileOrdering[planeTileOrdering[i]],moveBackground,backgroundTimeMultiplier,backgroundMultiplierX,backgroundMultiplierY,currentTime);
+			//	distortBackgroundPlane(planeTileOrdering[planeTileOrdering[i]],moveBackground,backgroundTimeMultiplier,backgroundMultiplierX,backgroundMultiplierY,currentTime);
 			}
 			// Otherwise set it inactive
 			else 
@@ -307,7 +298,10 @@ public class environmentManager : MonoBehaviour {
 		// Calculate the bottom left and top right point of the combination of all active plane tiles
 		currentBackgroundExtent = new Vector4 (float.MaxValue, float.MaxValue, float.MinValue, float.MinValue);
 		for (int i = 0; i < 9; i++) {
+
 			if (environmentPlaneTiles[i].activeSelf) {
+				distortBackgroundPlane(planeTileOrdering[i],moveBackground,backgroundTimeMultiplier,backgroundMultiplierX,backgroundMultiplierY,currentTime);
+
 				currentBackgroundExtent.x = Mathf.Min (currentBackgroundExtent.x, environmentPlaneTileBounds[i].min.x);
 				currentBackgroundExtent.y = Mathf.Min (currentBackgroundExtent.y, environmentPlaneTileBounds[i].min.y);
 				currentBackgroundExtent.z = Mathf.Max (currentBackgroundExtent.z, environmentPlaneTileBounds[i].max.x);
@@ -323,9 +317,9 @@ public class environmentManager : MonoBehaviour {
 				continue;
 
 			Bounds obstacleBounds = environmentalObstacles[obstacleIndex].GetComponent<MeshRenderer>().bounds;
-			Vector3 distance = playerPos - obstacleBounds.center;
+
 			// Set the obstacle to active if player's viewingRange reaches the closest point of this obstacle's boundaries
-			if( (obstacleBounds.ClosestPoint(playerPos) - playerPos).magnitude <= 6.0f*playerViewingRange)
+			if( (obstacleBounds.ClosestPoint(playerPos) - playerPos).magnitude <= 2.5f*playerViewingRange)
 			{
 				environmentalObstacles[obstacleIndex].SetActive(true);
 			}
@@ -376,7 +370,7 @@ public class environmentManager : MonoBehaviour {
 		Vector2 textureExtent = topRightOfBackground - bottomLeftOfBackground;
 
 		Vector2 bottomLeftOfViewingRange = new Vector2 (player.transform.position.x - playerViewingRange, player.transform.position.y - playerViewingRange);
-		Vector2 viewingRangeExtent = 8.0f * new Vector2(playerViewingRange, playerViewingRange);
+		Vector2 viewingRangeExtent = 6.0f * new Vector2(playerViewingRange, playerViewingRange);
 
 		// Calculate what distance each pixel of the texture covers in world space
 		Vector2 worldDistancePerPixel = new Vector2 (textureExtent.x / mainTextureResolution.x, textureExtent.y / mainTextureResolution.y);
@@ -395,7 +389,7 @@ public class environmentManager : MonoBehaviour {
 
 		calculateTextureMaskNew(startRow, endRow, startColumn, endColumn, bottomLeftOfBackground.x, bottomLeftOfBackground.y, worldDistancePerPixel, currentTime);
 
-		float threshold = 0.75f;
+		float threshold = environmentOccuranceProbability;
 		generateEnvironmentalHazardsNew (startRow, endRow, startColumn, endColumn, bottomLeftOfBackground, worldDistancePerPixel, threshold);
 	}
 
@@ -1184,7 +1178,8 @@ public class environmentManager : MonoBehaviour {
 
 	private float generateWaterSurface(float x, float y, float currentTime)
 	{
-		return addUpOctaves(waterBumpMapOctaves, waterBumpMapFrequency, waterBumpMapPersistence, x + currentTime, y + currentTime);
+//		return addUpOctaves(waterBumpMapOctaves, waterBumpMapFrequency, waterBumpMapPersistence, x + currentTime, y + currentTime);
+		return 0.0f;
 	}
 
 

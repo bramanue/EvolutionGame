@@ -4,13 +4,15 @@ using UnityEngine.UI;
 
 public class highscoreManager : MonoBehaviour {
 
-	private float currentHighscore;
+	private float currentHighscore = 0.0f;
 
-	private float visibleHighscore;
+	private float visibleHighscore = 0.0f;
 
 	private float multiplier = 1.0f;
 
 	private float timer;
+
+	private GameObject highscoreDisplayObject;
 
 	public Text highscoreDisplay;
 
@@ -18,9 +20,11 @@ public class highscoreManager : MonoBehaviour {
 
 
 	// Use this for initialization
-	void Start () {
+	void Start () 
+	{
+		highscoreDisplayObject = GameObject.Find ("HighscoreCanvas");
 		currentHighscore = 0.0f;
-
+		visibleHighscore = 0.0f;
 	}
 	
 	// Update is called once per frame
@@ -71,5 +75,17 @@ public class highscoreManager : MonoBehaviour {
 		// TODO Display for what the points are
 		currentHighscore += Mathf.Floor(score*multiplier);
 		visibleHighscore += Mathf.Floor(score*multiplier);
+	}
+
+	public void resetHighscore()
+	{
+		currentHighscore = 0.0f;
+		visibleHighscore = 0.0f;
+		multiplier = 1.0f;
+	}
+
+	public void showHighscore(bool active) 
+	{
+		highscoreDisplayObject.SetActive (active);
 	}
 }

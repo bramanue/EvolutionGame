@@ -10,6 +10,9 @@ public class enemyManager : MonoBehaviour {
 	// The radius in which enemies can spawn
 	public float radius;
 
+	// Defines whether enemies are revived after they were eaten
+	public bool respawnEnemies;
+
 	// The prototype for each enemy
 	public GameObject basicEnemy;
 
@@ -44,6 +47,8 @@ public class enemyManager : MonoBehaviour {
 	// 1 is the highest difficulty and 5 the lowest
 	// Defines for each enemy, how many abilities it gets
 	public float difficulty;
+
+	public int maxNofAbilities = 6;
 
 
 	// Use this for initialization
@@ -99,7 +104,7 @@ public class enemyManager : MonoBehaviour {
 			}
 
 			// Respawn defeated enemies
-			if(enemyGameObjects[i].transform.localScale.x <= 0) 
+			if(enemyGameObjects[i].transform.localScale.x <= 0 && respawnEnemies) 
 			{
 				setRandomInitialValues (i);
 				distance = (enemyGameObjects [i].transform.position - playerPosition).magnitude;
@@ -143,6 +148,7 @@ public class enemyManager : MonoBehaviour {
 
 		// Calculate how many abilities this enemy should get
 		int nofAbilities = (int)Mathf.Floor(1.0f/Mathf.Exp(difficulty*Random.value) * 8 + 0.8f);
+		nofAbilities = (int)Mathf.Min (maxNofAbilities, nofAbilities);
 		float rndValue = Random.value;
 		float score = 1000;
 		// Decide which abilities it should get
@@ -261,6 +267,24 @@ public class enemyManager : MonoBehaviour {
 	public void setNecessaryAbilities(EAbilityType[] abilities)
 	{
 		necessaryAbilities = abilities;
+	}
+
+	public void resetEnemies()
+	{
+		// Create the basic amount of enemies
+		for(int i = 0; i < nofEnemies; i++) 
+		{
+			// Calculate a random spawn position
+			Vector3 spawnPoint = calculateSpawnPosition();
+			// Calculate random initial rotation
+			Quaternion rotation = Quaternion.Euler(new Vector3(0.0f,0.0f,Random.Range(-180,180)));
+			// Create new enemy GameObject
+			enemyGameObjects[i] = ((GameObject)GameObject.Instantiate(basicEnemy,spawnPoint,rotation));
+			// Add enemy script to the array
+			enemyScripts[i] = (enemy)enemyGameObjects[i].GetComponent(typeof(enemy));
+			// Set values for this script
+			setRandomInitialValues(i);
+		}
 	}
 
 }
