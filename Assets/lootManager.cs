@@ -127,7 +127,7 @@ public class lootManager : MonoBehaviour {
 			float x = time*xPerSecond;
 			float y = time*yPerSecond;
 			float x_parabelSpace = Mathf.Sqrt (x*x + y*y);
-			float z = Mathf.Max (-Mathf.Pow(x_parabelSpace - halfDistance,2.0f) + halfDistanceSquared,0)*5.0f;
+			float z = -Mathf.Max (-Mathf.Pow(x_parabelSpace - halfDistance,2.0f) + halfDistanceSquared,0);
 
 			// Change position and rotation
 			lootObjects[index].transform.position = from + new Vector3(x,y,z);
@@ -193,7 +193,7 @@ public class lootManager : MonoBehaviour {
 		// Set the loot parameters
 		loot.eaten = false;
 		loot.level = level;
-		loot.abilityName = ability.name;
+		loot.abilityName = ability.abilityName;
 		loot.abilityType = ability.abilityEnum;
 		loot.abilityDescription = ability.description;
 		loot.abilityClass = ability.abilitySuperClassEnum;

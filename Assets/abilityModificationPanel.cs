@@ -33,6 +33,8 @@ public class abilityModificationPanel : MonoBehaviour {
 
 	private Text titleBox;
 
+	private string[] currentAbilities = new string[6];
+
 
 	private bool active;
 
@@ -55,6 +57,8 @@ public class abilityModificationPanel : MonoBehaviour {
 
 	private int highlightTrigger;
 
+
+	private GUIStyle guiStyle = new GUIStyle();
 
 
 
@@ -89,10 +93,10 @@ public class abilityModificationPanel : MonoBehaviour {
 		highlightTrigger = -1;
 
 		messageBox = (Text)( GameObject.Find ("MessageBox").GetComponent(typeof(Text)));
-		messageBox.text = "Something";
+		messageBox.text = "";
 
 		titleBox = (Text)( GameObject.Find ("TitleBox").GetComponent(typeof(Text)));
-		messageBox.text = "New Ability Name";
+		titleBox.text = "";
 
 		player = GameObject.Find ("Blob");
 
@@ -103,131 +107,16 @@ public class abilityModificationPanel : MonoBehaviour {
 	// Update is called once per frame
 	void Update () 
 	{
-		if (active) 
-		{
+		if (active) {
 			Time.timeScale = 0.0f;
-			// Make sure that if the fade animation is active, that the panel has not been opened again
-			if(fadeAnimationId == id)
-			{
-				Time.timeScale = 1.0f;
-				if(timer > 0) 
-				{
-					timer -= Time.deltaTime;
-					if(highlightButton != -1) {
-						for (int i = 0; i < 4; i++) {
-							if (i == highlightButton) {
-								if(timer >= 0.5*originalTimer) {
-									// Increase alpha value until one
-									float alpha = Mathf.Min (1.0f,buttonRenderers [i].GetAlpha() + Time.deltaTime*0.6f);
-									buttonRenderers [i].SetAlpha (alpha);
-									buttonTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, alpha);
-								}
-								else
-								{
-									// Decrease alpha value until 0
-									float alpha = Mathf.Max (0.0f,buttonRenderers [i].GetAlpha() - Time.deltaTime);
-									buttonRenderers [i].SetAlpha (alpha);
-									buttonTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, alpha);
-								}
-							} else {
-								// Not the changed button - Decrease alpha values until 0
-								float alpha = Mathf.Max (0.0f,buttonRenderers [i].GetAlpha() - Time.deltaTime*0.6f);
-								buttonRenderers [i].SetAlpha (alpha);
-								buttonTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, alpha);
-							}
-						}
-					} 
-					else if(highlightTrigger != -1) 
-					{
-
-						for (int i = 0; i < 2; i++) {
-							if (i == highlightTrigger) {
-								if(timer >= 0.5*originalTimer) {
-									// Increase alpha value until one
-									float alpha = Mathf.Min (1.0f,triggerRenderers [i].GetAlpha() + Time.deltaTime*0.6f);
-									triggerRenderers [i].SetAlpha (alpha);
-									triggerTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, alpha);
-								}
-								else
-								{
-									// Decrease alpha value until 0
-									float alpha = Mathf.Max (0.0f,buttonRenderers [i].GetAlpha() - Time.deltaTime);
-									triggerRenderers [i].SetAlpha (alpha);
-									triggerTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, alpha);
-								}
-							} else {
-								// Not the changed button - Decrease alpha values until 0
-								float alpha = Mathf.Max (0.0f,buttonRenderers [i].GetAlpha() - Time.deltaTime*0.6f);
-								triggerRenderers [i].SetAlpha (alpha);
-								triggerTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, alpha);
-							}
-						}
-					} 
-					else 
-					{
-						for (int i = 0; i < 4; i++) {
-							// No buttons were changed - simply let the panel fade away
-							float alpha = Mathf.Max (0.0f,buttonRenderers [i].GetAlpha() - Time.deltaTime*0.6f);
-							buttonRenderers [i].SetAlpha (alpha);
-							buttonTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, alpha);
-						}
-
-						for (int i = 0; i < 2; i++) {
-							// No buttons were changed - simply let the panel fade away
-							float alpha = Mathf.Max (0.0f,triggerRenderers [i].GetAlpha() - Time.deltaTime*0.6f);
-							triggerRenderers [i].SetAlpha (alpha);
-							triggerTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, alpha);
-						}
-					}
-				}
-				else
-				{
-					if(!isInChosingState)
-					{
-						active = false;
-						highlightButton = -1;
-						highlightTrigger = -1;
-					//	gameObject.SetActive(false);
-					}
-				}
-			}
-		}
+		} 
 	}
 
-	void LateUpdate()
-	{
-		if(isInChosingState)
-			gameObject.SetActive(true);
-	}
-
-	public void showPanel(string[] abilityNames, ability newAbility, enemy enemyScript)
-	{
-		active = true;
-		isInChosingState = true;
-		id = Random.value;	// Random value as id
-
-		Time.timeScale = 0.0f;
-
-		gameObject.SetActive(true);
-
-		// Display names and mark already mapped buttons
-		for (int i = 0; i < 4; i++) {
-			if (!abilityNames[i].Equals (string.Empty)) {
-				((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.8f,1.0f,true);
-				buttonTextBoxes [i].text = abilityNames[i];
-				buttonTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, 0.8f);
-			} else {
-				buttonRenderers [i].SetAlpha (0.0f);
-				((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.5f,1.0f,true);
-				buttonTextBoxes [i].text = "(empty)";
-				buttonTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, 0.5f);
-			}
-		}
-	}
 
 	public void showPanel (string[] abilityNames, EAbilityClass abilityClass)
 	{
 		currentAbilityClass = abilityClass;
+		currentAbilities = abilityNames;
 		if(currentAbilityClass == EAbilityClass.EActiveAbility) 
 		{
 			active = true;
@@ -235,19 +124,16 @@ public class abilityModificationPanel : MonoBehaviour {
 			id = Random.value;	// Random value as id
 			Time.timeScale = 0.0f;
 
-			gameObject.SetActive(true);
-
 			// Display names and mark already mapped buttons
 			for (int i = 0; i < 4; i++) {
 				if (!abilityNames[i].Equals (string.Empty)) {
-					((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.8f,1.0f,true);
+					((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(1.0f,0.5f,true);
 					buttonTextBoxes [i].text = abilityNames[i];
-					buttonTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, 0.8f);
+					buttonTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, 1.0f);
 				} else {
-					buttonRenderers [i].SetAlpha (0.0f);
-					((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.5f,1.0f,true);
+					((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.6f,0.5f,true);
 					buttonTextBoxes [i].text = "(empty)";
-					buttonTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, 0.5f);
+					buttonTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, 0.6f);
 				}
 			}
 		}
@@ -257,20 +143,17 @@ public class abilityModificationPanel : MonoBehaviour {
 			isInChosingState = true;
 			id = Random.value;	// Random value as id
 			Time.timeScale = 0.0f;
-			
-			gameObject.SetActive(true);
-			
+
 			// Display names and mark already mapped buttons
-			for (int i = 0; i < 2; i++) {
+			for (int i = 4; i < 6; i++) {
 				if (!abilityNames[i].Equals (string.Empty)) {
-					((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.8f,1.0f,true);
-					triggerTextBoxes [i].text = abilityNames[i];
-					triggerTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, 0.8f);
+					((Image)(triggers[i-4].GetComponent(typeof(Image)))).CrossFadeAlpha(1.0f,0.5f,true);
+					triggerTextBoxes [i-4].text = abilityNames[i];
+					triggerTextBoxes [i-4].color = new Color (1.0f, 1.0f, 1.0f, 1.0f);
 				} else {
-					buttonRenderers [i].SetAlpha (0.0f);
-					((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.5f,1.0f,true);
-					triggerTextBoxes [i].text = "(empty)";
-					triggerTextBoxes [i].color = new Color (1.0f, 1.0f, 1.0f, 0.5f);
+					((Image)(triggers[i-4].GetComponent(typeof(Image)))).CrossFadeAlpha(0.6f,0.5f,true);
+					triggerTextBoxes [i-4].text = "(empty)";
+					triggerTextBoxes [i-4].color = new Color (1.0f, 1.0f, 1.0f, 0.6f);
 				}
 			}
 		}
@@ -283,47 +166,48 @@ public class abilityModificationPanel : MonoBehaviour {
 
 	public void hidePanel()
 	{
-		fadeAnimationId = id;
-		isInChosingState = false;
-		Time.timeScale = 1.0f;
-		originalTimer = 1.0f;
-		timer = 1.0f;
-	}
-
-	public void highlightButtonAndHide(string newAbilityName, EButtonType button)
-	{
-		fadeAnimationId = id;
-		isInChosingState = false;
-		Time.timeScale = 1.0f;
-		timer = 1.5f;
-		originalTimer = 1.0f;
-		highlightButton = (int)button;
-		buttonTextBoxes [highlightButton].text = newAbilityName;
-		messageBox.CrossFadeAlpha (0, 0.5f, false);
-	}
-
-	public void highlightTriggerAndHide(string newAbilityName, EButtonType trigger)
-	{
-		fadeAnimationId = id;
-		isInChosingState = false;
-		Time.timeScale = 1.0f;
-		timer = 1.5f;
-		originalTimer = 1.0f;
-		if (trigger == EButtonType.ELeftTrigger) {
-			triggerTextBoxes [0].text = newAbilityName;
-			highlightTrigger = 0;
-		} else {
-			triggerTextBoxes [1].text = newAbilityName;
-			highlightTrigger = 1;
+		for (int i = 0; i < 4; i++) {
+			if (!currentAbilities[i].Equals (string.Empty)) {
+				((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.8f,0.5f,true);
+				buttonTextBoxes [i].text = "";
+			} else {
+				((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.3f,0.5f,true);
+				buttonTextBoxes [i].text = "";
+			}
 		}
-		messageBox.CrossFadeAlpha (0, 0.5f, false);
+		for (int i = 0; i < 2; i++) {
+			if (!currentAbilities[i+4].Equals (string.Empty)) {
+				((Image)(triggers[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.8f,0.5f,true);
+				triggerTextBoxes [i].text = "";
+			} else {
+				((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.3f,0.5f,true);
+				triggerTextBoxes [i].text = "";
+			}
+		}
+
+		messageBox.CrossFadeAlpha (0.0f, 0.5f, true);
+		fadeAnimationId = id;
+		active = false;
+		isInChosingState = false;
+		Time.timeScale = 1.0f;
 	}
 
 	public void displayMessage(string message) {
 		messageBox.text = message;
+		messageBox.CrossFadeAlpha (1, 0.5f, true);
+	}
+
+	public void hideMessage() {
+		messageBox.CrossFadeAlpha (0, 0.5f, true);
 	}
 
 	public void displayTitle(string title) {
 		titleBox.text = title;
+		titleBox.CrossFadeAlpha (1, 0.3f, true);
 	}
+
+	public void hideTitle() {
+		titleBox.CrossFadeAlpha (0, 0.2f, true);
+	}
+
 }

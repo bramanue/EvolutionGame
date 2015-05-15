@@ -218,6 +218,11 @@ public class enemy : MonoBehaviour {
 		canMove = true;
 		// Set the original size
 		originalSize = size;
+
+		shrinkSpeed = size;
+
+		growSpeed = 0.1f * size;
+
 		Debug.Log ("originalsize = " + originalSize);
 	}
 	
@@ -238,10 +243,15 @@ public class enemy : MonoBehaviour {
 				Vector3 throwTo = transform.position + viewingDirection*transform.localScale.x;
 				lootManager.throwAbilityLoot(rndAbility, 1, transform.position, throwTo);
 			}
-			scoreFraction = originalSize / totalDamageByPlayer;
+			// Calculate how much damage was inflicted by player
+			scoreFraction = totalDamageByPlayer / originalSize;
 			dead = true;
 			return;
 		}
+
+		shrinkSpeed = Mathf.Max (1.0f,size);
+		
+		growSpeed = Mathf.Max (0.1f, 0.1f * size);
 
 		// Get the viewing direction
 		viewingDirection = transform.up;

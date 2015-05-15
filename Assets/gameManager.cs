@@ -28,6 +28,8 @@ public class gameManager : MonoBehaviour {
 	private GameObject mainMenu;
 
 	private bool gameStarted;
+
+	private GUIStyle textStyle = new GUIStyle();
 	
 	// Use this for initialization
 	void Start () 
@@ -58,7 +60,7 @@ public class gameManager : MonoBehaviour {
 
 		abilityModificationPanelScript = (abilityModificationPanel)GameObject.Find ("AbilityModificationPanel").GetComponent (typeof(abilityModificationPanel));
 	//	abilityModificationPanelScript.gameObject.SetActive (false);
-
+		Time.timeScale = 0.0f;
 	//	startGame ();
 	}
 	
@@ -76,13 +78,12 @@ public class gameManager : MonoBehaviour {
 		// Pause / resume game upon player input
 		if (Input.GetButtonDown ("Pause"))
 		{ 
+			// Start game
 			if(!gameStarted){
 				startGame ();
 				gameStarted = true;
-			}
-			else
-			{
 				abilityModificationPanelScript.gameObject.SetActive (true);
+				return;
 			}
 
 			if (paused) {
@@ -137,9 +138,10 @@ public class gameManager : MonoBehaviour {
 		highscoreManager.showHighscore (true);
 		enemyManager.nofEnemies = 40;
 		enemyManager.difficulty = 5;
+		enemyManager.resetEnemies ();
 		Time.timeScale = 1.0f;
 		// Hide the main menu
-		mainMenu.SetActive (false);
+	//	mainMenu.SetActive (false);
 		abilityModificationPanelScript.gameObject.SetActive (false);
 	}
 

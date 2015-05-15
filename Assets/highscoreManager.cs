@@ -57,17 +57,22 @@ public class highscoreManager : MonoBehaviour {
 
 	public void enemyKilled(float score)
 	{
+		if(float.IsInfinity(score))
+			Debug.Log (score * multiplier + " points for killing enemy");
+
 		// TODO Display for what the points are
 		currentHighscore += Mathf.Floor(score*multiplier);
 		scoreUpdateSpeed = 0.5f*(currentHighscore - visibleHighscore);
-		Debug.Log (score * multiplier + " points for killing enemy");
 	}
 
 	public void lootDropped(float score)
 	{
+		if(float.IsInfinity(score))
+			Debug.Log (score * multiplier + " points for killing enemy");
+
 		// TODO Display for what the points are
 		currentHighscore += Mathf.Floor(score*multiplier);
-		scoreUpdateSpeed = 0.5f*(currentHighscore - visibleHighscore);
+		visibleHighscore += Mathf.Floor(score*multiplier);
 	}
 
 	public void playerIsGrowing(float score)
