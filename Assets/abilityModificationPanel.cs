@@ -187,7 +187,7 @@ public class abilityModificationPanel : MonoBehaviour {
 						active = false;
 						highlightButton = -1;
 						highlightTrigger = -1;
-						gameObject.SetActive(false);
+					//	gameObject.SetActive(false);
 					}
 				}
 			}
@@ -299,6 +299,7 @@ public class abilityModificationPanel : MonoBehaviour {
 		originalTimer = 1.0f;
 		highlightButton = (int)button;
 		buttonTextBoxes [highlightButton].text = newAbilityName;
+		messageBox.CrossFadeAlpha (0, 0.5f, false);
 	}
 
 	public void highlightTriggerAndHide(string newAbilityName, EButtonType trigger)
@@ -315,6 +316,7 @@ public class abilityModificationPanel : MonoBehaviour {
 			triggerTextBoxes [1].text = newAbilityName;
 			highlightTrigger = 1;
 		}
+		messageBox.CrossFadeAlpha (0, 0.5f, false);
 	}
 
 	public void displayMessage(string message) {

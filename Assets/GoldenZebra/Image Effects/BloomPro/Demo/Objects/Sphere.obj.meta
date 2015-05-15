@@ -5,11 +5,16 @@ ModelImporter:
   fileIDToRecycleName:
     100000: Default_Sphere polySurface2 polySurface1
     100002: //RootNode
+    100004: Default_Sphere_polySurface2_polySurface1
     400000: Default_Sphere polySurface2 polySurface1
     400002: //RootNode
+    400004: Default_Sphere_polySurface2_polySurface1
     2300000: Default_Sphere polySurface2 polySurface1
+    2300002: Default_Sphere_polySurface2_polySurface1
     3300000: Default_Sphere polySurface2 polySurface1
+    3300002: Default_Sphere_polySurface2_polySurface1
     4300000: Default_Sphere polySurface2 polySurface1
+    4300002: Default_Sphere_polySurface2_polySurface1
     9500000: //RootNode
   materials:
     importMaterials: 1

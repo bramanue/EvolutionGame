@@ -9,6 +9,8 @@ public class abilityLoot : loot {
 
 	public string abilityName;
 
+	public string abilityDescription;
+
 	public int level;
 
 	// Use this for initialization

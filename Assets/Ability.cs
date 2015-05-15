@@ -12,6 +12,9 @@ public class ability : MonoBehaviour {
 	// The name of the ability
 	public string abilityName;
 
+	// Description of this ability
+	public string description;
+
 	// Cooldowntimer for active abilities
 	public float cooldownTimer;
 

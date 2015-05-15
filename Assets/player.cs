@@ -124,6 +124,8 @@ public class player : MonoBehaviour
 	// Update is called once per frame
 	void Update()
 	{
+		abilityModificationScript.displayTitle("");
+
 		if (!dead) {
 
 			if(nearbyAbilityLoot != null) 
@@ -131,6 +133,7 @@ public class player : MonoBehaviour
 				// Show display to press RB or LB if player wants to acquire the ability
 				string abilityName = nearbyAbilityLoot.abilityName;
 				EAbilityClass abilityClass = nearbyAbilityLoot.abilityClass;
+				abilityModificationScript.displayTitle(abilityName);
 
 				if(Input.GetButtonDown ("PauseForAbilityGatheringLB") || Input.GetButtonDown ("PauseForAbilityGatheringRB"))
 				{
@@ -144,8 +147,8 @@ public class player : MonoBehaviour
 								abilityNames[i] = (abilities[i] != null) ? (abilities[i].abilityName + " (lvl. " + abilities[i].level +")") : string.Empty;
 							}
 							abilityModificationScript.showPanel(abilityNames, abilityClass);
-							abilityModificationScript.displayTitle(nearbyAbilityLoot.abilityName);
-							abilityModificationScript.displayMessage("You found a new attack ability! \n Press the button you want to map it to. \n Press \"RB\" or \"LB\" to continue.");
+							abilityModificationScript.displayTitle(abilityName);
+							abilityModificationScript.displayMessage("You found a new attack ability! \n" + nearbyAbilityLoot.abilityDescription +  "\nPress the button you want to map it to. \n Press \"RB\" or \"LB\" to continue.");
 							return;
 						}
 						else if(abilityClass == EAbilityClass.EShieldAbility)
@@ -155,8 +158,8 @@ public class player : MonoBehaviour
 								abilityNames[i] = (abilities[4+i] != null) ? (abilities[4+i].abilityName + " (lvl. " + abilities[4+i].level +")") : string.Empty;
 							}
 							abilityModificationScript.showPanel(abilityNames, abilityClass);
-							abilityModificationScript.displayTitle(nearbyAbilityLoot.abilityName);
-							abilityModificationScript.displayMessage("You found a new attack ability! \n Press the button you want to map it to. \n Press \"RB\" or \"LB\" to continue.");
+							abilityModificationScript.displayTitle(abilityName);
+							abilityModificationScript.displayMessage("You found a new shield ability! \n" + nearbyAbilityLoot.abilityDescription +  "\nPress the trigger you want to map it to. \n Press \"RB\" or \"LB\" to continue.");
 							return;
 						}
 					}

@@ -195,7 +195,9 @@ public class lootManager : MonoBehaviour {
 		loot.level = level;
 		loot.abilityName = ability.name;
 		loot.abilityType = ability.abilityEnum;
+		loot.abilityDescription = ability.description;
 		loot.abilityClass = ability.abilitySuperClassEnum;
+
 
 		// Set the appearance of the loot
 		newLootObject.transform.position = from;

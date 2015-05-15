@@ -26,6 +26,8 @@ public class gameManager : MonoBehaviour {
 	private abilityModificationPanel abilityModificationPanelScript;
 
 	private GameObject mainMenu;
+
+	private bool gameStarted;
 	
 	// Use this for initialization
 	void Start () 
@@ -55,9 +57,9 @@ public class gameManager : MonoBehaviour {
 		enemyManager.setNecessaryAbilities(necessaryAbilities);
 
 		abilityModificationPanelScript = (abilityModificationPanel)GameObject.Find ("AbilityModificationPanel").GetComponent (typeof(abilityModificationPanel));
-		abilityModificationPanelScript.gameObject.SetActive (false);
+	//	abilityModificationPanelScript.gameObject.SetActive (false);
 
-		startGame ();
+	//	startGame ();
 	}
 	
 	// Update is called once per frame
@@ -67,11 +69,22 @@ public class gameManager : MonoBehaviour {
 		{
 			print ("Game Over");
 			Time.timeScale = 0.1f;
+			gameStarted = false;
+			abilityModificationPanelScript.gameObject.SetActive (false);
 		}
 
 		// Pause / resume game upon player input
 		if (Input.GetButtonDown ("Pause"))
 		{ 
+			if(!gameStarted){
+				startGame ();
+				gameStarted = true;
+			}
+			else
+			{
+				abilityModificationPanelScript.gameObject.SetActive (true);
+			}
+
 			if (paused) {
 				// Continue
 				playerScript.setStunned(0.0f);
