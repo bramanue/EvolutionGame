@@ -79,13 +79,15 @@ public class enemyManager : MonoBehaviour {
 			// Set values for this script
 			setRandomInitialValues(i);
 		}
+
+		setEnemiesHostile (false);
 	}
 	
 	// Update is called once per frame
 	void Update () {
 
 		// Make sure the radius increases with the player's size
-		radius = 2.0f*Mathf.Max (5.0f,playerScript.currentViewingRange) + 2.0f*nofEnemies*player.transform.localScale.x + 2.0f*playerScript.currentSpeed;
+		radius = 2.0f*Mathf.Max (5.0f,playerScript.currentViewingRange) + nofEnemies*player.transform.localScale.x + 2.0f*playerScript.currentSpeed;
 		// Get the current position of the player
 		Vector3 playerPosition = player.transform.position;
 		// Loop over all enemies and check whether they need to be repositioned (out of the radius)
@@ -147,8 +149,10 @@ public class enemyManager : MonoBehaviour {
 		enemyScript.resetAllStates();
 
 		// Calculate how many abilities this enemy should get
+		int maxNofAbilities = playerScript.getNofAbilities() + 1;
 		int nofAbilities = (int)Mathf.Floor(1.0f/Mathf.Exp(difficulty*Random.value) * 8 + 0.8f);
 		nofAbilities = (int)Mathf.Min (maxNofAbilities, nofAbilities);
+
 		float rndValue = Random.value;
 		float score = 1000;
 		// Decide which abilities it should get
@@ -284,6 +288,14 @@ public class enemyManager : MonoBehaviour {
 			enemyScripts[i] = (enemy)enemyGameObjects[i].GetComponent(typeof(enemy));
 			// Set values for this script
 			setRandomInitialValues(i);
+		}
+	}
+
+	public void setEnemiesHostile(bool hostile)
+	{
+		for (int i = 0; i < nofEnemies; i++) 
+		{
+			enemyScripts[i].hostile = hostile;
 		}
 	}
 

@@ -62,6 +62,7 @@ public class tutorialManager : MonoBehaviour {
 					if(count <= 0)
 					{
 						currentTutorialComplete = true;
+						enemyManager.setEnemiesHostile (false);
 					}
 				}
 			}
@@ -83,6 +84,7 @@ public class tutorialManager : MonoBehaviour {
 			enemyManager.maxNofAbilities = 0;
 			enemyManager.respawnEnemies = false;
 			enemyManager.resetEnemies();
+			enemyManager.setEnemiesHostile (true);
 			count = 10;
 			break;
 		case (ETutorialType.abilityTutorial) :
@@ -94,6 +96,7 @@ public class tutorialManager : MonoBehaviour {
 			enemyManager.maxNofAbilities = 2;
 			enemyManager.respawnEnemies = false;
 			enemyManager.resetEnemies();
+			enemyManager.setEnemiesHostile (true);
 			count = 20;
 			break;
 		case (ETutorialType.environmentTutorial):
@@ -106,6 +109,7 @@ public class tutorialManager : MonoBehaviour {
 			enemyManager.maxNofAbilities = 0;
 			enemyManager.respawnEnemies = false;
 			enemyManager.resetEnemies();
+			enemyManager.setEnemiesHostile (true);
 			count = 10;
 			break;
 		default:

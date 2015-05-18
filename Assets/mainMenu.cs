@@ -42,7 +42,21 @@ public class mainMenu : MonoBehaviour {
 
 		pauseMenu = (pauseMenu)GameObject.Find ("PauseMenu").GetComponent(typeof(pauseMenu));
 
-		showMainMenu ();
+		startButton.SetActive (true);
+		tutorialButton.SetActive (true);
+		highscoreButton.SetActive (true);
+		
+		tutorial1Button.SetActive (false);
+		tutorial2Button.SetActive (false);
+		tutorial3Button.SetActive (false);
+		tutorialToMainMenuButton.SetActive (false);
+		
+		tutorialToMainMenuButton.SetActive (false);
+		gameOverText.SetActive (false);
+		retryButton.SetActive (false);
+		gameOverToMainMenuButton.SetActive (false);
+		
+		EventSystem.current.SetSelectedGameObject (startButton);
 		
 	}
 

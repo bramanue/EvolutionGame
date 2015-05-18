@@ -187,6 +187,8 @@ public class enemy : MonoBehaviour {
 
 	private bool didSeePlayer;
 
+	public bool hostile;
+
 
 
 	private lootManager lootManager;
@@ -302,7 +304,7 @@ public class enemy : MonoBehaviour {
 			canSeePlayer = isInViewingRange (player);
 			didSeePlayer = canSeePlayer;
 
-			if (canSeePlayer) {
+			if (canSeePlayer && hostile) {
 				// TODO: Camouflage, darkness, scene geometry, etc...
 
 				// Enemy can see player

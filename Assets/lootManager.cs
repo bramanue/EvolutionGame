@@ -73,10 +73,18 @@ public class lootManager : MonoBehaviour {
 
 	public void destroyLootManager()
 	{
-		for (int i = 0; i < lootObjects.Length; i++) {
-			GameObject.Destroy (lootObjects [i]);
-		}
+		removeAndDestroyAllLoot ();
 		StopCoroutine(cleanUpIEnumerator);
+	}
+
+	public void removeAndDestroyAllLoot()
+	{
+		for (int i = 0; i < lootObjects.Length; i++) 
+		{
+			if(lootObjects[i])
+				GameObject.Destroy (lootObjects [i]);
+			lootObjects[i] = null;
+		}
 	}
 
 	// Removes all loot that has been eaten by the player (10 times per second)

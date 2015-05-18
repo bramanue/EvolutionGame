@@ -17,6 +17,8 @@ public class gameManager : MonoBehaviour {
 
 	private tutorialManager tutorialManager;
 
+	private lootManager lootManager;
+
 	private bool paused;
 
 	private float timer;
@@ -38,21 +40,12 @@ public class gameManager : MonoBehaviour {
 	{
 		player = GameObject.Find("Blob");
 		playerScript = (player)player.GetComponent(typeof(player));
+		lootManager = (lootManager)GameObject.Find("LootManager").GetComponent (typeof(lootManager));
 		abilityManager = (abilityManager)GameObject.Find("AbilityManager").GetComponent (typeof(abilityManager));
 		environmentManager = (environmentManager)GameObject.Find ("EnvironmentManager").GetComponent (typeof(environmentManager));
 		highscoreManager = (highscoreManager)GameObject.Find ("HighscoreManager").GetComponent (typeof(highscoreManager));
 		mainMenu = (mainMenu)GameObject.Find ("MainMenu").GetComponent(typeof(mainMenu));
 		pauseMenu = (pauseMenu)GameObject.Find ("PauseMenu").GetComponent(typeof(pauseMenu));
-
-		// Active Abilities
-		abilityManager.addAbilityToPlayer(player,EAbilityType.ERamAbility,0,4);
-		abilityManager.addAbilityToPlayer(player,EAbilityType.EBiteAbility,1,1);
-		// Shield abilities
-		abilityManager.addAbilityToPlayer(player,EAbilityType.EThornShieldAbility,4,1);
-		abilityManager.addAbilityToPlayer(player,EAbilityType.EElectricityShieldAbility,5,1);
-		// Passive abilities
-		abilityManager.addAbilityToPlayer(player,EAbilityType.ERunAbility,6,4);
-		abilityManager.addAbilityToPlayer(player,EAbilityType.EViewAbility,7,5);
 
 		bossDefeated = false;
 		chooseNextEnvironmentalChange ();
@@ -60,12 +53,13 @@ public class gameManager : MonoBehaviour {
 		enemyManager = (enemyManager)GameObject.Find ("EnemyManager").GetComponent (typeof(enemyManager));
 		EAbilityType[] necessaryAbilities = {EAbilityType.EThornShieldAbility, EAbilityType.EWaterShieldAbility};
 		enemyManager.setNecessaryAbilities(necessaryAbilities);
+		enemyManager.nofEnemies = 0;
 
 		abilityModificationPanelScript = (abilityModificationPanel)GameObject.Find ("AbilityModificationPanel").GetComponent (typeof(abilityModificationPanel));
-	//	abilityModificationPanelScript.gameObject.SetActive (false);
 
+		Time.timeScale = 0.4f;
 
-		Time.timeScale = 0.0f;
+		playerScript.dead = true;
 
 	}
 	
@@ -77,7 +71,7 @@ public class gameManager : MonoBehaviour {
 			playerScript.setStunned(9999999999999.0f);
 			highscoreManager.showHighscore (false);
 			abilityModificationPanelScript.gameObject.SetActive (false);
-			Time.timeScale = 0.0f;
+			Time.timeScale = 0.4f;
 		}
 
 		if (paused) 
@@ -89,7 +83,8 @@ public class gameManager : MonoBehaviour {
 		if (gameStarted && playerScript.size <= 0) 
 		{
 			mainMenu.showGameOverScreen();
-			Time.timeScale = 0.1f;
+			Time.timeScale = 0.4f;
+			playerScript.removeAllAbilities ();
 			gameStarted = false;
 			abilityModificationPanelScript.gameObject.SetActive (false);
 		}
@@ -142,16 +137,30 @@ public class gameManager : MonoBehaviour {
 
 	public void startGame() 
 	{
-		Debug.Log ("StartGame function called");
 		environmentManager.environmentOccuranceProbability = 0.7f;
+		playerScript.removeAllAbilities ();
 		playerScript.dead = false;
 		playerScript.size = 1.0f;
 		playerScript.gameObject.transform.localScale = new Vector3 (1, 1, 0.5f);
+
+		// Active Abilities
+	//	abilityManager.addAbilityToPlayer(player,EAbilityType.ERamAbility,0,4);
+	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EBiteAbility,1,1);
+		// Shield abilities
+	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EThornShieldAbility,4,1);
+	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EElectricityShieldAbility,5,1);
+		// Passive abilities
+		abilityManager.addAbilityToPlayer(player,EAbilityType.ERunAbility,6,0);
+		abilityManager.addAbilityToPlayer(player,EAbilityType.EViewAbility,7,0);
+
 		highscoreManager.resetHighscore ();
 		highscoreManager.showHighscore (true);
 		enemyManager.nofEnemies = 40;
 		enemyManager.difficulty = 5;
 		enemyManager.resetEnemies ();
+		enemyManager.setEnemiesHostile (true);
+
+		lootManager.removeAndDestroyAllLoot ();
 
 		// Hide the main menu
 		mainMenu.hide();
@@ -163,11 +172,15 @@ public class gameManager : MonoBehaviour {
 
 	public void finishGame()
 	{
-		mainMenu.showMainMenu ();
-		Time.timeScale = 0.0f;
+		playerScript.removeAllAbilities ();
 		abilityModificationPanelScript.gameObject.SetActive (false);
+
 		playerScript.dead = true;
 		gameStarted = false;
+
+		mainMenu.showMainMenu ();
+		Time.timeScale = 0.4f;
+		enemyManager.setEnemiesHostile (false);
 	}
 
 	public void continueGame() 

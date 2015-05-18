@@ -103,7 +103,6 @@ public class player : MonoBehaviour
 
 	private bool waitedOneFrame = false;
 
-
 	// Use this for initialization
 	void Start()
 	{
@@ -115,8 +114,6 @@ public class player : MonoBehaviour
 		canMove = true;
 		// Get the ability modification panel
 		abilityModificationScript = (abilityModificationPanel)(GameObject.Find("AbilityModificationPanel").GetComponent(typeof(abilityModificationPanel)));
-//		abilityModificationScript.gameObject.SetActive (true);
-
 		abilityManager = (abilityManager)GameObject.Find ("AbilityManager").GetComponent(typeof(abilityManager));
 		highscoreManager = (highscoreManager)GameObject.Find ("HighscoreManager").GetComponent(typeof(highscoreManager));
 
@@ -126,7 +123,6 @@ public class player : MonoBehaviour
 	// Update is called once per frame
 	void Update()
 	{
-
 		if (!dead) {
 			if (nearbyAbilityLoot != null) {
 				// Show display to press RB or LB if player wants to acquire the ability
@@ -261,6 +257,7 @@ public class player : MonoBehaviour
 				else 
 				{
 					// If not paused yet, then remove reference
+					abilityModificationScript.displayMessage("Press \"RB\" or \"LB\" to gather new ability");
 					nearbyAbilityLoot = null;
 				}
 			} 
@@ -269,6 +266,7 @@ public class player : MonoBehaviour
 				// If no ability loot in reach
 				if(waitedOneFrame) {
 					abilityModificationScript.hideTitle();
+					abilityModificationScript.displayMessage("");
 					waitedOneFrame = false;
 				}
 				else
@@ -383,6 +381,12 @@ public class player : MonoBehaviour
 		} else {
 			// If dead
 			abilityModificationScript.displayTitle("");
+			// Reset viewing range towards 0
+			if(abilities[7]) {
+				abilities [7].level = 0;
+				abilities [7].useAbility ();
+			}
+			currentViewingRange = baseViewingRange + viewingRangeBoost;
 		}
 
 		// Change appearance according to current size
@@ -475,6 +479,18 @@ public class player : MonoBehaviour
 			nofAbilities--;
 			abilities [slot] = null;
 			GameObject.Destroy (abilityObjects [slot].gameObject);
+		}
+	}
+
+	public int getNofAbilities()
+	{
+		return nofAbilities;
+	}
+
+	public void removeAllAbilities() 
+	{
+		for (int slot = 0; slot < 8; slot++) {
+			removeAndDestroyAbility(slot);
 		}
 	}
 
