@@ -43,7 +43,6 @@ public class meshDatabase : MonoBehaviour
 			}
 			addMesh(mesh);
 		}
-		int a = 0;
 	}
 	
 	// Update is called once per frame

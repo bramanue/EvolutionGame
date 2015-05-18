@@ -115,7 +115,7 @@ public class player : MonoBehaviour
 		canMove = true;
 		// Get the ability modification panel
 		abilityModificationScript = (abilityModificationPanel)(GameObject.Find("AbilityModificationPanel").GetComponent(typeof(abilityModificationPanel)));
-		abilityModificationScript.gameObject.SetActive (true);
+//		abilityModificationScript.gameObject.SetActive (true);
 
 		abilityManager = (abilityManager)GameObject.Find ("AbilityManager").GetComponent(typeof(abilityManager));
 		highscoreManager = (highscoreManager)GameObject.Find ("HighscoreManager").GetComponent(typeof(highscoreManager));
@@ -353,7 +353,7 @@ public class player : MonoBehaviour
 						// Get the rotation target
 						Quaternion rotationTargetQuaternion = Quaternion.Euler (new Vector3 (0.0f, 0.0f, transform.localEulerAngles.z + angleBetween));
 						// Reset time scale to normal
-						transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * Mathf.Max (10.0f, currentSpeed));
+						transform.rotation = Quaternion.Slerp (transform.rotation, rotationTargetQuaternion, Time.deltaTime * Mathf.Min (10.0f, currentSpeed));
 						// Move blob according to joystick input
 						transform.position += viewingDirection * Time.deltaTime * speedFraction * currentSpeed;
 					}

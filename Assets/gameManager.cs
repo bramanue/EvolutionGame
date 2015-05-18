@@ -25,7 +25,9 @@ public class gameManager : MonoBehaviour {
 
 	private abilityModificationPanel abilityModificationPanelScript;
 
-	private GameObject mainMenu;
+	private mainMenu mainMenu;
+
+	private pauseMenu pauseMenu;
 
 	private bool gameStarted;
 
@@ -39,7 +41,8 @@ public class gameManager : MonoBehaviour {
 		abilityManager = (abilityManager)GameObject.Find("AbilityManager").GetComponent (typeof(abilityManager));
 		environmentManager = (environmentManager)GameObject.Find ("EnvironmentManager").GetComponent (typeof(environmentManager));
 		highscoreManager = (highscoreManager)GameObject.Find ("HighscoreManager").GetComponent (typeof(highscoreManager));
-		mainMenu = GameObject.Find ("MainMenu");
+		mainMenu = (mainMenu)GameObject.Find ("MainMenu").GetComponent(typeof(mainMenu));
+		pauseMenu = (pauseMenu)GameObject.Find ("PauseMenu").GetComponent(typeof(pauseMenu));
 
 		// Active Abilities
 		abilityManager.addAbilityToPlayer(player,EAbilityType.ERamAbility,0,4);
@@ -60,41 +63,48 @@ public class gameManager : MonoBehaviour {
 
 		abilityModificationPanelScript = (abilityModificationPanel)GameObject.Find ("AbilityModificationPanel").GetComponent (typeof(abilityModificationPanel));
 	//	abilityModificationPanelScript.gameObject.SetActive (false);
+
+
 		Time.timeScale = 0.0f;
-	//	startGame ();
+
 	}
 	
 	// Update is called once per frame
 	void Update () 
 	{
-		if (player && playerScript.size <= 0) 
+		if(!gameStarted)
 		{
-			print ("Game Over");
+			playerScript.setStunned(9999999999999.0f);
+			highscoreManager.showHighscore (false);
+			abilityModificationPanelScript.gameObject.SetActive (false);
+			Time.timeScale = 0.0f;
+		}
+
+		if (paused) 
+		{
+			playerScript.setStunned(9999999999999.0f);
+			Time.timeScale = 0.0f;
+		}
+
+		if (gameStarted && playerScript.size <= 0) 
+		{
+			mainMenu.showGameOverScreen();
 			Time.timeScale = 0.1f;
 			gameStarted = false;
 			abilityModificationPanelScript.gameObject.SetActive (false);
 		}
 
 		// Pause / resume game upon player input
-		if (Input.GetButtonDown ("Pause"))
+		if (Input.GetButtonDown ("Pause") && gameStarted)
 		{ 
-			// Start game
-			if(!gameStarted){
-				startGame ();
-				gameStarted = true;
-				abilityModificationPanelScript.gameObject.SetActive (true);
-				return;
-			}
-
 			if (paused) {
 				// Continue
-				playerScript.setStunned(0.0f);
-				Time.timeScale = 1.0f;
-				paused = false;
+				continueGame();
 			}
 			else
 			{
 				// Make sure ram ability is stopped
+				pauseMenu.show();
 				playerScript.setStunned(9999999999999.0f);
 				Time.timeScale = 0.0f;
 				paused = true;
@@ -130,22 +140,45 @@ public class gameManager : MonoBehaviour {
 		bossDefeated = false;
 	}
 
-	private void startGame() 
+	public void startGame() 
 	{
+		Debug.Log ("StartGame function called");
 		environmentManager.environmentOccuranceProbability = 0.7f;
 		playerScript.dead = false;
+		playerScript.size = 1.0f;
+		playerScript.gameObject.transform.localScale = new Vector3 (1, 1, 0.5f);
 		highscoreManager.resetHighscore ();
 		highscoreManager.showHighscore (true);
 		enemyManager.nofEnemies = 40;
 		enemyManager.difficulty = 5;
 		enemyManager.resetEnemies ();
-		Time.timeScale = 1.0f;
+
 		// Hide the main menu
-	//	mainMenu.SetActive (false);
-		abilityModificationPanelScript.gameObject.SetActive (false);
+		mainMenu.hide();
+		abilityModificationPanelScript.gameObject.SetActive (true);
+		gameStarted = true;
+
+		continueGame ();
 	}
 
-	private void startTutorial(ETutorialType tutorialType) 
+	public void finishGame()
+	{
+		mainMenu.showMainMenu ();
+		Time.timeScale = 0.0f;
+		abilityModificationPanelScript.gameObject.SetActive (false);
+		playerScript.dead = true;
+		gameStarted = false;
+	}
+
+	public void continueGame() 
+	{
+		paused = false;
+		playerScript.setStunned(0.0f);
+		Time.timeScale = 1.0f;
+		pauseMenu.hide ();
+	}
+
+	public void startTutorial(ETutorialType tutorialType) 
 	{
 		tutorialManager.activateTutorial (tutorialType);
 	}
