@@ -45,7 +45,8 @@ public class runAbility : ability {
 	
 	void Update () 
 	{
-		transform.localRotation = new Quaternion ();
+		transform.Rotate (0, Time.deltaTime*360, 0);
+	//	transform.localRotation = new Quaternion ();
 		transform.localScale = new Vector3(1,1,1);
 		transform.localPosition = new Vector3(0,0,0);
 
