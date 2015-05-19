@@ -39,8 +39,14 @@ public class lavaShieldAbility : ability {
 	
 	// Update is called once per frame
 	void Update () {
-		transform.localPosition = new Vector3 (0, 0, 0);
+
+	}
+
+	public override void resetTransform()
+	{
 		transform.localScale = new Vector3 (1, 1, 1);
+		transform.localPosition = new Vector3 (0, 0, 0);
+		transform.localRotation = new Quaternion ();
 	}
 
 	void LateUpdate() {

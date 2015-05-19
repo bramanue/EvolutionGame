@@ -75,9 +75,6 @@ public class ramAbility : ability {
 	void Update()
 	{
 		cooldownTimer -= Time.deltaTime;
-		transform.localPosition = new Vector3 (0, 0, 0);
-		transform.localScale = new Vector3 (1, 1, 1);
-		transform.rotation = new Quaternion ();
 
 		// Update range and damage
 		damage = internalDamage*parentBlob.transform.localScale.x;
@@ -221,6 +218,13 @@ public class ramAbility : ability {
 		inUse = false;
 	}
 
+	public override void resetTransform()
+	{
+		transform.localScale = new Vector3 (1, 1, 1);
+		transform.localPosition = new Vector3 (0, 0, 0);
+		transform.localRotation = new Quaternion ();
+	}
+
 	// Called whenever the button is down
 	public override bool useAbility() 
 	{
@@ -328,7 +332,7 @@ public class ramAbility : ability {
 								return;
 							}
 						} 
-						playerScript.size -= damage;
+						playerScript.inflictDamage(damage);
 
 					} else {
 						ability shieldInUse = enemyScript.shieldInUse;

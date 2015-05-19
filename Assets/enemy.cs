@@ -189,6 +189,8 @@ public class enemy : MonoBehaviour {
 
 	public bool hostile;
 
+	private dangerLight dangerLight;
+
 
 
 	private lootManager lootManager;
@@ -220,6 +222,8 @@ public class enemy : MonoBehaviour {
 		canMove = true;
 		// Set the original size
 		originalSize = size;
+
+		dangerLight = (dangerLight)this.gameObject.GetComponentInChildren (typeof(dangerLight));
 
 		shrinkSpeed = size;
 
@@ -297,6 +301,12 @@ public class enemy : MonoBehaviour {
 			blinded = false;
 		}
 
+		if (transform.localScale.x > player.transform.localScale.x) {
+			dangerLight.setToAttack ();
+		} else {
+			dangerLight.setToFlee ();
+		}
+
 		// Move and use abilities if not stunned
 		if (!stunned) 
 		{
@@ -308,7 +318,6 @@ public class enemy : MonoBehaviour {
 				// TODO: Camouflage, darkness, scene geometry, etc...
 
 				// Enemy can see player
-			//	Debug.Log ("Player spotted");
 				if (size > playerScript.size) {
 
 					if (!isHuntingPlayer) {
@@ -322,6 +331,7 @@ public class enemy : MonoBehaviour {
 						// TODO aggressivity level -> some may take the pursuit never the less
 						if(playerScript.currentEnvironment == null || hasAbility(playerScript.currentEnvironment.requiredAbility) != -1)
 						{
+							dangerLight.frequency = 1.0f;
 							isHuntingPlayer = true;
 							// Increase awareness
 							setAlertedState();
@@ -336,6 +346,7 @@ public class enemy : MonoBehaviour {
 						}
 					}
 					if(size < 2.0f * playerScript.size) {
+						dangerLight.frequency = 0.5f;
 						isHuntingPlayer = false;
 						isRunningAwayFromPlayer = false;
 						// Proceed with idle behaviour
@@ -345,6 +356,7 @@ public class enemy : MonoBehaviour {
 				else  // Run away
 				{
 					// Enemy is smaller than player -> run away (forever? or get slower by exhaustion?)
+					dangerLight.frequency = 1.0f;
 					isRunningAwayFromPlayer = true;
 					isInAlertedState = false;
 					isHuntingPlayer = false;
@@ -696,6 +708,8 @@ public class enemy : MonoBehaviour {
 		// Reduce the blob's speed for idle behaviour
 		currentSpeed = (baseVelocity + runVelocityBoost)*idleSpeedReduction*environmentalSlowDown;
 
+		dangerLight.frequency = 0.5f;
+
 		// If enemy has walked/turned close to a dangerous environment, then turn away from this object
 		if (environmentProximityData != null  || currentEnvironment != null) {
 			bool carryOnAsUsual = avoidEnvironmentalHazard();
@@ -860,6 +874,12 @@ public class enemy : MonoBehaviour {
 		dead = false;
 		totalDamageByPlayer = 0;
 		originalSize = size;
+		// Make sure ability meshes have the correct size
+		for (int i = 0; i < 8; i++) {
+			if(abilities[i]) {
+				abilities[i].resetTransform();
+			}
+		}
 	}
 
 	private void useRunning() {

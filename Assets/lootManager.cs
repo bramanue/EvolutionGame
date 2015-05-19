@@ -137,19 +137,26 @@ public class lootManager : MonoBehaviour {
 			float x_parabelSpace = Mathf.Sqrt (x*x + y*y);
 			float z = -Mathf.Max (-Mathf.Pow(x_parabelSpace - halfDistance,2.0f) + halfDistanceSquared,0);
 
+			// Check for abortion
+			if(lootObjects[index] == null)
+				break;
+
 			// Change position and rotation
 			lootObjects[index].transform.position = from + new Vector3(x,y,z);
 			lootObjects[index].transform.Rotate(randomRotationAxis,totalDegreesOfRotationPerSecond*Time.deltaTime*Mathf.Sqrt(flightTime-time));
-		//	Debug.Log ("time = " + time + " Distance = " + 2.0f*halfDistance + " x2_parabelSpace = " + x_parabelSpace + "vector = " + new Vector3(x,y,z) + " Rotation = " + lootObjects[index].transform.rotation);
 			yield return null;
 		}
-		// Make sure the loot is really on zero level
-		Vector3 position = lootObjects [index].transform.position;
-		position.z = 0;
-		lootObjects [index].transform.position = position;
 
-		// Mark the loot as ready to be looted
-		((loot)lootObjects [index].GetComponent (typeof(loot))).readyToEat = true;
+		if (lootObjects [index]) {
+
+			// Make sure the loot is really on zero level
+			Vector3 position = lootObjects [index].transform.position;
+			position.z = 0;
+			lootObjects [index].transform.position = position;
+
+			// Mark the loot as ready to be looted
+			((loot)lootObjects [index].GetComponent (typeof(loot))).readyToEat = true;
+		}
 	}
 
 

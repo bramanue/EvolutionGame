@@ -160,7 +160,7 @@ public class mouth : MonoBehaviour {
 		}
 		if (other.gameObject == player) { 
 			if (parentEnemyScript.isHuntingPlayer) {
-				playerScript.inflictDamage(0.02f*parentBlob.transform.localScale.x/other.gameObject.transform.localScale.x);
+				playerScript.inflictDamage(0.05f*parentBlob.transform.localScale.x/other.gameObject.transform.localScale.x);
 			}
 			return;
 		} 

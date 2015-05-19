@@ -82,6 +82,13 @@ public class ability : MonoBehaviour {
 		return 0.0f;
 	}
 
+	public virtual void resetTransform()
+	{
+		transform.localScale = new Vector3 (1, 1, 1);
+		transform.localPosition = new Vector3 (0, 0, 0);
+		transform.localRotation = new Quaternion ();
+	}
+
 	// Needs to be called, when this game object is handed over to a new blob
 	public void updateParent()
 	{

@@ -102,6 +102,8 @@ public class abilityModificationPanel : MonoBehaviour {
 
 		fadeAnimationId = -1;
 
+		resetPanel ();
+
 	}
 	
 	// Update is called once per frame
@@ -208,6 +210,21 @@ public class abilityModificationPanel : MonoBehaviour {
 
 	public void hideTitle() {
 		titleBox.CrossFadeAlpha (0, 0.2f, true);
+	}
+
+	public void resetPanel()
+	{
+		// Set all button symbols transparent
+		for (int i = 0; i < 4; i++) {
+			((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.3f,0.1f,true);
+			buttonTextBoxes [i].text = "";
+		}
+		for (int i = 0; i < 2; i++) {
+			((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.3f,0.1f,true);
+			triggerTextBoxes [i].text = "";
+		}
+
+		// TODO remove ability symbols
 	}
 
 }

@@ -146,7 +146,6 @@ public class enemyManager : MonoBehaviour {
 		enemyScript.cosViewingAngle = Random.Range(-0.5f,0.0f) + difficulty*0.1f;
 		enemyScript.baseVelocity = Random.Range(4.0f,6.0f);
 
-		enemyScript.resetAllStates();
 
 		// Calculate how many abilities this enemy should get
 		int maxNofAbilities = playerScript.getNofAbilities() + 1;
@@ -253,6 +252,8 @@ public class enemyManager : MonoBehaviour {
 		default:
 			break;
 		}
+
+		enemyScript.resetAllStates();
 
 		scores [index] = score * size;
 		Debug.Log ("Score for enemy " + index + " = " + score);

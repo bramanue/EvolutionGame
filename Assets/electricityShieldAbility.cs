@@ -16,6 +16,7 @@ public class electricityShieldAbility : ability {
 	private bool deactivateInNextFrame;
 
 	public Material electricityShieldMaterial;
+
 	
 	// Use this for initialization
 	void Start () {
@@ -39,8 +40,14 @@ public class electricityShieldAbility : ability {
 	
 	// Update is called once per frame
 	void Update () {
-		transform.localPosition = new Vector3 (0, 0, 0);
+
+	}
+
+	public override void resetTransform()
+	{
 		transform.localScale = new Vector3 (1, 1, 1);
+		transform.localPosition = new Vector3 (0, 0, 0);
+		transform.localRotation = new Quaternion ();
 	}
 
 	void LateUpdate() 
@@ -71,11 +78,13 @@ public class electricityShieldAbility : ability {
 			
 			// Reset to default sprite if no other shield is active
 			if(isPlayer) {
-				if(parentPlayerScript.shieldInUse == null)
+				if(parentPlayerScript.shieldInUse == null) {
 					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentPlayerScript.defaultMaterial;
+				}
 			} else {
-				if(parentEnemyScript.shieldInUse == null)
+				if(parentEnemyScript.shieldInUse == null) {
 					((MeshRenderer)parentBlob.GetComponent<MeshRenderer>()).material = parentEnemyScript.defaultMaterial;
+				}
 			}
 		}
 		// Delay the deactivation (i.e. inUse = false) by one frame due to update order. Collision triggers are called before the update and therefore inUse would always be false

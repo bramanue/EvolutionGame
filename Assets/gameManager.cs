@@ -23,6 +23,8 @@ public class gameManager : MonoBehaviour {
 
 	private float timer;
 
+	private float gameTimer;
+
 	private bool bossDefeated;
 
 	private abilityModificationPanel abilityModificationPanelScript;
@@ -34,6 +36,10 @@ public class gameManager : MonoBehaviour {
 	private bool gameStarted;
 
 	private GUIStyle textStyle = new GUIStyle();
+
+	private Light directionalLight;
+
+	public float dayLength = 180f;
 	
 	// Use this for initialization
 	void Start () 
@@ -46,6 +52,7 @@ public class gameManager : MonoBehaviour {
 		highscoreManager = (highscoreManager)GameObject.Find ("HighscoreManager").GetComponent (typeof(highscoreManager));
 		mainMenu = (mainMenu)GameObject.Find ("MainMenu").GetComponent(typeof(mainMenu));
 		pauseMenu = (pauseMenu)GameObject.Find ("PauseMenu").GetComponent(typeof(pauseMenu));
+		directionalLight = (Light)GameObject.Find ("DirectionalLight").GetComponent<Light>();
 
 		bossDefeated = false;
 		chooseNextEnvironmentalChange ();
@@ -72,6 +79,19 @@ public class gameManager : MonoBehaviour {
 			highscoreManager.showHighscore (false);
 			abilityModificationPanelScript.gameObject.SetActive (false);
 			Time.timeScale = 0.4f;
+		}
+
+	/*	float anglesPerSecond = 180.0f / dayLength;
+		directionalLight.transform.Rotate(new Vector3(1,0,0),Time.deltaTime*anglesPerSecond);
+		if (directionalLight.transform.rotation.eulerAngles.x > 90) {
+			float angle = (360f-directionalLight.transform.rotation.eulerAngles.x);
+			directionalLight.intensity = angle/60f + 0.3f;
+		}else{
+			directionalLight.intensity = (directionalLight.transform.rotation.eulerAngles.x)/60f + 0.3f;
+		}
+*/
+		if (gameStarted) {
+			gameTimer += Time.deltaTime;
 		}
 
 		if (paused) 
@@ -145,7 +165,7 @@ public class gameManager : MonoBehaviour {
 
 		// Active Abilities
 	//	abilityManager.addAbilityToPlayer(player,EAbilityType.ERamAbility,0,4);
-	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EBiteAbility,1,1);
+		abilityManager.addAbilityToPlayer(player,EAbilityType.EBiteAbility,1,1);
 		// Shield abilities
 	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EThornShieldAbility,4,1);
 	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EElectricityShieldAbility,5,1);
@@ -155,15 +175,20 @@ public class gameManager : MonoBehaviour {
 
 		highscoreManager.resetHighscore ();
 		highscoreManager.showHighscore (true);
-		enemyManager.nofEnemies = 40;
+		enemyManager.nofEnemies = 30;
 		enemyManager.difficulty = 5;
 		enemyManager.resetEnemies ();
 		enemyManager.setEnemiesHostile (true);
 
+				gameTimer = 0.0f;
+
 		lootManager.removeAndDestroyAllLoot ();
+
+		((BloomPro)GameObject.Find ("MainCamera").GetComponent (typeof(BloomPro))).ChromaticAberrationOffset = 1.0f;
 
 		// Hide the main menu
 		mainMenu.hide();
+		abilityModificationPanelScript.resetPanel ();
 		abilityModificationPanelScript.gameObject.SetActive (true);
 		gameStarted = true;
 
@@ -193,6 +218,7 @@ public class gameManager : MonoBehaviour {
 
 	public void startTutorial(ETutorialType tutorialType) 
 	{
+		abilityModificationPanelScript.resetPanel ();
 		tutorialManager.activateTutorial (tutorialType);
 	}
 

@@ -32,6 +32,7 @@ public class biteAbility : ability {
 		abilitySuperClassEnum = EAbilityClass.EActiveAbility;
 
 		// Put ability on blob
+		transform.localScale = new Vector3 (1, 1, 1);
 		transform.localPosition = new Vector3 (0, 0, 0);
 	}
 	
@@ -42,17 +43,26 @@ public class biteAbility : ability {
 
 	void LateUpdate()
 	{
-		transform.localRotation = new Quaternion (0, 0, 0, 1);
-		transform.localScale = new Vector3(1,1,1);
-		transform.localPosition = new Vector3(0,0,0);
 		otherBlob = null;
 		blobInReach = false;
+	}
+
+	public override void resetTransform()
+	{
+		transform.localScale = new Vector3 (1, 1, 1);
+		transform.localPosition = new Vector3 (0, 0, 0);
+		transform.localRotation = new Quaternion ();
 	}
 	
 	public override bool useAbility() 
 	{
+
 		// TODO Cast effects / sounds
-		if (cooldownTimer <= 0.0f) {
+		if (cooldownTimer <= 0.0f) 
+		{
+			StartCoroutine (stingAnimation ());
+			cooldownTimer = 0.4f;
+
 			if(blobInReach) {
 				if(isPlayer) {
 					enemy enemyScript = (enemy)otherBlob.GetComponent (typeof(enemy));
@@ -71,7 +81,7 @@ public class biteAbility : ability {
 					player playerScript = (player)otherBlob.GetComponent (typeof(player));
 					float oldSize = playerScript.size;
 					damage = baseDamage + level * 0.1f;
-					playerScript.size -= damage;
+					playerScript.inflictDamage(damage);
 					// Half of the inflicted damage is added to the enemy's size
 					parentEnemyScript.size += 0.25f*Mathf.Min (damage, oldSize);
 					// Restart cooldown timer
@@ -89,6 +99,23 @@ public class biteAbility : ability {
 		{
 			return false;
 		}
+	}
+
+	IEnumerator stingAnimation() 
+	{
+		float distancePerSecond = 0.5f / 0.2f;
+		for (float time = 0f; time < 0.2f; time += Time.deltaTime) {
+			float y = Mathf.Min (0.5f, transform.localPosition.y + Time.deltaTime*distancePerSecond);
+			transform.localPosition = new Vector3(0,y,0);
+			yield return null;
+		}
+
+		for (float time = 0f; time < 0.2f; time += Time.deltaTime) {
+			float y = Mathf.Max (0, transform.localPosition.y - Time.deltaTime*distancePerSecond);
+			transform.localPosition = new Vector3(0,y,0);
+			yield return null;
+		}
+		transform.localPosition = new Vector3(0,0,0);
 	}
 
 	public override int increaseLevel(int x)

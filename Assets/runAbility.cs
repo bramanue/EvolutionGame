@@ -46,9 +46,6 @@ public class runAbility : ability {
 	void Update () 
 	{
 		transform.Rotate (0, Time.deltaTime*360, 0);
-	//	transform.localRotation = new Quaternion ();
-		transform.localScale = new Vector3(1,1,1);
-		transform.localPosition = new Vector3(0,0,0);
 
 		maxSpeed = 0.5f*level;
 
@@ -62,6 +59,13 @@ public class runAbility : ability {
 			parentEnemyScript.runVelocityBoost = currentSpeed;
 		inUse = false;
 
+	}
+
+	public override void resetTransform()
+	{
+		transform.localScale = new Vector3 (1, 1, 1);
+		transform.localPosition = new Vector3 (0, 0, 0);
+		transform.localRotation = new Quaternion ();
 	}
 
 	// Increases the level of this ability by x and returns the effective change in levels

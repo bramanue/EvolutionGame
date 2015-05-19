@@ -103,6 +103,13 @@ public class player : MonoBehaviour
 
 	private bool waitedOneFrame = false;
 
+	private BloomPro videoFilter;
+
+	private float damageTimer;
+
+	private float currentDamageOffset = 0.0f;
+
+
 	// Use this for initialization
 	void Start()
 	{
@@ -116,7 +123,9 @@ public class player : MonoBehaviour
 		abilityModificationScript = (abilityModificationPanel)(GameObject.Find("AbilityModificationPanel").GetComponent(typeof(abilityModificationPanel)));
 		abilityManager = (abilityManager)GameObject.Find ("AbilityManager").GetComponent(typeof(abilityManager));
 		highscoreManager = (highscoreManager)GameObject.Find ("HighscoreManager").GetComponent(typeof(highscoreManager));
-
+		GameObject cam = GameObject.Find ("MainCamera");
+		videoFilter = (BloomPro)GameObject.Find ("MainCamera").GetComponent (typeof(BloomPro));
+		videoFilter.ChromaticAberrationOffset = 1.0f;
 		previousSize = size;
 	}
 	
@@ -276,7 +285,8 @@ public class player : MonoBehaviour
 			}
 
 			// Get the viewing range
-			abilities [7].useAbility ();
+			if(abilities[7])
+				abilities [7].useAbility ();
 			currentViewingRange = baseViewingRange + viewingRangeBoost;
 			// Get the viewing direction
 			viewingDirection = transform.up;
@@ -366,6 +376,26 @@ public class player : MonoBehaviour
 			transform.position += environmentalPushBack;
 			environmentalPushBack = new Vector3 (0, 0, 0);
 
+			float totalDamage = environmentalDamage + abilityDamage;
+			if(totalDamage > 0)
+			{
+				float factor = Mathf.Min (2.0f,totalDamage/size);
+				currentDamageOffset = 1.5f*factor*10f;
+				StartCoroutine(visualizeDamage(Mathf.Max (factor,0.3f),currentDamageOffset));
+				damageTimer = Mathf.Max (factor,0.3f);
+			}
+			else
+			{
+				if(damageTimer > 0)
+					damageTimer -= Time.deltaTime;
+				else
+				{
+					videoFilter.ChromaticAberrationOffset = Mathf.Max (1.0f, videoFilter.ChromaticAberrationOffset - 3.0f*Time.deltaTime);
+					videoFilter.BloomParams.BloomIntensity = Mathf.Max (1.5f, videoFilter.BloomParams.BloomIntensity - 3.0f*Time.deltaTime);
+					videoFilter.BloomParams.BloomThreshold = Mathf.Min (0.8f, videoFilter.BloomParams.BloomThreshold + 1.2f*Time.deltaTime);
+				}
+			}
+
 			// Inflict environmental damage
 			size -= environmentalDamage;
 			// Reset it to 0 for the next frame
@@ -387,12 +417,27 @@ public class player : MonoBehaviour
 				abilities [7].useAbility ();
 			}
 			currentViewingRange = baseViewingRange + viewingRangeBoost;
+
+			videoFilter.ChromaticAberrationOffset = Mathf.Max (1.0f, videoFilter.ChromaticAberrationOffset - 3.0f*Time.deltaTime);
+			videoFilter.BloomParams.BloomIntensity = Mathf.Max (1.5f, videoFilter.BloomParams.BloomIntensity - 3.0f*Time.deltaTime);
+			videoFilter.BloomParams.BloomThreshold = Mathf.Min (0.8f, videoFilter.BloomParams.BloomThreshold + 1.2f*Time.deltaTime);
 		}
 
 		// Change appearance according to current size
 		grow();
 	}
 
+	IEnumerator visualizeDamage(float duration, float offset)
+	{
+		float offsetPerSecond = offset / duration;
+		for (float time = 0; time < duration; time += Time.deltaTime) 
+		{
+			videoFilter.ChromaticAberrationOffset = Mathf.Min (2.5f, videoFilter.ChromaticAberrationOffset + Time.deltaTime*offsetPerSecond);
+			videoFilter.BloomParams.BloomIntensity = Mathf.Min (3.0f, videoFilter.BloomParams.BloomIntensity + Time.deltaTime*offsetPerSecond);
+			videoFilter.BloomParams.BloomThreshold = Mathf.Max (0.0f, videoFilter.BloomParams.BloomThreshold - Time.deltaTime*offsetPerSecond);
+			yield return null;
+		}
+	}
 
 	void LateUpdate() {
 		if (size <= 0) {
@@ -401,6 +446,8 @@ public class player : MonoBehaviour
 		}
 		// Reset the current environment
 		currentEnvironment = null;
+		// Make sure new bloom parameters are applied
+		videoFilter.Init( false );
 	}
 
 
@@ -455,6 +502,7 @@ public class player : MonoBehaviour
 		}
 		abilityObjects [slot] = ability;
 		abilities[slot] = (ability)abilityObjects [slot].GetComponent (typeof(ability));
+		abilities [slot].resetTransform ();
 	}
 
 	public void improveAbility(int slot, int levelUp) 
