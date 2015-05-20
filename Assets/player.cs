@@ -175,7 +175,7 @@ public class player : MonoBehaviour
 						if (Input.GetButtonDown ("Ability0")) {
 							if (abilities [0] != null && !selectionConfirmed [0]) {
 								selectionConfirmed [0] = true;
-								abilityModificationScript.displayMessage ("Please press \"A\" again to confirm \n Press \"LB\" or \"RB\" to continue \n Press one of the other buttons to map the new ability to them");
+								abilityModificationScript.displayMessage ("Please press \"A\" again to confirm \n" + abilityName + "\n" + nearbyAbilityLoot.abilityDescription +  "\nPress \"LB\" or \"RB\" to continue \n Press one of the other buttons to map the new ability to them");
 							} else {
 								abilityManager.addAbilityToPlayer (this.gameObject, nearbyAbilityLoot.abilityType, 0, 1);
 								Debug.Log ("You gained a new ability : " + abilities [0].abilityName + " at level " + abilities [0].level);
@@ -187,12 +187,11 @@ public class player : MonoBehaviour
 						} else if (Input.GetButtonDown ("Ability1")) {
 							if (abilities [1] != null && !selectionConfirmed [1]) {
 								selectionConfirmed [1] = true;
-								abilityModificationScript.displayMessage ("Please press \"B\" again to confirm \n Press \"LB\" or \"RB\" to continue \n Press one of the other buttons to map the new ability to them.");
+								abilityModificationScript.displayMessage ("Please press \"B\" again to confirm \n" + abilityName + "\n" + nearbyAbilityLoot.abilityDescription +  "\n Press \"LB\" or \"RB\" to continue \n Press one of the other buttons to map the new ability to them.");
 							} else {
 								abilityManager.addAbilityToPlayer (this.gameObject, nearbyAbilityLoot.abilityType, 1, 1);
 								Debug.Log ("You gained a new ability : " + abilities [1].abilityName + " at level " + abilities [1].level);
 								abilityModificationScript.hidePanel ();
-								//	abilityModificationScript.highlightButtonAndHide(abilities[1].abilityName, EButtonType.EBButton);
 								selectionConfirmed [1] = false;
 							}
 							// Reset the other selections
@@ -200,12 +199,11 @@ public class player : MonoBehaviour
 						} else if (Input.GetButtonDown ("Ability2")) {
 							if (abilities [2] != null && !selectionConfirmed [2]) {
 								selectionConfirmed [2] = true;
-								abilityModificationScript.displayMessage ("Please press \"X\" again to confirm \n Press \"LB\" or \"RB\" to continue \n Press one of the other buttons to map the new ability to them.");
+								abilityModificationScript.displayMessage ("Please press \"X\" again to confirm \n" + abilityName + "\n" + nearbyAbilityLoot.abilityDescription +  "\n Press \"LB\" or \"RB\" to continue \n Press one of the other buttons to map the new ability to them.");
 							} else {
 								abilityManager.addAbilityToPlayer (this.gameObject, nearbyAbilityLoot.abilityType, 2, 1);
 								Debug.Log ("You gained a new ability : " + abilities [2].abilityName + " at level " + abilities [2].level);
 								abilityModificationScript.hidePanel ();
-								//	abilityModificationScript.highlightButtonAndHide(abilities[2].abilityName, EButtonType.EXButton);
 								selectionConfirmed [2] = false;
 							}
 							// Reset the other selections
@@ -213,12 +211,11 @@ public class player : MonoBehaviour
 						} else if (Input.GetButtonDown ("Ability3")) {
 							if (abilities [3] != null && !selectionConfirmed [3]) {
 								selectionConfirmed [3] = true;
-								abilityModificationScript.displayMessage ("Please press \"Y\" again to confirm \n Press \"LB\" or \"RB\" to continue \n Press one of the other buttons to map the new ability to them");
+								abilityModificationScript.displayMessage ("Please press \"Y\" again to confirm \n" + abilityName + "\n" + nearbyAbilityLoot.abilityDescription +  "\n Press \"LB\" or \"RB\" to continue \n Press one of the other buttons to map the new ability to them");
 							} else {
 								abilityManager.addAbilityToPlayer (this.gameObject, nearbyAbilityLoot.abilityType, 3, 1);
 								Debug.Log ("You gained a new ability : " + abilities [3].abilityName + " at level " + abilities [3].level);
 								abilityModificationScript.hidePanel ();
-								//	abilityModificationScript.highlightButtonAndHide(abilities[3].abilityName, EButtonType.EYButton);
 								selectionConfirmed [3] = false;
 							}
 							// Reset the other selections
@@ -230,12 +227,11 @@ public class player : MonoBehaviour
 							if (abilities [4] != null && !selectionConfirmed [0]) {
 								selectionConfirmed [0] = true;
 								triggerReleased [0] = false;
-								abilityModificationScript.displayMessage ("Please press \"RT\" again to confirm \n Press \"LB\" or \"RB\" to continue \n Press the LT to map the new ability to the other trigger");
+								abilityModificationScript.displayMessage ("Please press \"RT\" again to confirm \n" + abilityName + "\n" + nearbyAbilityLoot.abilityDescription +  "\n Press \"LB\" or \"RB\" to continue \n Press the LT to map the new ability to the other trigger");
 							} else if (abilities [4] == null || triggerReleased [0]) {
 								abilityManager.addAbilityToPlayer (this.gameObject, nearbyAbilityLoot.abilityType, 4, 1);
 								Debug.Log ("You gained a new ability : " + abilities [4].abilityName + " at level " + abilities [4].level);
 								abilityModificationScript.hidePanel ();
-								//	abilityModificationScript.highlightTriggerAndHide(abilities[4].abilityName, EButtonType.ERightTrigger);
 								selectionConfirmed [0] = false;
 							}
 							// Reset the other selections
@@ -245,12 +241,11 @@ public class player : MonoBehaviour
 							if (abilities [5] != null && !selectionConfirmed [1]) {
 								selectionConfirmed [1] = true;
 								triggerReleased [1] = false;
-								abilityModificationScript.displayMessage ("Please press \"LT\" again to confirm \n Press \"LB\" or \"RB\" to continue \n Press RT to map the new ability to the other trigger.");
+								abilityModificationScript.displayMessage ("Please press \"LT\" again to confirm \n" + abilityName + "\n" + nearbyAbilityLoot.abilityDescription +  "\n Press \"LB\" or \"RB\" to continue \n Press RT to map the new ability to the other trigger.");
 							} else if (abilities [5] == null || triggerReleased [1]) {
 								abilityManager.addAbilityToPlayer (this.gameObject, nearbyAbilityLoot.abilityType, 5, 1);
 								Debug.Log ("You gained a new ability : " + abilities [5].abilityName + " at level " + abilities [5].level);
 								abilityModificationScript.hidePanel ();
-								//	abilityModificationScript.highlightTriggerAndHide(abilities[1].abilityName, EButtonType.ELeftTrigger);
 								selectionConfirmed [1] = false;
 							}
 							selectionConfirmed [0] = false;
@@ -359,7 +354,8 @@ public class player : MonoBehaviour
 					// If the player is moving
 					if (speedFraction > 0) {
 						// Use the run ability to become faster
-						abilities [6].useAbility ();
+						if(abilities[6])
+							abilities [6].useAbility ();
 						// Calculate the angle to rotate about
 						float angleBetween = Mathf.Sign (Vector3.Cross (viewingDirection, targetDirection).z) * Vector3.Angle (viewingDirection, targetDirection);
 						// Get the rotation target

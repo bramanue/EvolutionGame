@@ -110,7 +110,7 @@ public class glowingShieldAbility : ability {
 				enemyScript.setAlertState();
 			}*/
 
-			if(enemyScript.shieldInUse == null || enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EGlowingShieldAbility )
+			if(enemyScript.shieldInUse == null/* || enemyScript.shieldInUse.getAbilityEnum() != EAbilityType.EGlowingShieldAbility*/ )
 			{
 				// TODO Only if it is dark and if enemy is looking into this direction
 				// TODO Cast effect
@@ -127,7 +127,7 @@ public class glowingShieldAbility : ability {
 				playerScript.setBlinded(blindnessDuration);
 			}*/
 
-			if(playerScript.shieldInUse == null || playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EGlowingShieldAbility )
+			if(playerScript.shieldInUse == null /*|| playerScript.shieldInUse.getAbilityEnum() != EAbilityType.EGlowingShieldAbility*/ )
 			{
 				// TODO Only if it is dark and if player is looking into this direction
 				// TODO Cast effect
@@ -165,12 +165,12 @@ public class glowingShieldAbility : ability {
 			return 0.0f;
 		
 		// If we are in the water, return a high probability
-		if (parentEnemyScript.currentEnvironment!= null && parentEnemyScript.currentEnvironment.requiredAbility == EAbilityType.EGlowingShieldAbility) {
+		if (parentEnemyScript.currentEnvironment!= null /*&& parentEnemyScript.currentEnvironment.requiredAbility == EAbilityType.EGlowingShieldAbility*/) {
 			return 0.9f;
 		}
 		
 		// If we are close to the water, also return a high probability
-		if (parentEnemyScript.environmentProximityData != null && parentEnemyScript.environmentProximityData.requiredAbility == EAbilityType.EGlowingShieldAbility) {
+		if (parentEnemyScript.environmentProximityData != null/* && parentEnemyScript.environmentProximityData.requiredAbility == EAbilityType.EGlowingShieldAbility*/) {
 			return 0.7f;
 		}
 		
@@ -189,7 +189,8 @@ public class glowingShieldAbility : ability {
 	
 	public override EAbilityType getAbilityEnum()
 	{
-		return EAbilityType.EGlowingShieldAbility;
+		return EAbilityType.EEmptyAbility;
+	//	return EAbilityType.EGlowingShieldAbility;
 	}
 	
 }

@@ -11,14 +11,16 @@ public enum EAbilityType {
 	// Active abilities
 	ERamAbility,
 	EBiteAbility,
-	EJumpAbility,
+//	EJumpAbility,
+//	EBombAbility,
+//	EShootAbility,
 	// Shield abilities
 	EIceShieldAbility,
 	ELavaShieldAbility,
 	EDustShieldAbility,
 	EThornShieldAbility,
 	EWaterShieldAbility,
-	EGlowingShieldAbility,
+//	EGlowingShieldAbility,
 	EElectricityShieldAbility
 }
 
@@ -58,6 +60,22 @@ public class abilityManager : MonoBehaviour {
 
 	public Dictionary<EAbilityType, float> abilityMaxScores = new Dictionary<EAbilityType, float>();
 
+	private List<EAbilityType> availableAbilities = new List<EAbilityType>();
+
+	private List<EAbilityType> availableActiveAbilities = new List<EAbilityType>();
+
+	private List<EAbilityType> availablePassiveAbilities = new List<EAbilityType>();
+
+	private List<EAbilityType> availableShieldAbilities = new List<EAbilityType>();
+
+	private int nofAvailableActiveAbilities;
+
+	private int nofAvailablePassiveAbilities;
+
+	private int nofAvailableShieldAbilities;
+
+	private int nofAvailableAbilities;
+
 
 	// Use this for initialization
 	void Start () {
@@ -65,13 +83,13 @@ public class abilityManager : MonoBehaviour {
 		abilityMaxScores.Add (EAbilityType.EViewAbility, 1000);
 		abilityMaxScores.Add (EAbilityType.ERamAbility, 2000);
 		abilityMaxScores.Add (EAbilityType.EBiteAbility, 2000);
-		abilityMaxScores.Add (EAbilityType.EJumpAbility, 100);
+	//	abilityMaxScores.Add (EAbilityType.EJumpAbility, 100);
 		abilityMaxScores.Add (EAbilityType.EIceShieldAbility, 2000);
 		abilityMaxScores.Add (EAbilityType.ELavaShieldAbility, 2000);
 		abilityMaxScores.Add (EAbilityType.EDustShieldAbility, 3000);
 		abilityMaxScores.Add (EAbilityType.EThornShieldAbility, 2000);
 		abilityMaxScores.Add (EAbilityType.EWaterShieldAbility, 1000);
-		abilityMaxScores.Add (EAbilityType.EGlowingShieldAbility, 1000);
+	//	abilityMaxScores.Add (EAbilityType.EGlowingShieldAbility, 1000);
 		abilityMaxScores.Add (EAbilityType.EElectricityShieldAbility, 300);
 	}
 	
@@ -105,8 +123,8 @@ public class abilityManager : MonoBehaviour {
 			return (GameObject)GameObject.Instantiate(thornShieldAbility);
 		case EAbilityType.EWaterShieldAbility :
 			return (GameObject)GameObject.Instantiate(waterShieldAbility);
-		case EAbilityType.EGlowingShieldAbility :
-			return (GameObject)GameObject.Instantiate(glowingShieldAbility);
+	//	case EAbilityType.EGlowingShieldAbility :
+	//		return (GameObject)GameObject.Instantiate(glowingShieldAbility);
 		case EAbilityType.EElectricityShieldAbility :
 			return (GameObject)GameObject.Instantiate(electricityShieldAbility);
 		default :
@@ -116,6 +134,9 @@ public class abilityManager : MonoBehaviour {
 
 	public void addAbilityToPlayer(GameObject parent, EAbilityType abilityType, int slot, int level)
 	{
+		if (abilityType == EAbilityType.EEmptyAbility)
+			return;
+
 		// Get the corresponding prefab
 		GameObject abilityObject = getPrefab(abilityType);
 
@@ -124,21 +145,30 @@ public class abilityManager : MonoBehaviour {
 			return;
 		}
 
+		// Passive abilities have a specific predefined index
+		if (EAbilityType.ERunAbility == abilityType)
+			slot = 6;
+		else if (EAbilityType.EViewAbility == abilityType)
+			slot = 7;
+
+		ability abilityScript = (ability)abilityObject.GetComponent(typeof(ability));
 		player playerScript = (player)parent.GetComponent(typeof(player));
 		int existingSlot = playerScript.hasAbility (abilityType);
-		if (existingSlot != -1) {
-			playerScript.addAbility (abilityObject, existingSlot);
-		} else {
-			playerScript.addAbility (abilityObject, slot);
-		}
 
-		abilityObject.transform.parent = parent.transform;
-		ability abilityScript = (ability)abilityObject.GetComponent(typeof(ability));
-		abilityScript.level = level;
+		if (existingSlot != -1) {
+			playerScript.improveAbility(existingSlot, 1);
+		} else {
+			abilityObject.transform.parent = parent.transform;
+			playerScript.addAbility (abilityObject, slot);
+			abilityScript.level = level;
+		}
 	}
 
 	public float addAbilityToEnemy(GameObject parent, EAbilityType abilityType, int slot, int level)
 	{
+		if (abilityType == EAbilityType.EEmptyAbility)
+			return 0;
+
 		enemy enemyScript = (enemy)parent.GetComponent(typeof(enemy));
 		// Check whether enemy already has this ability
 		int existingSlot = enemyScript.hasAbility (abilityType);
@@ -165,6 +195,8 @@ public class abilityManager : MonoBehaviour {
 			slot = 7;
 
 		enemyScript.addAbility(abilityObject, slot);
+
+		// Define score for defeating enemy with this ability
 		float score;
 		abilityMaxScores.TryGetValue (abilityType, out score);
 		return score*(float)(level/abilityScript.maxLevel);
@@ -172,89 +204,182 @@ public class abilityManager : MonoBehaviour {
 
 	public EAbilityType getRandomPassiveAbility()
 	{
-		int index = Random.Range (0, 2);
-		Debug.Log (index);
-		switch (index) {
-		// Passive abilities
-		case 0:
-			return EAbilityType.ERunAbility;
-		case 1:
-			return EAbilityType.EViewAbility;
-		default :
+		if (nofAvailablePassiveAbilities == 0)
 			return EAbilityType.EEmptyAbility;
-		}
+		
+		int index = Random.Range (0, nofAvailablePassiveAbilities);
+		return availablePassiveAbilities [index];
 	}
 
 	public EAbilityType getRandomActiveAbility()
 	{
-		int index = Random.Range (0, 2);
-		
-		switch (index) {
-		case 0:
-			return EAbilityType.ERamAbility;
-		case 1:
-			return EAbilityType.EBiteAbility;
-		default :
+		if (nofAvailableActiveAbilities == 0)
 			return EAbilityType.EEmptyAbility;
-		}
+		
+		int index = Random.Range (0, nofAvailableActiveAbilities);
+		return availableActiveAbilities [index];
 	}
 
 	public EAbilityType getRandomShieldAbility()
 	{
-		int index = Random.Range (0, 7);
-		
-		switch (index) {
-		case 0 :
-			return EAbilityType.EIceShieldAbility;
-		case 1 :
-			return EAbilityType.ELavaShieldAbility;
-		case 2 :
-			return EAbilityType.EDustShieldAbility;
-		case 3 :
-			return EAbilityType.EThornShieldAbility;
-		case 4 :
-			return EAbilityType.EWaterShieldAbility;
-		case 5 :
-			return EAbilityType.EGlowingShieldAbility;
-		case 6 :
-			return EAbilityType.EElectricityShieldAbility;
-		default :
+		if (nofAvailableShieldAbilities == 0)
 			return EAbilityType.EEmptyAbility;
-		}
+		
+		int index = Random.Range (0, nofAvailableShieldAbilities);
+		return availableShieldAbilities [index];
 	}
 
 	public EAbilityType getRandomAbilityType() 
 	{
-		int index = Random.Range (0, 11);
+		if (nofAvailableAbilities == 0)
+			return EAbilityType.EEmptyAbility;
+
+		int index = Random.Range (0, nofAvailableAbilities);
+		return availableAbilities [index];
+	}
+
+	public void addAbilityToTheGame(EAbilityType abilityType, EAbilityClass abilityClass) 
+	{
+		if(!availableAbilities.Contains(abilityType)) 
+		{
+			nofAvailableAbilities++;
+			availableAbilities.Add (abilityType);
+
+			switch (abilityClass) {
+			case EAbilityClass.EActiveAbility :
+				availableActiveAbilities.Add (abilityType);
+				nofAvailableActiveAbilities++;
+				break;
+			case EAbilityClass.EPassiveAbility :
+				availablePassiveAbilities.Add (abilityType);
+				nofAvailablePassiveAbilities++;
+				break;
+			case EAbilityClass.EShieldAbility :
+				availableShieldAbilities.Add (abilityType);
+				nofAvailableShieldAbilities++;
+				break;
+			};
+		}
+	}
+
+	public void addRandomAbilityToTheGame() {
+		int index = Random.Range (0, 10);
+
+		switch (index) {
+			// Passive abilities
+		case 0 :
+			addAbilityToTheGame(EAbilityType.ERunAbility, EAbilityClass.EPassiveAbility);
+			break;
+		case 1 :
+			addAbilityToTheGame(EAbilityType.EViewAbility, EAbilityClass.EPassiveAbility);
+			break;
+			// Active abilities
+		case 2 :
+			addAbilityToTheGame(EAbilityType.ERamAbility, EAbilityClass.EActiveAbility);
+			break;
+		case 3 :
+			addAbilityToTheGame(EAbilityType.EBiteAbility, EAbilityClass.EActiveAbility);
+			break;
+			// Shield abilities
+		case 4 :
+			addAbilityToTheGame(EAbilityType.EIceShieldAbility, EAbilityClass.EShieldAbility);
+			break;
+		case 5 :
+			addAbilityToTheGame(EAbilityType.ELavaShieldAbility, EAbilityClass.EShieldAbility);
+			break;
+		case 6 :
+			addAbilityToTheGame(EAbilityType.EDustShieldAbility, EAbilityClass.EShieldAbility);
+			break;
+		case 7 :
+			addAbilityToTheGame(EAbilityType.EThornShieldAbility, EAbilityClass.EShieldAbility);
+			break;
+		case 8 :
+			addAbilityToTheGame(EAbilityType.EWaterShieldAbility, EAbilityClass.EShieldAbility);
+			break;
+		case 9 :
+			addAbilityToTheGame(EAbilityType.EElectricityShieldAbility, EAbilityClass.EShieldAbility);
+			break;
+	//	case 10 :
+		//	addAbilityToTheGame(EAbilityType.EGlowingShieldAbility, EAbilityClass.EShieldAbility);
+		//	break;
+		default :
+			break;
+		}
+	}
+
+	public void addRandomShieldAbilityToTheGame() {
+		int index = Random.Range (4, 10);
+		
+		switch (index) {
+			// Passive abilities
+		case 4 :
+			addAbilityToTheGame(EAbilityType.EIceShieldAbility, EAbilityClass.EShieldAbility);
+			break;
+		case 5 :
+			addAbilityToTheGame(EAbilityType.ELavaShieldAbility, EAbilityClass.EShieldAbility);
+			break;
+		case 6 :
+			addAbilityToTheGame(EAbilityType.EDustShieldAbility, EAbilityClass.EShieldAbility);
+			break;
+		case 7 :
+			addAbilityToTheGame(EAbilityType.EThornShieldAbility, EAbilityClass.EShieldAbility);
+			break;
+		case 8 :
+			addAbilityToTheGame(EAbilityType.EWaterShieldAbility, EAbilityClass.EShieldAbility);
+			break;
+		case 9 :
+			addAbilityToTheGame(EAbilityType.EElectricityShieldAbility, EAbilityClass.EShieldAbility);
+			break;
+		//	case 10 :
+			//	addAbilityToTheGame(EAbilityType.EGlowingShieldAbility, EAbilityClass.EShieldAbility);
+			//	break;
+		default :
+			break;
+		}
+	}
+
+	public void addRandomActiveAbilityToTheGame() {
+		int index = Random.Range (2, 4);
+		
+		switch (index) {
+			// Passive abilities
+		case 2 :
+			addAbilityToTheGame(EAbilityType.ERamAbility, EAbilityClass.EActiveAbility);
+			break;
+		case 3 :
+			addAbilityToTheGame(EAbilityType.EBiteAbility, EAbilityClass.EActiveAbility);
+			break;
+		default :
+			break;
+		}
+	}
+
+	public void addRandomPassiveAbilityToTheGame() {
+		int index = Random.Range (0, 2);
 		
 		switch (index) {
 			// Passive abilities
 		case 0 :
-			return EAbilityType.ERunAbility;
+			addAbilityToTheGame(EAbilityType.ERunAbility, EAbilityClass.EPassiveAbility);
+			break;
 		case 1 :
-			return EAbilityType.EViewAbility;
-			// Active abilities
-		case 2 :
-			return EAbilityType.ERamAbility;
-		case 3 :
-			return EAbilityType.EBiteAbility;
-			// Shield abilities
-		case 4 :
-			return EAbilityType.EIceShieldAbility;
-		case 5 :
-			return EAbilityType.ELavaShieldAbility;
-		case 6 :
-			return EAbilityType.EDustShieldAbility;
-		case 7 :
-			return EAbilityType.EThornShieldAbility;
-		case 8 :
-			return EAbilityType.EWaterShieldAbility;
-		case 9 :
-			return EAbilityType.EGlowingShieldAbility;
-		case 10 :
-			return EAbilityType.EElectricityShieldAbility;
+			addAbilityToTheGame(EAbilityType.EViewAbility, EAbilityClass.EPassiveAbility);
+			break;
 		default :
-			return EAbilityType.EEmptyAbility;
+			break;
 		}
+	}
+
+	public void reset() 
+	{
+		availableAbilities.Clear ();
+		availableShieldAbilities.Clear ();
+		availableActiveAbilities.Clear ();
+		availablePassiveAbilities.Clear ();
+
+		nofAvailableAbilities = 0;
+		nofAvailableShieldAbilities = 0;
+		nofAvailableActiveAbilities = 0;
+		nofAvailablePassiveAbilities = 0;
 	}
 }

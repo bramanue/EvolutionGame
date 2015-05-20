@@ -40,6 +40,8 @@ public class ramAbility : ability {
 
 	private float internalRange;
 
+	private audioManager audioMngr;
+
 
 	void Start() 
 	{
@@ -49,6 +51,8 @@ public class ramAbility : ability {
 		parentEnemyScript = (enemy)parentBlob.GetComponent(typeof(enemy));
 		parentPlayerScript = (player)parentBlob.GetComponent(typeof(player));
 		isPlayer = (bool)parentPlayerScript;
+
+		audioMngr = (audioManager)GameObject.Find ("GameManager").GetComponent (typeof(audioManager));
 
 		inTargetMode = true;
 		inChargeMode = false;
@@ -285,7 +289,9 @@ public class ramAbility : ability {
 
 		// If we are in attack mode and hit an enemy/player, then put damage to that blob
 		if (inAttackMode) {
-			// TODO play sound
+
+			// TODO change sound to RamSound
+			audioMngr.PlayhurtSound();
 
 			// TODO Collision with environment
 			bool inpenetratableObject = false;
@@ -357,7 +363,7 @@ public class ramAbility : ability {
 		internalRange = baseRange + 0.5f * level;
 		return level - previousLevel;
 		
-		// TODO Change appearance of ability sprite
+		// TODO Change appearance of ability mesh
 	}
 
 	public override float calculateUseProbability(player playerScript, Vector3 toPlayer, bool attack, bool canSeePlayer) 

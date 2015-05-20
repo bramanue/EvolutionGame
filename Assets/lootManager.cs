@@ -20,7 +20,7 @@ public class lootManager : MonoBehaviour {
 
 	public loot[] lootScripts = new loot[100];
 
-	private int index;
+	private int currentIndex;
 
 	private GameObject player;
 
@@ -43,7 +43,7 @@ public class lootManager : MonoBehaviour {
 		playerScript = (player)player.GetComponent (typeof(player));
 		abilityManager = (abilityManager)GameObject.Find ("AbilityManager").GetComponent(typeof(abilityManager));
 		highscoreManager = (highscoreManager)GameObject.Find ("HighscoreManager").GetComponent (typeof(highscoreManager));
-		index = 0;
+		currentIndex = 0;
 		cleanUpIEnumerator = cleanUpRoutine ();
 		StartCoroutine (cleanUpIEnumerator);
 	}
@@ -75,6 +75,11 @@ public class lootManager : MonoBehaviour {
 	{
 		removeAndDestroyAllLoot ();
 		StopCoroutine(cleanUpIEnumerator);
+	}
+
+	public void reset() {
+		removeAndDestroyAllLoot ();
+		currentIndex = 0;
 	}
 
 	public void removeAndDestroyAllLoot()
@@ -166,10 +171,14 @@ public class lootManager : MonoBehaviour {
 		GameObject newLootObject = createLootGameObject (ELootType.ESizeLoot);
 		if (!newLootObject)
 			return;
-		
+
 		// Destroy the old loot at that position
-		if (lootObjects [index] != null)
-			GameObject.Destroy (lootObjects [index]);
+		int thisIdx = currentIndex;
+		if (lootObjects [thisIdx] != null) {
+			GameObject.Destroy (lootObjects [thisIdx]);
+			currentIndex++;
+			currentIndex %= lootObjects.Length;
+		}
 
 		sizeLoot loot = (sizeLoot)newLootObject.GetComponent (typeof(sizeLoot));
 		// Set size loot parameters
@@ -180,13 +189,10 @@ public class lootManager : MonoBehaviour {
 		newLootObject.transform.position = from;
 		newLootObject.transform.localScale = 3.0f*new Vector3 (size, size, size);
 		// Add object to the list
-		lootObjects [index] = newLootObject;
-		lootObjects [index].SetActive (true);
+		lootObjects [thisIdx] = newLootObject;
+		lootObjects [thisIdx].SetActive (true);
 		// throw it
-		StartCoroutine (throwLootCoroutine (index, from, to, 1.0f));
-		
-		index++;
-		index %= lootObjects.Length;
+		StartCoroutine (throwLootCoroutine (thisIdx, from, to, 1.0f));
 
 		// Send message to highscore
 		highscoreManager.lootDropped (size*scorePerSizeLoot);
@@ -200,8 +206,12 @@ public class lootManager : MonoBehaviour {
 			return;
 		
 		// Destroy the old loot at that position
-		if (lootObjects [index] != null)
-			GameObject.Destroy (lootObjects [index]);
+		int thisIdx = currentIndex;
+		if (lootObjects [thisIdx] != null) {
+			GameObject.Destroy (lootObjects [thisIdx]);
+			currentIndex++;
+			currentIndex %= lootObjects.Length;
+		}
 		
 		abilityLoot loot = (abilityLoot)newLootObject.GetComponent (typeof(abilityLoot));
 
@@ -219,14 +229,11 @@ public class lootManager : MonoBehaviour {
 		float size = Mathf.Max(0.5f,0.2f*player.transform.localScale.x);
 		newLootObject.transform.localScale = 2.0f*new Vector3 (size, size, size);
 
-		lootObjects [index] = newLootObject;
-		lootObjects [index].SetActive (true);
+		lootObjects [thisIdx] = newLootObject;
+		lootObjects [thisIdx].SetActive (true);
 
-		StartCoroutine (throwLootCoroutine (index, from, to, 1.0f));
+		StartCoroutine (throwLootCoroutine (thisIdx, from, to, 1.0f));
 		
-		index++;
-		index %= lootObjects.Length;
-
 		// Send message to highscore
 		highscoreManager.lootDropped (scorePerAbilityLoot);
 	}

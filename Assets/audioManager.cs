@@ -26,6 +26,7 @@ public class audioManager : MonoBehaviour {
 	{
 		audio.PlayOneShot(hurtSound);
 	}
+
 	public void PlaylootSound()
 	{
 		audio.PlayOneShot(lootSound);

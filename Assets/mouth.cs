@@ -15,6 +15,8 @@ public class mouth : MonoBehaviour {
 
 	private player playerScript;
 
+	private audioManager audioMngr;
+
 
 	// Use this for initialization
 	void Start () {
@@ -28,6 +30,8 @@ public class mouth : MonoBehaviour {
 
 		player = GameObject.Find ("Blob");
 		playerScript = (player)player.GetComponent (typeof(player));
+
+		audioMngr = (audioManager)GameObject.Find ("GameManager").GetComponent (typeof(audioManager));
 	}
 	
 	// Update is called once per frame
@@ -52,6 +56,8 @@ public class mouth : MonoBehaviour {
 						parentPlayerScript.size += 0.1f*growFactor*growFactor;
 						// Kill enemy, will be respawned by the emeny manager
 						enemyScript.eat();
+						// TODO change sound to EatSound
+						audioMngr.PlaylootSound();
 					}
 				} 
 				return;
@@ -78,7 +84,6 @@ public class mouth : MonoBehaviour {
 						{
 							// Show the player, that there is a new ability he could acquire
 							parentPlayerScript.nearbyAbilityLoot = abilityLoot;
-							Debug.Log ("Nearby ability loot");
 						}
 					}
 				}
@@ -88,7 +93,7 @@ public class mouth : MonoBehaviour {
 
 			if (other.gameObject == player) { 
 				if(parentEnemyScript.isHuntingPlayer) {
-					playerScript.inflictDamage(0.05f*parentBlob.transform.localScale.x/other.gameObject.transform.localScale.x);
+					playerScript.inflictDamage(0.02f*Time.deltaTime*parentBlob.transform.localScale.x/other.gameObject.transform.localScale.x);
 				}
 				return;
 			}
@@ -126,6 +131,8 @@ public class mouth : MonoBehaviour {
 						parentPlayerScript.size += 0.1f*growFactor*growFactor;
 						// Kill enemy, will be respawned by the emeny manager
 						enemyScript.eat();
+						// TODO change sound to EatSound
+						audioMngr.PlaylootSound();
 					}
 				} 
 			}
@@ -160,7 +167,7 @@ public class mouth : MonoBehaviour {
 		}
 		if (other.gameObject == player) { 
 			if (parentEnemyScript.isHuntingPlayer) {
-				playerScript.inflictDamage(0.05f*parentBlob.transform.localScale.x/other.gameObject.transform.localScale.x);
+				playerScript.inflictDamage(0.02f*Time.deltaTime*parentBlob.transform.localScale.x/other.gameObject.transform.localScale.x);
 			}
 			return;
 		} 

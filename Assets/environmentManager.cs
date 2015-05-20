@@ -131,7 +131,9 @@ public class environmentManager : MonoBehaviour {
 	public GameObject lightningStormPrefab;
 
 
-	public List<EEnvironmentClass> possibleEnvironemnts = new List<EEnvironmentClass>();
+	public List<EEnvironmentClass> possibleEnvironments = new List<EEnvironmentClass>();
+
+	public int maxNofEnvironmentTypes;
 
 
 	// An array contianing all environmental obstacles on the field
@@ -161,6 +163,8 @@ public class environmentManager : MonoBehaviour {
 
 
 	private int frameCounter = 0;
+
+	private gameManager gameManager;
 
 
 
@@ -249,6 +253,11 @@ public class environmentManager : MonoBehaviour {
 		}
 		environmentalObstacleIndex = 0;
 		patchSizes[nofPatches-1] = nofStoredObstacles;
+
+		gameManager = (gameManager)GameObject.Find ("GameManager").GetComponent (typeof(gameManager));
+
+		maxNofEnvironmentTypes = 1;
+		addRandomPossibleEnvironment ();
 	}
 	
 	// Update is called once per frame
@@ -273,8 +282,6 @@ public class environmentManager : MonoBehaviour {
 				if(i != 4) {
 					setNewCenterTile(i);
 				}
-				// Calculate terrain elevation for all active planes
-			//	distortBackgroundPlane(planeTileOrdering[planeTileOrdering[i]],moveBackground,backgroundTimeMultiplier,backgroundMultiplierX,backgroundMultiplierY,currentTime);
 			}
 			// Set the plane active if player's viewingRange reaches the closest point of this plane tile's boundaries
 			else if( (environmentPlaneTileBounds[planeTileOrdering[i]].ClosestPoint(playerPos) - playerPos).magnitude <= 3.0f*playerViewingRange)
@@ -283,8 +290,6 @@ public class environmentManager : MonoBehaviour {
 				{
 					environmentPlaneTiles[planeTileOrdering[i]].SetActive(true);
 				}
-				// Calculate terrain elevation for all active planes
-			//	distortBackgroundPlane(planeTileOrdering[planeTileOrdering[i]],moveBackground,backgroundTimeMultiplier,backgroundMultiplierX,backgroundMultiplierY,currentTime);
 			}
 			// Otherwise set it inactive
 			else 
@@ -340,9 +345,11 @@ public class environmentManager : MonoBehaviour {
 
 
 		// TODO update perlin noise parameters according to time and plyer's size
+		environmentFrequency = 0.05f - 0.001f * player.transform.localScale.x;
 
 		// Calculate current environment texture
-		calculateEnvironmentTextureNew ();
+		if(possibleEnvironments.Count > 0)
+			calculateEnvironmentTextureNew ();
 
 	//	Debug.Log ("Total time for environment update on CPU : " + (System.DateTime.Now.Millisecond - t0) + "ms");
 		frameCounter++;
@@ -370,7 +377,7 @@ public class environmentManager : MonoBehaviour {
 		Vector2 textureExtent = topRightOfBackground - bottomLeftOfBackground;
 
 		Vector2 bottomLeftOfViewingRange = new Vector2 (player.transform.position.x - playerViewingRange, player.transform.position.y - playerViewingRange);
-		Vector2 viewingRangeExtent = 6.0f * new Vector2(playerViewingRange, playerViewingRange);
+		Vector2 viewingRangeExtent = 8.0f * new Vector2(playerViewingRange, playerViewingRange);
 
 		// Calculate what distance each pixel of the texture covers in world space
 		Vector2 worldDistancePerPixel = new Vector2 (textureExtent.x / mainTextureResolution.x, textureExtent.y / mainTextureResolution.y);
@@ -408,10 +415,19 @@ public class environmentManager : MonoBehaviour {
 	private void generateEnvironmentalHazardsNew (int startRow, int endRow, int startColumn, int endColumn, Vector2 bottomLeftOfBackground, Vector2 worldDistancePerPixel, float threshold)
 	{
 		Vector2 extentToCenterOfPixel = worldDistancePerPixel * 0.5f;
+		int xRange = endColumn - startColumn;
+		int yRange = endRow - startRow;
+
 		for (int y = startRow; y < endRow; y++) 
 		{
 			for(int x = startColumn; x < endColumn; x++) 
 			{
+				// Make sure we do not generate objects inside the viewing range of the player
+				// Sampled area has width and height of 8 times the viewing range. Widescreen makes a window of 4 times the viewing range in x direction and 
+				// 2 times the viewing range in y direction, which can be considered as the field of sight of the player.
+				if(gameManager.isGameRunning() && x > startColumn+xRange*0.25f && x < startColumn+xRange*0.75f && y > startRow+yRange/3.0f && y < startRow+yRange*2.0f/3.0f)
+					continue;
+
 				// Continue only if this texture quad is not yet occupied by some structure
 				if(textureQuadIsOccupiedBy[y*(int)mainTextureResolution.x + x] == -1)
 				{
@@ -435,6 +451,8 @@ public class environmentManager : MonoBehaviour {
 									break;
 								}
 							}
+							if(instantiated)
+								break;
 						}
 						if(!instantiated) {
 							// If there were no surrounding obstacles, then pick one at random to instantiate
@@ -472,8 +490,8 @@ public class environmentManager : MonoBehaviour {
 
 	private GameObject instantiateRandomPrefab()
 	{
-		int rndIndex = (int)Random.Range (0, possibleEnvironemnts.Count);
-		EEnvironmentClass environmentClass = possibleEnvironemnts [rndIndex];
+		int rndIndex = (int)Random.Range (0, possibleEnvironments.Count);
+		EEnvironmentClass environmentClass = possibleEnvironments [rndIndex];
 
 		return instantiatePrefab (environmentClass);
 	}
@@ -507,16 +525,76 @@ public class environmentManager : MonoBehaviour {
 
 	public void addPossibleEnvrionment(EEnvironmentClass environmentClass)
 	{
-		if (!possibleEnvironemnts.Contains (environmentClass)) {
-			possibleEnvironemnts.Add(environmentClass);
+		if (environmentClass == EEnvironmentClass.EEmptyEnvironment)
+			return;
+
+		if (!possibleEnvironments.Contains (environmentClass) && possibleEnvironments.Count + 1 <= maxNofEnvironmentTypes ) {
+			possibleEnvironments.Add(environmentClass);
 		}
 	}
 
 	public void removePossibleEnvironemnt(EEnvironmentClass environmentClass)
 	{
-		if (possibleEnvironemnts.Contains (environmentClass)) {
-			possibleEnvironemnts.Remove(environmentClass);
+		if (environmentClass == EEnvironmentClass.EEmptyEnvironment)
+			return;
+
+		if (possibleEnvironments.Contains (environmentClass)) {
+			possibleEnvironments.Remove(environmentClass);
 		}
+	}
+
+	public void removeRandomPossibleEnvironment() {
+		if (possibleEnvironments.Count > 0) {
+			int index = Random.Range(0,possibleEnvironments.Count);
+			possibleEnvironments.RemoveAt(index);
+		}
+	}
+
+	public EEnvironmentClass addRandomPossibleEnvironment()
+	{
+		EEnvironmentClass environmentClass = getRandomEnvrionmentClass ();
+		if (possibleEnvironments.Count >= maxNofEnvironmentTypes && !possibleEnvironments.Contains(environmentClass)) {
+			removeRandomPossibleEnvironment();
+			addPossibleEnvrionment(environmentClass);
+			return environmentClass;
+		}
+		else if (possibleEnvironments.Count < maxNofEnvironmentTypes) {
+			addPossibleEnvrionment(environmentClass);
+			return environmentClass;
+		}
+		return EEnvironmentClass.EEmptyEnvironment;
+	}
+
+	private EEnvironmentClass getRandomEnvrionmentClass() 
+	{
+		int index = Random.Range (0, 6);
+		
+		switch (index) {
+		case 0 :
+			return EEnvironmentClass.EWaterEinviornment;
+		case 1 :
+			return EEnvironmentClass.ELavaEnvironment;
+		case 2 :
+			return EEnvironmentClass.EIceEnvironment;
+		case 3 :
+			return EEnvironmentClass.EDesertEnvironment;
+		case 4 :
+			return EEnvironmentClass.EElectricityEnvironment;
+		case 5 :
+			return EEnvironmentClass.EThornEnvironment;
+		default :
+			return EEnvironmentClass.EEmptyEnvironment;
+		}
+	}
+
+	public void reset() {
+		possibleEnvironments.Clear ();
+		possibleEnvironments = new List<EEnvironmentClass> ();
+		for (int i = 0; i < textureQuadIsOccupiedBy.Length; i++)
+			textureQuadIsOccupiedBy [i] = -1;
+		for (int i = 0; i < environmentalObstacles.Length; i++)
+			GameObject.Destroy (environmentalObstacles [i]);
+		maxNofEnvironmentTypes = 0;
 	}
 
 	// Calculates a texture for each environment component that acts as mask for high resolution textures

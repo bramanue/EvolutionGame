@@ -40,6 +40,10 @@ public class gameManager : MonoBehaviour {
 	private Light directionalLight;
 
 	public float dayLength = 180f;
+
+	private int stage;
+
+	public float stageTimer;
 	
 	// Use this for initialization
 	void Start () 
@@ -60,7 +64,7 @@ public class gameManager : MonoBehaviour {
 		enemyManager = (enemyManager)GameObject.Find ("EnemyManager").GetComponent (typeof(enemyManager));
 		EAbilityType[] necessaryAbilities = {EAbilityType.EThornShieldAbility, EAbilityType.EWaterShieldAbility};
 		enemyManager.setNecessaryAbilities(necessaryAbilities);
-		enemyManager.nofEnemies = 0;
+		enemyManager.nofEnemies = 10;
 
 		abilityModificationPanelScript = (abilityModificationPanel)GameObject.Find ("AbilityModificationPanel").GetComponent (typeof(abilityModificationPanel));
 
@@ -92,6 +96,100 @@ public class gameManager : MonoBehaviour {
 */
 		if (gameStarted) {
 			gameTimer += Time.deltaTime;
+			stageTimer += Time.deltaTime;
+
+			if(stageTimer > 60)
+			{
+				if(stage == 0 && playerScript.size > 1.5f) {
+					// Add ram ability to the game
+					abilityManager.addAbilityToTheGame(EAbilityType.ERamAbility, EAbilityClass.EActiveAbility);
+					abilityManager.addAbilityToTheGame(EAbilityType.EViewAbility, EAbilityClass.EPassiveAbility);
+					// Increase enemy size
+					enemyManager.maxNofAbilities = 1;
+					stage = 1;
+					stageTimer = 0;
+				}
+				else if(stage == 1) {
+					// Add passive abilities to the game
+					abilityManager.addAbilityToTheGame(EAbilityType.ERunAbility, EAbilityClass.EPassiveAbility);
+					stageTimer = 0;
+					stage = 2;
+				}
+				else if(stage == 2) {
+					// Add first environment && corresponding shield
+					environmentManager.maxNofEnvironmentTypes = 1;
+					EEnvironmentClass envClass = environmentManager.addRandomPossibleEnvironment();
+					switch (envClass) {
+					case EEnvironmentClass.EDesertEnvironment :
+						abilityManager.addAbilityToTheGame(EAbilityType.EDustShieldAbility,EAbilityClass.EShieldAbility);
+						break;
+					case EEnvironmentClass.EIceEnvironment :
+						abilityManager.addAbilityToTheGame(EAbilityType.EIceShieldAbility,EAbilityClass.EShieldAbility);
+						break;
+					case EEnvironmentClass.EElectricityEnvironment :
+						abilityManager.addAbilityToTheGame(EAbilityType.EElectricityShieldAbility,EAbilityClass.EShieldAbility);
+						break;
+					case EEnvironmentClass.ELavaEnvironment :
+						abilityManager.addAbilityToTheGame(EAbilityType.ELavaShieldAbility,EAbilityClass.EShieldAbility);
+						break;
+					case EEnvironmentClass.EThornEnvironment :
+						abilityManager.addAbilityToTheGame(EAbilityType.EThornShieldAbility,EAbilityClass.EShieldAbility);
+						break;
+					case EEnvironmentClass.EWaterEinviornment :
+						abilityManager.addAbilityToTheGame(EAbilityType.EWaterShieldAbility,EAbilityClass.EShieldAbility);
+						break;
+					default :
+						break;
+					};
+					// Add a random shield
+					abilityManager.addRandomShieldAbilityToTheGame();
+
+					enemyManager.maxNofAbilities++;
+					stageTimer = 0;
+					stage = 3;
+				}
+				else if (stage == 3) {
+					// Add sting ability to the game and a random shield
+					abilityManager.addAbilityToTheGame(EAbilityType.EBiteAbility, EAbilityClass.EActiveAbility);
+					abilityManager.addRandomShieldAbilityToTheGame();
+					stageTimer = 0;
+					stage = 4;
+				}
+				else if (stage == 4) {
+					// Increase difficulty, add / replace environments
+					float rnd = Random.value;
+					if(rnd > 0.96f) 
+					{
+						enemyManager.difficulty = Mathf.Max (enemyManager.difficulty, 1);
+					}
+					else if (rnd > 0.7f)
+					{
+						abilityManager.addRandomAbilityToTheGame();
+					}
+					else if (rnd > 0.5f)
+					{
+						environmentManager.maxNofEnvironmentTypes = Mathf.Min (4,environmentManager.maxNofEnvironmentTypes+1);
+					}
+					else if (rnd > 0.3f)
+					{
+						environmentManager.addRandomPossibleEnvironment();
+					}
+					else if (rnd > 0.2f)
+					{
+						environmentManager.removeRandomPossibleEnvironment();
+					}
+					else if (rnd > 0.05)
+					{
+						enemyManager.maxNofAbilities++;
+					}
+					else
+					{
+						environmentManager.maxNofEnvironmentTypes = Mathf.Max (0,environmentManager.maxNofEnvironmentTypes-1);
+					}
+
+					stageTimer = 0;
+				}
+			}
 		}
 
 		if (paused) 
@@ -158,31 +256,41 @@ public class gameManager : MonoBehaviour {
 	public void startGame() 
 	{
 		environmentManager.environmentOccuranceProbability = 0.7f;
+
 		playerScript.removeAllAbilities ();
 		playerScript.dead = false;
 		playerScript.size = 1.0f;
+		playerScript.viewingRangeBoost = 0.0f;
 		playerScript.gameObject.transform.localScale = new Vector3 (1, 1, 0.5f);
+
+		stage = 0;
+		stageTimer = 0.0f;
+
+		lootManager.reset ();
+		abilityManager.reset ();
+		environmentManager.reset ();
 
 		// Active Abilities
 	//	abilityManager.addAbilityToPlayer(player,EAbilityType.ERamAbility,0,4);
-		abilityManager.addAbilityToPlayer(player,EAbilityType.EBiteAbility,1,1);
+	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EBiteAbility,1,1);
 		// Shield abilities
 	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EThornShieldAbility,4,1);
 	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EElectricityShieldAbility,5,1);
 		// Passive abilities
-		abilityManager.addAbilityToPlayer(player,EAbilityType.ERunAbility,6,0);
+	//	abilityManager.addAbilityToPlayer(player,EAbilityType.ERunAbility,6,0);
 		abilityManager.addAbilityToPlayer(player,EAbilityType.EViewAbility,7,0);
 
 		highscoreManager.resetHighscore ();
 		highscoreManager.showHighscore (true);
+
+		enemyManager.reset ();
+		enemyManager.maxNofAbilities = 0;
 		enemyManager.nofEnemies = 30;
 		enemyManager.difficulty = 5;
 		enemyManager.resetEnemies ();
 		enemyManager.setEnemiesHostile (true);
 
-				gameTimer = 0.0f;
-
-		lootManager.removeAndDestroyAllLoot ();
+		gameTimer = 0.0f;
 
 		((BloomPro)GameObject.Find ("MainCamera").GetComponent (typeof(BloomPro))).ChromaticAberrationOffset = 1.0f;
 
@@ -220,6 +328,10 @@ public class gameManager : MonoBehaviour {
 	{
 		abilityModificationPanelScript.resetPanel ();
 		tutorialManager.activateTutorial (tutorialType);
+	}
+
+	public bool isGameRunning() {
+		return gameStarted;
 	}
 
 }

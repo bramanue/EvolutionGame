@@ -148,9 +148,8 @@ public class enemyManager : MonoBehaviour {
 
 
 		// Calculate how many abilities this enemy should get
-		int maxNofAbilities = playerScript.getNofAbilities() + 1;
-		int nofAbilities = (int)Mathf.Floor(1.0f/Mathf.Exp(difficulty*Random.value) * 8 + 0.8f);
-		nofAbilities = (int)Mathf.Min (maxNofAbilities, nofAbilities);
+		int nofAbilities = (int)Mathf.Floor(1.0f/Mathf.Exp(difficulty*Random.value) * maxNofAbilities + 0.8f);
+	//	nofAbilities = (int)Mathf.Min (maxNofAbilities, nofAbilities);
 
 		float rndValue = Random.value;
 		float score = 1000;
@@ -289,6 +288,15 @@ public class enemyManager : MonoBehaviour {
 			enemyScripts[i] = (enemy)enemyGameObjects[i].GetComponent(typeof(enemy));
 			// Set values for this script
 			setRandomInitialValues(i);
+		}
+	}
+
+	public void reset()
+	{
+		// Create the basic amount of enemies
+		for (int i = 0; i < nofEnemies; i++) {
+			GameObject.Destroy(enemyGameObjects[i]);
+			enemyScripts[i] = null;
 		}
 	}
 
