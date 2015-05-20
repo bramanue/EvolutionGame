@@ -57,6 +57,9 @@ public class player : MonoBehaviour
 	// Enemy manager for performing eating, etc operations
 	private enemyManager enemyMngr;
 
+	// Sound manager
+	private audioManager audioMngr;
+
 	// Stores all ability scripts
 	// 0 to 3 are user chosen abilities
 	// 4 to 5 for shield abilities
@@ -115,6 +118,7 @@ public class player : MonoBehaviour
 	{
 		// Get an instance of the enemy manager
 		enemyMngr = (enemyManager)GameObject.Find ("EnemyManager").GetComponent (typeof(enemyManager));
+		audioMngr = (audioManager)GameObject.Find ("GameManager").GetComponent (typeof(audioManager));
 		// Get size
 		size = transform.localScale.x;
 		// Player is allowed to move
@@ -379,6 +383,7 @@ public class player : MonoBehaviour
 			float totalDamage = environmentalDamage + abilityDamage;
 			if(totalDamage > 0)
 			{
+				audioMngr.PlayhurtSound();
 				float factor = Mathf.Min (2.0f,totalDamage/size);
 				currentDamageOffset = 1.5f*factor*10f;
 				StartCoroutine(visualizeDamage(Mathf.Max (factor,0.3f),currentDamageOffset));
