@@ -149,7 +149,6 @@ public class enemyManager : MonoBehaviour {
 
 		// Calculate how many abilities this enemy should get
 		int nofAbilities = (int)Mathf.Floor(1.0f/Mathf.Exp(difficulty*Random.value) * maxNofAbilities + 0.8f);
-	//	nofAbilities = (int)Mathf.Min (maxNofAbilities, nofAbilities);
 
 		float rndValue = Random.value;
 		float score = 1000;

@@ -50,7 +50,7 @@ public class runAbility : ability {
 			rotationDegreesPerSecond = 360.0f*parentPlayerScript.currentSpeed / 7.0f;
 		else
 			rotationDegreesPerSecond = 360.0f*parentEnemyScript.currentSpeed / 7.0f;
-		transform.Rotate (0, Time.deltaTime*rotationDegreesPerSecond, 0);
+		transform.Rotate (0, Time.deltaTime*Mathf.Min (rotationDegreesPerSecond, 1190.0f), 0);
 
 		maxSpeed = 0.5f*level;
 

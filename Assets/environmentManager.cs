@@ -138,6 +138,8 @@ public class environmentManager : MonoBehaviour {
 
 	// An array contianing all environmental obstacles on the field
 	private GameObject[] environmentalObstacles = new GameObject[500];
+	// Stores for each object to what index in the 'textureQuadIsOccupiedBy' array it maps to
+	private int[] indexInTexture = new int[500];
 	// The next index into environmentalObstacles[] where a null object is
 	private int environmentalObstacleIndex;
 	// Defines from which index of environmentalObjects[] the current Update() iteration has to loop from
@@ -243,6 +245,9 @@ public class environmentManager : MonoBehaviour {
 		// Set all spaces to unoccupied
 		for (int i = 0; i < textureQuadIsOccupiedBy.Length; i++) {
 			textureQuadIsOccupiedBy[i] = -1;
+		}
+		for (int i = 0; i < indexInTexture.Length; i++) {
+			indexInTexture[i] = -1;
 		}
 
 		nofPatches = patchSizes.Length;
@@ -385,14 +390,14 @@ public class environmentManager : MonoBehaviour {
 		float currentTime = Time.time;
 
 		int startRow = (int)(mainTextureResolution.y - (textureExtent.y - (bottomLeftOfViewingRange.y - bottomLeftOfBackground.y)) / worldDistancePerPixel.y);
-		startRow = (int)Mathf.Max (0, startRow - 1);
+		startRow = (int)Mathf.Max (0, startRow - 4);	// -4 to make sure that when texture pixels are huge in comparison to the blob, that stuff doesn't pop up 
 		int endRow = (int)(startRow + viewingRangeExtent.y / worldDistancePerPixel.y + 1);
-		endRow = (int)Mathf.Min (endRow + 1, mainTextureResolution.y);
+		endRow = (int)Mathf.Min (endRow + 4, mainTextureResolution.y);	// +4 to make sure that when texture pixels are huge in comparison to the blob, that stuff doesn't pop up 
 
 		int startColumn = (int)(mainTextureResolution.x - (textureExtent.x - (bottomLeftOfViewingRange.x - bottomLeftOfBackground.x)) / worldDistancePerPixel.x);
-		startColumn = (int)Mathf.Max (0, startColumn - 1);
+		startColumn = (int)Mathf.Max (0, startColumn - 4); // -4 to make sure that when texture pixels are huge in comparison to the blob, that stuff doesn't pop up 
 		int endColumn = (int)(startColumn + viewingRangeExtent.x / worldDistancePerPixel.x + 1);
-		endColumn = (int)Mathf.Min (endColumn + 1, mainTextureResolution.y);
+		endColumn = (int)Mathf.Min (endColumn + 4, mainTextureResolution.y); // +4 to make sure that when texture pixels are huge in comparison to the blob, that stuff doesn't pop up 
 
 		calculateTextureMaskNew(startRow, endRow, startColumn, endColumn, bottomLeftOfBackground.x, bottomLeftOfBackground.y, worldDistancePerPixel, currentTime);
 
@@ -417,6 +422,8 @@ public class environmentManager : MonoBehaviour {
 		Vector2 extentToCenterOfPixel = worldDistancePerPixel * 0.5f;
 		int xRange = endColumn - startColumn;
 		int yRange = endRow - startRow;
+		Vector2 lowerLeftOfViewport = new Vector2 (startColumn+xRange*0.25f, startRow+yRange/3.0f);
+		Vector2 topRightOfViewport = new Vector2 (startColumn + xRange * 0.75f, startRow + yRange * 2.0f / 3.0f);
 
 		for (int y = startRow; y < endRow; y++) 
 		{
@@ -425,17 +432,16 @@ public class environmentManager : MonoBehaviour {
 				// Make sure we do not generate objects inside the viewing range of the player
 				// Sampled area has width and height of 8 times the viewing range. Widescreen makes a window of 4 times the viewing range in x direction and 
 				// 2 times the viewing range in y direction, which can be considered as the field of sight of the player.
-				if(gameManager.isGameRunning() && x > startColumn+xRange*0.25f && x < startColumn+xRange*0.75f && y > startRow+yRange/3.0f && y < startRow+yRange*2.0f/3.0f)
+				if(gameManager.isGameRunning() && x >= lowerLeftOfViewport.x && x <= topRightOfViewport.x && y >= lowerLeftOfViewport.y && y <= topRightOfViewport.y) {
 					continue;
+				}
 
 				// Continue only if this texture quad is not yet occupied by some structure
 				if(textureQuadIsOccupiedBy[y*(int)mainTextureResolution.x + x] == -1)
 				{
 					if(environmentalHazardMask[y*(int)mainTextureResolution.x + x] > threshold) 
 					{
-						if(environmentalObstacles[environmentalObstacleIndex] != null) {
-							GameObject.Destroy(environmentalObstacles[environmentalObstacleIndex]);
-						}
+
 						// Look at neighboring environment spots to figure out which environment should be placed here
 						bool instantiated = false;
 						for(int y2 = -1; y2 <= 1; y2++) {
@@ -445,8 +451,24 @@ public class environmentManager : MonoBehaviour {
 								if(x + x2 < 0 || x+x2 >= mainTextureResolution.x)
 									continue;
 								int gameObjectIndex = textureQuadIsOccupiedBy[(y+y2)*(int)mainTextureResolution.x + x + x2];
-								if(gameObjectIndex != -1) {
-									environmentalObstacles[environmentalObstacleIndex] = instantiatePrefab(((hazardousEnvironment)environmentalObstacles[gameObjectIndex].GetComponent(typeof(hazardousEnvironment))).environmentClass);
+								if(gameObjectIndex != -1) 
+								{
+									EEnvironmentClass targetEnvironment = ((hazardousEnvironment)environmentalObstacles[gameObjectIndex].GetComponent(typeof(hazardousEnvironment))).environmentClass;
+									if(environmentalObstacles[environmentalObstacleIndex] != null && ((hazardousEnvironment)environmentalObstacles[environmentalObstacleIndex].GetComponent(typeof(hazardousEnvironment))).environmentClass == targetEnvironment) {
+										// We only need to reposition the old item
+										// But first resize it to default size
+										Vector3 scale = environmentalObstacles[environmentalObstacleIndex].transform.localScale;
+										scale /= scale.x;
+										environmentalObstacles[environmentalObstacleIndex].transform.localScale = scale;
+										// The old position of this gameobject is now free again
+										textureQuadIsOccupiedBy[indexInTexture[environmentalObstacleIndex]] = -1;
+									}
+									else
+									{
+										// Destroy old environment and replace with new one
+										GameObject.Destroy(environmentalObstacles[environmentalObstacleIndex]);
+										environmentalObstacles[environmentalObstacleIndex] = instantiatePrefab(targetEnvironment);
+									}
 									instantiated = true;
 									break;
 								}
@@ -455,8 +477,25 @@ public class environmentManager : MonoBehaviour {
 								break;
 						}
 						if(!instantiated) {
-							// If there were no surrounding obstacles, then pick one at random to instantiate
-							environmentalObstacles[environmentalObstacleIndex] = instantiateRandomPrefab();
+							// If there were no surrounding obstacles, then take the old one at this array index (if that environment class can still exist) or pick one at random to instantiate
+							if(environmentalObstacles[environmentalObstacleIndex] != null && possibleEnvironments.Contains(((hazardousEnvironment)environmentalObstacles[environmentalObstacleIndex].GetComponent(typeof(hazardousEnvironment))).environmentClass))
+							{
+								// Take the old environment and simply reposition it
+								// First resize it to default size
+								Vector3 scale = environmentalObstacles[environmentalObstacleIndex].transform.localScale;
+								scale /= scale.x;
+								environmentalObstacles[environmentalObstacleIndex].transform.localScale = scale;
+								// The old position of this gameobject is now free again
+								textureQuadIsOccupiedBy[indexInTexture[environmentalObstacleIndex]] = -1;
+							}
+							else
+							{
+								if(environmentalObstacles[environmentalObstacleIndex] != null) {
+									GameObject.Destroy(environmentalObstacles[environmentalObstacleIndex]);
+								}
+								environmentalObstacles[environmentalObstacleIndex] = instantiateRandomPrefab();
+							}
+
 						}
 
 						hazardousEnvironment environmentalHazard = (hazardousEnvironment)environmentalObstacles[environmentalObstacleIndex].GetComponent(typeof(hazardousEnvironment));
@@ -475,6 +514,7 @@ public class environmentManager : MonoBehaviour {
 						environmentalObstacles[environmentalObstacleIndex].transform.position = position;
 						environmentalObstacles[environmentalObstacleIndex].SetActive(true);
 						textureQuadIsOccupiedBy[y*(int)mainTextureResolution.x + x] = environmentalObstacleIndex;
+						indexInTexture[environmentalObstacleIndex] = y*(int)mainTextureResolution.x + x;
 
 						environmentalObstacleIndex++;
 						environmentalObstacleIndex %= environmentalObstacles.Length;
@@ -487,6 +527,13 @@ public class environmentManager : MonoBehaviour {
 			}
 		}
 	}
+
+	private EEnvironmentClass getRandomPossibleEnvironmentClass() 
+	{
+		int rndIndex = (int)Random.Range (0, possibleEnvironments.Count);
+		return possibleEnvironments [rndIndex];
+	}
+
 
 	private GameObject instantiateRandomPrefab()
 	{

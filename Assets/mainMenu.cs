@@ -62,8 +62,6 @@ public class mainMenu : MonoBehaviour {
 
 	public void showListOfTutorials()
 	{
-
-
 		startButton.SetActive (false);
 		tutorialButton.SetActive (false);
 		highscoreButton.SetActive (false);

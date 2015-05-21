@@ -98,7 +98,7 @@ public class gameManager : MonoBehaviour {
 			gameTimer += Time.deltaTime;
 			stageTimer += Time.deltaTime;
 
-			if(stageTimer > 60)
+			if(stageTimer > 50)
 			{
 				if(stage == 0 && playerScript.size > 1.5f) {
 					// Add ram ability to the game
@@ -176,7 +176,7 @@ public class gameManager : MonoBehaviour {
 					}
 					else if (rnd > 0.2f)
 					{
-						environmentManager.removeRandomPossibleEnvironment();
+						//environmentManager.removeRandomPossibleEnvironment();
 					}
 					else if (rnd > 0.05)
 					{
@@ -184,7 +184,7 @@ public class gameManager : MonoBehaviour {
 					}
 					else
 					{
-						environmentManager.maxNofEnvironmentTypes = Mathf.Max (0,environmentManager.maxNofEnvironmentTypes-1);
+						environmentManager.maxNofEnvironmentTypes = Mathf.Max (1,environmentManager.maxNofEnvironmentTypes-1);
 					}
 
 					stageTimer = 0;
@@ -261,7 +261,9 @@ public class gameManager : MonoBehaviour {
 		playerScript.dead = false;
 		playerScript.size = 1.0f;
 		playerScript.viewingRangeBoost = 0.0f;
+		playerScript.runVelocityBoost = 0.0f;
 		playerScript.gameObject.transform.localScale = new Vector3 (1, 1, 0.5f);
+		((MeshRenderer)playerScript.gameObject.GetComponent<MeshRenderer>()).material = playerScript.defaultMaterial;
 
 		stage = 0;
 		stageTimer = 0.0f;
@@ -277,7 +279,7 @@ public class gameManager : MonoBehaviour {
 	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EThornShieldAbility,4,1);
 	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EElectricityShieldAbility,5,1);
 		// Passive abilities
-	//	abilityManager.addAbilityToPlayer(player,EAbilityType.ERunAbility,6,0);
+		abilityManager.addAbilityToPlayer(player,EAbilityType.ERunAbility,6,0);
 		abilityManager.addAbilityToPlayer(player,EAbilityType.EViewAbility,7,0);
 
 		highscoreManager.resetHighscore ();
@@ -310,6 +312,7 @@ public class gameManager : MonoBehaviour {
 
 		playerScript.dead = true;
 		gameStarted = false;
+		paused = false;
 
 		mainMenu.showMainMenu ();
 		Time.timeScale = 0.4f;
