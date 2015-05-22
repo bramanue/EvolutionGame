@@ -425,6 +425,9 @@ public class player : MonoBehaviour
 		}
 
 		// Change appearance according to current size
+		shrinkSpeed = Mathf.Max (1.0f,size);
+		growSpeed = Mathf.Max (0.4f, 0.4f * size);
+
 		grow();
 	}
 

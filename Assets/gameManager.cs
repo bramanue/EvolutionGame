@@ -279,7 +279,7 @@ public class gameManager : MonoBehaviour {
 	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EThornShieldAbility,4,1);
 	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EElectricityShieldAbility,5,1);
 		// Passive abilities
-		abilityManager.addAbilityToPlayer(player,EAbilityType.ERunAbility,6,0);
+	//	abilityManager.addAbilityToPlayer(player,EAbilityType.ERunAbility,6,0);
 		abilityManager.addAbilityToPlayer(player,EAbilityType.EViewAbility,7,0);
 
 		highscoreManager.resetHighscore ();

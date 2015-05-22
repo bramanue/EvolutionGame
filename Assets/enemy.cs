@@ -227,8 +227,6 @@ public class enemy : MonoBehaviour {
 
 		shrinkSpeed = size;
 
-		growSpeed = 0.1f * size;
-
 		Debug.Log ("originalsize = " + originalSize);
 	}
 	
@@ -257,7 +255,7 @@ public class enemy : MonoBehaviour {
 
 		shrinkSpeed = Mathf.Max (1.0f,size);
 		
-		growSpeed = Mathf.Max (0.1f, 0.1f * size);
+		growSpeed = Mathf.Max (0.4f, 0.4f * size);
 
 		// Get the viewing direction
 		viewingDirection = transform.up;
