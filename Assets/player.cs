@@ -129,7 +129,7 @@ public class player : MonoBehaviour
 		highscoreManager = (highscoreManager)GameObject.Find ("HighscoreManager").GetComponent(typeof(highscoreManager));
 		GameObject cam = GameObject.Find ("MainCamera");
 		videoFilter = (BloomPro)GameObject.Find ("MainCamera").GetComponent (typeof(BloomPro));
-		videoFilter.ChromaticAberrationOffset = 1.0f;
+		videoFilter.ChromaticAberrationOffset = 1.7f;
 		previousSize = size;
 	}
 	
@@ -391,7 +391,7 @@ public class player : MonoBehaviour
 					damageTimer -= Time.deltaTime;
 				else
 				{
-					videoFilter.ChromaticAberrationOffset = Mathf.Max (1.0f, videoFilter.ChromaticAberrationOffset - 3.0f*Time.deltaTime);
+					videoFilter.ChromaticAberrationOffset = Mathf.Max (1.7f, videoFilter.ChromaticAberrationOffset - 3.0f*Time.deltaTime);
 					videoFilter.BloomParams.BloomIntensity = Mathf.Max (1.5f, videoFilter.BloomParams.BloomIntensity - 3.0f*Time.deltaTime);
 					videoFilter.BloomParams.BloomThreshold = Mathf.Min (0.8f, videoFilter.BloomParams.BloomThreshold + 1.2f*Time.deltaTime);
 				}
@@ -419,7 +419,7 @@ public class player : MonoBehaviour
 			}
 			currentViewingRange = baseViewingRange + viewingRangeBoost;
 
-			videoFilter.ChromaticAberrationOffset = Mathf.Max (1.0f, videoFilter.ChromaticAberrationOffset - 3.0f*Time.deltaTime);
+			videoFilter.ChromaticAberrationOffset = Mathf.Max (1.7f, videoFilter.ChromaticAberrationOffset - 3.0f*Time.deltaTime);
 			videoFilter.BloomParams.BloomIntensity = Mathf.Max (1.5f, videoFilter.BloomParams.BloomIntensity - 3.0f*Time.deltaTime);
 			videoFilter.BloomParams.BloomThreshold = Mathf.Min (0.8f, videoFilter.BloomParams.BloomThreshold + 1.2f*Time.deltaTime);
 		}

@@ -220,7 +220,7 @@ public class abilityModificationPanel : MonoBehaviour {
 			buttonTextBoxes [i].text = "";
 		}
 		for (int i = 0; i < 2; i++) {
-			((Image)(buttons[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.3f,0.1f,true);
+			((Image)(triggers[i].GetComponent(typeof(Image)))).CrossFadeAlpha(0.3f,0.1f,true);
 			triggerTextBoxes [i].text = "";
 		}
 
