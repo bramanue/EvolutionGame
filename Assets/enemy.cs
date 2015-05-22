@@ -270,11 +270,14 @@ public class enemy : MonoBehaviour {
 		originalViewingRange = baseViewingRange + viewingRangeBoost;
 
 		// Modify viewing angle
-		if (isInAlertedStateTimer > 0 && !isRunningAwayFromPlayer) {
-			// Reduce active timer
-			isInAlertedStateTimer -= Time.deltaTime;
-			// After escape from player reduce awareness(viewing angle) only with time
-			cosViewingAngle += 0.2f*(originalCosViewingAngle + 1) * (Time.deltaTime/originalInAlertedStateTimer);
+		if (isInAlertedStateTimer > 0) {
+			if(!isRunningAwayFromPlayer)
+			{
+				// Reduce active timer
+				isInAlertedStateTimer -= Time.deltaTime;
+				// After escape from player reduce awareness(viewing angle) only with time
+				cosViewingAngle += 0.2f*(originalCosViewingAngle + 1) * (Time.deltaTime/originalInAlertedStateTimer);
+			}
 		}
 		else {
 			cosViewingAngle = originalCosViewingAngle;

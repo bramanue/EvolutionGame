@@ -426,7 +426,7 @@ public class player : MonoBehaviour
 
 		// Change appearance according to current size
 		shrinkSpeed = Mathf.Max (1.0f,size);
-		growSpeed = Mathf.Max (0.4f, 0.4f * size);
+		growSpeed = Mathf.Max (1.0f, size);
 
 		grow();
 	}
@@ -471,7 +471,7 @@ public class player : MonoBehaviour
 		if (diff < 0) 
 		{
 			// Shrinking
-			float nextSize = Mathf.Max(size,currentSize - Time.deltaTime*shrinkSpeed*Mathf.Max (1.0f,-diff));
+			float nextSize = Mathf.Max(size,currentSize - Time.deltaTime*shrinkSpeed);
 			transform.localScale = new Vector3(nextSize, nextSize, nextSize);
 		}
 		else
@@ -479,7 +479,7 @@ public class player : MonoBehaviour
 			// Growing
 			float nextSize = Mathf.Min(size,currentSize + Time.deltaTime*growSpeed);
 			transform.localScale = new Vector3(nextSize, nextSize, nextSize);
-			highscoreManager.playerIsGrowing(diff*transform.localScale.x*10);
+			highscoreManager.playerIsGrowing((nextSize-currentSize)*100);
 
 		}
 	}

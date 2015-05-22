@@ -44,6 +44,8 @@ public class gameManager : MonoBehaviour {
 	private int stage;
 
 	public float stageTimer;
+
+	public bool hideUI;
 	
 	// Use this for initialization
 	void Start () 
@@ -283,7 +285,8 @@ public class gameManager : MonoBehaviour {
 		abilityManager.addAbilityToPlayer(player,EAbilityType.EViewAbility,7,0);
 
 		highscoreManager.resetHighscore ();
-		highscoreManager.showHighscore (true);
+		if(!hideUI)
+			highscoreManager.showHighscore (true);
 
 		enemyManager.reset ();
 		enemyManager.maxNofAbilities = 0;
@@ -299,7 +302,8 @@ public class gameManager : MonoBehaviour {
 		// Hide the main menu
 		mainMenu.hide();
 		abilityModificationPanelScript.resetPanel ();
-		abilityModificationPanelScript.gameObject.SetActive (true);
+		if(!hideUI)
+			abilityModificationPanelScript.gameObject.SetActive (true);
 		gameStarted = true;
 
 		continueGame ();
