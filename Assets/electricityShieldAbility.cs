@@ -197,6 +197,8 @@ public class electricityShieldAbility : ability {
 	{
 		if (timer > 0  && cooldownTimer < 0) {
 			deactivateInNextFrame = false;
+			if(!isPlayer)
+				parentEnemyScript.shieldInUse = this;
 			inUse = true;
 			return true;
 		} else {
@@ -220,16 +222,16 @@ public class electricityShieldAbility : ability {
 		}
 		
 		// If running away from player and player is close enough, activate shield for defense
-		if (attack == false && canSeePlayer && toPlayer.magnitude - parentBlob.transform.localScale.x - playerScript.size < parentBlob.transform.localScale.x) {
+		if (attack == false && canSeePlayer && toPlayer.magnitude - parentBlob.transform.localScale.x - playerScript.size < 2.0f*parentBlob.transform.localScale.x) {
 			if(playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.EWaterShieldAbility)
-				return 0.9f;
+				return 0.89f;
 			else
 				return 0.8f;
 		}
 		
 		// If attacking player and remaining use time is high enough, then activate the shield
 		if (attack && maxTimeInThunderstorm > 15) {
-			return 0.9f;
+			return 0.89f;
 		}
 		
 		return 0.0f;

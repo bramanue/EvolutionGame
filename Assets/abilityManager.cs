@@ -66,7 +66,7 @@ public class abilityManager : MonoBehaviour {
 
 	private List<EAbilityType> availablePassiveAbilities = new List<EAbilityType>();
 
-	private List<EAbilityType> availableShieldAbilities = new List<EAbilityType>();
+	public List<EAbilityType> availableShieldAbilities = new List<EAbilityType>();
 
 	private int nofAvailableActiveAbilities;
 

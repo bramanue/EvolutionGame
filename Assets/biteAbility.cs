@@ -67,6 +67,23 @@ public class biteAbility : ability {
 				if(isPlayer) {
 					enemy enemyScript = (enemy)otherBlob.GetComponent (typeof(enemy));
 					float oldSize = enemyScript.size;
+
+					ability shieldInUse = enemyScript.shieldInUse;
+					if(shieldInUse != null) {
+						if(shieldInUse.abilityEnum == EAbilityType.EDustShieldAbility || shieldInUse.abilityEnum == EAbilityType.EThornShieldAbility) {
+							if(shieldInUse.level == 0)
+								// TODO Play blocking sound (or cracking for shield decrease)
+								enemyScript.removeAndDestroyAbility(enemyScript.hasAbility(shieldInUse.abilityEnum));
+							else
+							{
+								shieldInUse.increaseLevel((int)(-1));	// Reduce shield level by one due to impact
+								// Restart cooldown timer
+								cooldownTimer = cooldownTime;
+								return true;
+							}
+						}
+					} 
+
 					enemyScript.inflictAbilityDamage(damage);
 					// A quarter of the inflicted damage is added to the player's size
 					parentPlayerScript.size += 0.25f*Mathf.Min (damage, oldSize);
@@ -81,6 +98,22 @@ public class biteAbility : ability {
 					player playerScript = (player)otherBlob.GetComponent (typeof(player));
 					float oldSize = playerScript.size;
 					damage = baseDamage + level * 0.1f;
+
+					ability shieldInUse = playerScript.shieldInUse;
+					if(shieldInUse != null) {
+						if(shieldInUse.abilityEnum == EAbilityType.EDustShieldAbility || shieldInUse.abilityEnum == EAbilityType.EThornShieldAbility) {
+							if(shieldInUse.level == 0)
+								playerScript.removeAndDestroyAbility(playerScript.hasAbility(shieldInUse.abilityEnum));
+							else
+							{
+								shieldInUse.increaseLevel((int)(-1));	// Reduce shield level by one due to impact
+								// Restart cooldown timer
+								cooldownTimer = cooldownTime;
+								return true;
+							}
+						}
+					} 
+
 					playerScript.inflictDamage(damage);
 					// Half of the inflicted damage is added to the enemy's size
 					parentEnemyScript.size += 0.25f*Mathf.Min (damage, oldSize);

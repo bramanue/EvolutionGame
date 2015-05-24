@@ -170,6 +170,8 @@ public class waterShieldAbility : ability {
 		if (timer > 0 && cooldownTimer < 0) {
 			inUse = true;
 			deactivateInNextFrame = false;
+			if(!isPlayer)
+				parentEnemyScript.shieldInUse = this;
 			return true;
 		} else {
 			return false;
@@ -192,7 +194,7 @@ public class waterShieldAbility : ability {
 		}
 
 		// If player has an active lava shield and is close to the enemy, then activate the water shield
-		if (canSeePlayer && playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.ELavaShieldAbility && toPlayer.magnitude - parentBlob.transform.localScale.x - playerScript.size < parentBlob.transform.localScale.x) {
+		if (canSeePlayer && playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.ELavaShieldAbility && toPlayer.magnitude - parentBlob.transform.localScale.x - playerScript.size < 2.0f*parentBlob.transform.localScale.x) {
 			return 0.8f;
 		}
 

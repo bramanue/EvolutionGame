@@ -96,7 +96,9 @@ public class gameManager : MonoBehaviour {
 			directionalLight.intensity = (directionalLight.transform.rotation.eulerAngles.x)/60f + 0.3f;
 		}
 */
-		if (gameStarted) {
+		if (gameStarted) 
+		{
+
 			gameTimer += Time.deltaTime;
 			stageTimer += Time.deltaTime;
 
@@ -192,6 +194,37 @@ public class gameManager : MonoBehaviour {
 					stageTimer = 0;
 				}
 			}
+
+			// Cheats to add specific abilities to the player
+			if(Input.GetKeyDown("v")) {
+				abilityManager.addAbilityToPlayer(player,EAbilityType.ERunAbility,6,2);
+			}
+			if(Input.GetKeyDown("r")) {
+				abilityManager.addAbilityToPlayer(player,EAbilityType.ERamAbility,0,6);
+			}
+			if(Input.GetKeyDown("b")) {
+				abilityManager.addAbilityToPlayer(player,EAbilityType.EBiteAbility,1,6);
+			}
+			if(Input.GetKeyDown("t")) {
+				abilityManager.addAbilityToPlayer(player,EAbilityType.EThornShieldAbility,4,10);
+			}
+			if(Input.GetKeyDown("l")) {
+				abilityManager.addAbilityToPlayer(player,EAbilityType.ELavaShieldAbility,5,10);
+			}
+			if(Input.GetKeyDown("w")) {
+				abilityManager.addAbilityToPlayer(player,EAbilityType.EWaterShieldAbility,4,10);
+			}
+			if(Input.GetKeyDown("e")) {
+				abilityManager.addAbilityToPlayer(player,EAbilityType.EElectricityShieldAbility,5,10);
+			}
+			if(Input.GetKeyDown("s")) {
+				abilityManager.addAbilityToPlayer(player,EAbilityType.EDustShieldAbility,4,10);
+			}
+			if(Input.GetKeyDown("i")) {
+				abilityManager.addAbilityToPlayer(player,EAbilityType.EIceShieldAbility,5,10);
+			}
+
+
 		}
 
 		if (paused) 

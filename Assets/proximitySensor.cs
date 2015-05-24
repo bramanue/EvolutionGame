@@ -127,9 +127,11 @@ public class proximitySensor : MonoBehaviour {
 		if (Physics.Raycast(parentBlob.transform.position, parentEnemyScript.viewingDirection, out hit, parentEnemyScript.currentSpeed))
 		{ 
 			// If the object hit is an environmental hazard...
-			if(hit.collider.gameObject.GetComponent(typeof(hazardousEnvironment)))
+			hazardousEnvironment environment = (hazardousEnvironment)hit.collider.gameObject.GetComponent(typeof(hazardousEnvironment));
+			if(environment != null)
 			{
 				proximityData.registerIntersection (hit.distance*parentEnemyScript.viewingDirection);
+				proximityData.requiredAbility = environment.requiredAbility;
 			}
 		}
 		return proximityData;

@@ -129,7 +129,7 @@ public class enemy : MonoBehaviour {
 	// Defines by which factor velocity should be removed for idle walking actions
 	private float idleSpeedReduction = 0.4f;
 
-	private float environmentalSlowDown = 1.0f;
+	public float environmentalSlowDown = 1.0f;
 
 
 	// The location, this enemy wants to walk to.
@@ -233,6 +233,12 @@ public class enemy : MonoBehaviour {
 	// Update is called once per frame
 	void Update() 
 	{
+		if(shieldInUse == null) {
+			((MeshRenderer)this.GetComponent<MeshRenderer>()).material = defaultMaterial;
+		}
+
+		shieldInUse = null;
+
 		// If dead, then don't move anymore
 		if (dead)
 			return;
@@ -431,6 +437,10 @@ public class enemy : MonoBehaviour {
 
 		environmentalSlowDown = 1.0f;
 
+		if(shieldInUse == null) {
+			((MeshRenderer)this.GetComponent<MeshRenderer>()).material = defaultMaterial;
+		}
+
 		if (currentEnvironment == null)
 			lastSecureSpot = transform.position;
 	}
@@ -489,7 +499,8 @@ public class enemy : MonoBehaviour {
 		}
 		if (mostProbableShieldIndex != -1) {
 			Debug.Log ("Use Shield " + abilities[mostProbableShieldIndex].abilityName);
-			abilities [mostProbableShieldIndex].useAbility ();
+			if(abilities [mostProbableShieldIndex].useAbility ())
+				shieldInUse = abilities [mostProbableShieldIndex];
 		}
 
 
@@ -521,6 +532,8 @@ public class enemy : MonoBehaviour {
 				if(!carryOnAsUsual)
 					return;
 			}
+			else
+				closeToEnvironmentBoundary = false;
 
 			// Calculate rotation target (the viewing direction this enemy strives for, i.e. towards player)
 			Vector3 rotationTarget = toPlayer.normalized;
@@ -536,11 +549,33 @@ public class enemy : MonoBehaviour {
 	{
 		if (stunned)
 			return;
+		else {
+			// Decide on a shield to use if any
+			float[] useShieldProbabilities = new float[2];
+			for (int i = 4; i < 6; i++) {
+				useShieldProbabilities[i-4] = (abilities[i] != null) ? abilities[i].calculateUseProbability(playerScript, toPlayer, isHuntingPlayer, canSeePlayer) : 0.0f;
+			}
+			int mostProbableShieldIndex = -1;
+			float maxShieldUseProbability = 0.0f;
+			for (int i = 0; i < 2; i++) {
+				if(useShieldProbabilities[i] > maxShieldUseProbability) {
+					mostProbableShieldIndex = i+4;
+					maxShieldUseProbability = useShieldProbabilities[i];
+				}
+			}
+			if (mostProbableShieldIndex != -1) {
+				Debug.Log ("Use Shield " + abilities[mostProbableShieldIndex].abilityName);
+				if(abilities [mostProbableShieldIndex].useAbility ())
+					shieldInUse = abilities [mostProbableShieldIndex];
+			}
+		}
 
 		if (canMove) 
 		{
 			// Use running
 			useRunning();
+
+
 
 			if (environmentProximityData != null || currentEnvironment != null) {
 				bool carryOnAsUsual = avoidEnvironmentalHazard();
@@ -548,6 +583,8 @@ public class enemy : MonoBehaviour {
 				if(!carryOnAsUsual)
 					return;
 			}
+			else
+				closeToEnvironmentBoundary = false;
 
 			// Calculate rotation target (the target viewing direction, i.e. look away from player)
 			Vector3 rotationTarget = -toPlayer.normalized;
@@ -566,6 +603,13 @@ public class enemy : MonoBehaviour {
 	// Returns true, if calling procedure can act as usual. Returns false, if calling procedure should not perform any additional movements.
 	private bool avoidEnvironmentalHazard()
 	{
+		// If we are close to some hazardous environment but not inside and we have the required shield, then carry on as if nothing had happened
+		if (currentEnvironment == null) {
+			int abilityIdx = hasAbility (environmentProximityData.requiredAbility);
+			if (abilityIdx != -1) {
+				return true;
+			}
+		}
 		// If we have just entered a dangerous environment try to get out again unless you're on the run
 		if (closeToEnvironmentBoundary || (currentEnvironment != null && previousEnvironment == null)) {
 			Debug.Log ("Just entered hazardous environment. Turn around");
@@ -573,10 +617,13 @@ public class enemy : MonoBehaviour {
 			if (currentEnvironment != null) {
 				int abilityIndex = hasAbility (currentEnvironment.requiredAbility);
 				if (abilityIndex != -1) {
-					abilities [abilityIndex].useAbility ();
-					// If we have the ability and are hunted, then don't turn around!
-					if (isRunningAwayFromPlayer || isHuntingPlayer)
-						return true;
+					if(abilities [abilityIndex].useAbility ())
+					{
+						shieldInUse = abilities [abilityIndex];
+						// If we have the ability and are hunted, then don't turn around!
+						if (isRunningAwayFromPlayer || isHuntingPlayer)
+							return true;
+					}
 				}
 
 			}
@@ -601,11 +648,13 @@ public class enemy : MonoBehaviour {
 				}
 			}
 		} 
-		// If we are stuck in a hazardous environment, then try to get our with max speed
+		// If we are stuck in a hazardous environment, then try to get out with max speed
 		else if (currentEnvironment != null && previousEnvironment != null) {
 			int abilityIndex = hasAbility (currentEnvironment.requiredAbility);
-			if (abilityIndex != -1)
-				abilities [abilityIndex].useAbility ();
+			if (abilityIndex != -1) {
+				if(abilities[abilityIndex].useAbility())
+					shieldInUse = abilities [abilityIndex];
+			}
 
 			// If we are hunting or running away, then simply carry on as usual
 			if (isHuntingPlayer || isRunningAwayFromPlayer) {
@@ -614,9 +663,6 @@ public class enemy : MonoBehaviour {
 			}
 
 			// If we are in idle, then move straight on to get out
-			Debug.Log ("Inside hazardous environment. Get out straight on");
-			// Perform rotation and moving with max speed
-			// Perform rotation and moving with max speed
 			useRunning();
 			transform.position += viewingDirection * currentSpeed * Time.deltaTime;
 			return false;
@@ -632,7 +678,9 @@ public class enemy : MonoBehaviour {
 				int abilityIndex = hasAbility(environmentProximityData.requiredAbility);
 				if(abilityIndex != -1) 
 				{
-					abilities[abilityIndex].useAbility();
+					if(abilities[abilityIndex].useAbility())
+						shieldInUse = abilities [abilityIndex];
+
 					if(isRunningAwayFromPlayer) 
 					{
 						// turn towards environment to hide in there
@@ -718,6 +766,8 @@ public class enemy : MonoBehaviour {
 			if(!carryOnAsUsual)
 				return;
 		}
+		else
+			closeToEnvironmentBoundary = false;
 
 		if (isIdleAnimationComplete) {
 			// If the idle animation is complete, then define the next random move or rotation

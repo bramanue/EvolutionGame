@@ -153,6 +153,8 @@ public class glowingShieldAbility : ability {
 			// TODO change visuals (activate point light)
 			inUse = true;
 			deactivateInNextFrame = false;
+			if(!isPlayer)
+				parentEnemyScript.shieldInUse = this;
 			return true;
 		} else {
 			return false;
@@ -175,7 +177,7 @@ public class glowingShieldAbility : ability {
 		}
 		
 		// If running away from player and player is close enough, activate shield for defense
-		if (attack == false && canSeePlayer && toPlayer.magnitude - parentBlob.transform.localScale.x - playerScript.size < parentBlob.transform.localScale.x) {
+		if (attack == false && canSeePlayer && toPlayer.magnitude - parentBlob.transform.localScale.x - playerScript.size < 2.0f*parentBlob.transform.localScale.x) {
 			return 0.8f;
 		}
 		

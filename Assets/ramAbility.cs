@@ -319,23 +319,37 @@ public class ramAbility : ability {
 			}
 
 			if (enemyScript != null || playerScript != null) {
-				if (isPlayer) {
-					if(enemyScript.shieldInUse != null) {
-						if(enemyScript.shieldInUse.getAbilityEnum() == EAbilityType.EDustShieldAbility || enemyScript.shieldInUse.getAbilityEnum() == EAbilityType.EThornShieldAbility) {
-							enemyScript.shieldInUse.increaseLevel((int)(-level*0.25f));	// Reduce shield level by a quarter of the ram ability's level
-							return;
+				if (isPlayer) 
+				{
+					ability shieldInUse = enemyScript.shieldInUse;
+					if(shieldInUse != null) {
+
+						if(shieldInUse.abilityEnum == EAbilityType.EDustShieldAbility || shieldInUse.abilityEnum == EAbilityType.EThornShieldAbility) {
+							// Destroy shield if level has gone to zero
+							if(shieldInUse.level == 0)
+								enemyScript.removeAndDestroyAbility(enemyScript.hasAbility(shieldInUse.abilityEnum));
+							else
+							{
+								shieldInUse.increaseLevel((int)(-1));	// Reduce shield level by one due to impact
+								return;
+							}
 						}
 					} 
 					enemyScript.inflictAbilityDamage(damage);
 				} else {
 					if (playerScript) {
 
-						Debug.Log ("Ram Level = " + level + " Damage to player = " + damage);
+
 						ability shieldInUse = playerScript.shieldInUse;
 						if(shieldInUse != null) {
-							if(shieldInUse.getAbilityEnum() == EAbilityType.EDustShieldAbility || shieldInUse.getAbilityEnum() == EAbilityType.EThornShieldAbility) {
-								shieldInUse.increaseLevel((int)(-level*0.25f));	// Reduce shield level by one due to impact
-								return;
+							if(shieldInUse.abilityEnum == EAbilityType.EDustShieldAbility || shieldInUse.abilityEnum == EAbilityType.EThornShieldAbility) {
+								if(shieldInUse.level == 0)
+									playerScript.removeAndDestroyAbility(playerScript.hasAbility(shieldInUse.abilityEnum));
+								else
+								{
+									shieldInUse.increaseLevel((int)(-1));	// Reduce shield level by one due to impact
+									return;
+								}
 							}
 						} 
 						playerScript.inflictDamage(damage);
@@ -343,11 +357,17 @@ public class ramAbility : ability {
 					} else {
 						ability shieldInUse = enemyScript.shieldInUse;
 						if(shieldInUse != null) {
-							if(shieldInUse.getAbilityEnum() == EAbilityType.EDustShieldAbility || shieldInUse.getAbilityEnum() == EAbilityType.EThornShieldAbility) {
-								shieldInUse.increaseLevel((int)(-level*0.25f));	// Reduce shield level by one due to impact
-								return;
+							if(shieldInUse.abilityEnum == EAbilityType.EDustShieldAbility || shieldInUse.abilityEnum == EAbilityType.EThornShieldAbility) {
+								if(shieldInUse.level == 0)
+									playerScript.removeAndDestroyAbility(playerScript.hasAbility(shieldInUse.abilityEnum));
+								else 
+								{
+									shieldInUse.increaseLevel((int)(-1));	// Reduce shield level by one due to impact
+									return;
+								}
 							}
 						} 
+						Debug.Log ("Ram Level = " + level + " Damage to player = " + damage);
 						enemyScript.inflictAbilityDamage(damage);
 					}
 				}

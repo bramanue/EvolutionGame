@@ -103,6 +103,8 @@ public class dustShieldAbility : ability {
 		if (timer > 0 && cooldownTimer < 0) {
 			inUse = true;
 			deactivateInNextFrame = false;
+			if(!isPlayer)
+				parentEnemyScript.shieldInUse = this;
 			return true;
 		} else {
 			return false;
@@ -125,7 +127,7 @@ public class dustShieldAbility : ability {
 		}
 		
 		// If running away from player and player is close enough, activate shield for defense
-		if (attack == false && canSeePlayer && toPlayer.magnitude - parentBlob.transform.localScale.x - playerScript.size < parentBlob.transform.localScale.x) {
+		if (attack == false && canSeePlayer && toPlayer.magnitude - parentBlob.transform.localScale.x - playerScript.size < 2.0f*parentBlob.transform.localScale.x) {
 			if(playerScript.shieldInUse != null && playerScript.shieldInUse.abilityEnum == EAbilityType.EThornShieldAbility)
 				return 0.9f;
 			else
