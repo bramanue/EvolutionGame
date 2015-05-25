@@ -241,15 +241,19 @@ public class gameManager : MonoBehaviour {
 			}
 
 			if(playerScript.size <= 0) {
-				mainMenu.showGameOverScreen();
+
 				Time.timeScale = 0.4f;
 				playerScript.removeAllAbilities ();
+
 				if(tutorialStarted) {
+					mainMenu.showGameOverScreen(false,0);
 					restartTutorialPending = true;
 					tutorialStarted = false;
 				}
-				else
+				else {
+					mainMenu.showGameOverScreen(true, highscoreManager.getHighscore());
 					gameStarted = false;
+				}
 				tutorialUI.SetActive (false);
 				abilityModificationPanelScript.gameObject.SetActive (false);
 			}

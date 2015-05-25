@@ -93,4 +93,8 @@ public class highscoreManager : MonoBehaviour {
 	{
 		highscoreDisplayObject.SetActive (active);
 	}
+
+	public float getHighscore() {
+		return currentHighscore;
+	}
 }
