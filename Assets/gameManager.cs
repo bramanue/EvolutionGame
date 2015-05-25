@@ -413,4 +413,8 @@ public class gameManager : MonoBehaviour {
 		return gameStarted;
 	}
 
+	public bool isPaused() {
+		return paused;
+	}
+
 }

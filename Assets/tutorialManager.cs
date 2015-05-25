@@ -83,7 +83,16 @@ public class tutorialManager : MonoBehaviour {
 			first = false;
 		}
 
+		if (gameManager.isPaused ()) {
+			explanations.gameObject.SetActive (false);
+			counter.gameObject.SetActive (false);
+		} else if (activeTutorial != ETutorialType.noTutorial) {
+			explanations.gameObject.SetActive (true);
+			counter.gameObject.SetActive (true);
+		}
+
 		if (UIShowing) {
+
 			playerScript.setStunned (999);
 			Time.timeScale = 0.0f;
 			if (Input.GetButton ("Ability1")) {
