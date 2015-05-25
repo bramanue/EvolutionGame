@@ -62,7 +62,7 @@ public class highscoreManager : MonoBehaviour {
 
 		// TODO Display for what the points are
 		currentHighscore += Mathf.Floor(score*multiplier);
-		scoreUpdateSpeed = 0.8f*(currentHighscore - visibleHighscore);
+		scoreUpdateSpeed = 2.0f*(currentHighscore - visibleHighscore);
 	}
 
 	public void lootDropped(float score)

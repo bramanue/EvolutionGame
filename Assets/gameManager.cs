@@ -35,6 +35,8 @@ public class gameManager : MonoBehaviour {
 
 	private bool gameStarted;
 
+	private bool tutorialStarted;
+
 	private GUIStyle textStyle = new GUIStyle();
 
 	private Light directionalLight;
@@ -46,6 +48,12 @@ public class gameManager : MonoBehaviour {
 	public float stageTimer;
 
 	public bool hideUI;
+
+	private GameObject tutorialUI;
+
+	public bool restartTutorialPending;
+
+	private ETutorialType activeTutorialType;
 	
 	// Use this for initialization
 	void Start () 
@@ -54,14 +62,14 @@ public class gameManager : MonoBehaviour {
 		playerScript = (player)player.GetComponent(typeof(player));
 		lootManager = (lootManager)GameObject.Find("LootManager").GetComponent (typeof(lootManager));
 		abilityManager = (abilityManager)GameObject.Find("AbilityManager").GetComponent (typeof(abilityManager));
+		tutorialManager = (tutorialManager)GameObject.Find ("TutorialManager").GetComponent (typeof(tutorialManager));
 		environmentManager = (environmentManager)GameObject.Find ("EnvironmentManager").GetComponent (typeof(environmentManager));
 		highscoreManager = (highscoreManager)GameObject.Find ("HighscoreManager").GetComponent (typeof(highscoreManager));
+
+		tutorialUI = GameObject.Find ("TutorialUI");
 		mainMenu = (mainMenu)GameObject.Find ("MainMenu").GetComponent(typeof(mainMenu));
 		pauseMenu = (pauseMenu)GameObject.Find ("PauseMenu").GetComponent(typeof(pauseMenu));
 		directionalLight = (Light)GameObject.Find ("DirectionalLight").GetComponent<Light>();
-
-		bossDefeated = false;
-		chooseNextEnvironmentalChange ();
 
 		enemyManager = (enemyManager)GameObject.Find ("EnemyManager").GetComponent (typeof(enemyManager));
 		EAbilityType[] necessaryAbilities = {EAbilityType.EThornShieldAbility, EAbilityType.EWaterShieldAbility};
@@ -79,7 +87,7 @@ public class gameManager : MonoBehaviour {
 	// Update is called once per frame
 	void Update () 
 	{
-		if(!gameStarted)
+		if(!gameStarted && !tutorialStarted)
 		{
 			playerScript.setStunned(9999999999999.0f);
 			highscoreManager.showHighscore (false);
@@ -98,11 +106,10 @@ public class gameManager : MonoBehaviour {
 */
 		if (gameStarted) 
 		{
-
 			gameTimer += Time.deltaTime;
 			stageTimer += Time.deltaTime;
 
-			if(stageTimer > 50)
+			if(stageTimer > 45)
 			{
 				if(stage == 0 && playerScript.size > 1.5f) {
 					// Add ram ability to the game
@@ -194,7 +201,16 @@ public class gameManager : MonoBehaviour {
 					stageTimer = 0;
 				}
 			}
+		}
 
+		if (paused) 
+		{
+			playerScript.setStunned(9999999999999.0f);
+			Time.timeScale = 0.0f;
+		}
+
+
+		if (gameStarted || tutorialStarted) {
 			// Cheats to add specific abilities to the player
 			if(Input.GetKeyDown("v")) {
 				abilityManager.addAbilityToPlayer(player,EAbilityType.ERunAbility,6,2);
@@ -224,130 +240,111 @@ public class gameManager : MonoBehaviour {
 				abilityManager.addAbilityToPlayer(player,EAbilityType.EIceShieldAbility,5,10);
 			}
 
-
-		}
-
-		if (paused) 
-		{
-			playerScript.setStunned(9999999999999.0f);
-			Time.timeScale = 0.0f;
-		}
-
-		if (gameStarted && playerScript.size <= 0) 
-		{
-			mainMenu.showGameOverScreen();
-			Time.timeScale = 0.4f;
-			playerScript.removeAllAbilities ();
-			gameStarted = false;
-			abilityModificationPanelScript.gameObject.SetActive (false);
-		}
-
-		// Pause / resume game upon player input
-		if (Input.GetButtonDown ("Pause") && gameStarted)
-		{ 
-			if (paused) {
-				// Continue
-				continueGame();
+			if(playerScript.size <= 0) {
+				mainMenu.showGameOverScreen();
+				Time.timeScale = 0.4f;
+				playerScript.removeAllAbilities ();
+				if(tutorialStarted) {
+					restartTutorialPending = true;
+					tutorialStarted = false;
+				}
+				else
+					gameStarted = false;
+				tutorialUI.SetActive (false);
+				abilityModificationPanelScript.gameObject.SetActive (false);
 			}
-			else
-			{
-				// Make sure ram ability is stopped
-				pauseMenu.show();
-				playerScript.setStunned(9999999999999.0f);
-				Time.timeScale = 0.0f;
-				paused = true;
+
+			// Pause / resume game upon player input
+			if (Input.GetButtonDown ("Pause"))
+			{ 
+				if (paused) {
+					// Continue
+					continueGame();
+				}
+				else
+				{
+					// Make sure ram ability is stopped
+					pauseMenu.show();
+					playerScript.setStunned(9999999999999.0f);
+					Time.timeScale = 0.0f;
+					paused = true;
+				}
 			}
 		}
+
 
 		// Make sure time stays at 0.0f (ram ability could interfer with the time)
 		if (paused) {
 			Time.timeScale = 0.0f;
 			playerScript.setStunned (9999999999999.0f);
 		}
-
-		// If the environmental change has finished, start the boss battle
-		if (timer <= 0) {
-			// Start boss battle
-		} else {
-			// Reduce timer
-			timer -= Time.deltaTime;
-		}
-
-		// If the player has defeated the boss, then go to the next environmental change
-		if (bossDefeated) {
-			chooseNextEnvironmentalChange();
-		}
-
 	}
 
-	private void chooseNextEnvironmentalChange()
-	{
-		// Choose the next environmental change at random
-		int index = Random.Range (0, 9);
-		timer = 6000.0f;
-		bossDefeated = false;
-	}
 
 	public void startGame() 
 	{
-		environmentManager.environmentOccuranceProbability = 0.7f;
+		if (restartTutorialPending) {
+			startTutorial (activeTutorialType);
+		} 
+		else 
+		{
+			environmentManager.environmentOccuranceProbability = 0.7f;
 
-		playerScript.removeAllAbilities ();
-		playerScript.dead = false;
-		playerScript.size = 1.0f;
-		playerScript.viewingRangeBoost = 0.0f;
-		playerScript.runVelocityBoost = 0.0f;
-		playerScript.gameObject.transform.localScale = new Vector3 (1, 1, 0.5f);
-		((MeshRenderer)playerScript.gameObject.GetComponent<MeshRenderer>()).material = playerScript.defaultMaterial;
+			playerScript.removeAllAbilities ();
+			playerScript.dead = false;
+			playerScript.size = 1.0f;
+			playerScript.baseVelocity = 8.0f;
+			playerScript.baseViewingRange = 5.0f;
+			playerScript.viewingRangeBoost = 0.0f;
+			playerScript.runVelocityBoost = 0.0f;
+			playerScript.currentViewingRange = playerScript.baseViewingRange;
+			playerScript.gameObject.transform.localScale = new Vector3 (1, 1, 0.5f);
+			((MeshRenderer)playerScript.gameObject.GetComponent<MeshRenderer> ()).material = playerScript.defaultMaterial;
 
-		stage = 0;
-		stageTimer = 0.0f;
+			stage = 0;
+			stageTimer = 0.0f;
 
-		lootManager.reset ();
-		abilityManager.reset ();
-		environmentManager.reset ();
+			lootManager.reset ();
+			abilityManager.reset ();
+			environmentManager.reset ();
 
-		// Active Abilities
-	//	abilityManager.addAbilityToPlayer(player,EAbilityType.ERamAbility,0,4);
-	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EBiteAbility,1,1);
-		// Shield abilities
-	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EThornShieldAbility,4,1);
-	//	abilityManager.addAbilityToPlayer(player,EAbilityType.EElectricityShieldAbility,5,1);
-		// Passive abilities
-	//	abilityManager.addAbilityToPlayer(player,EAbilityType.ERunAbility,6,0);
-		abilityManager.addAbilityToPlayer(player,EAbilityType.EViewAbility,7,0);
+			abilityManager.addAbilityToPlayer (player, EAbilityType.EViewAbility, 7, 0);
 
-		highscoreManager.resetHighscore ();
-		if(!hideUI)
-			highscoreManager.showHighscore (true);
+			highscoreManager.resetHighscore ();
+			if (!hideUI)
+				highscoreManager.showHighscore (true);
 
-		enemyManager.reset ();
-		enemyManager.maxNofAbilities = 0;
-		enemyManager.nofEnemies = 30;
-		enemyManager.difficulty = 5;
-		enemyManager.resetEnemies ();
-		enemyManager.setEnemiesHostile (true);
+			enemyManager.reset ();
+			enemyManager.maxNofAbilities = 0;
+			enemyManager.nofEnemies = 30;
+			enemyManager.difficulty = 5;
+			enemyManager.resetEnemies ();
+			enemyManager.setEnemiesHostile (true);
 
-		gameTimer = 0.0f;
+			gameTimer = 0.0f;
 
-		((BloomPro)GameObject.Find ("MainCamera").GetComponent (typeof(BloomPro))).ChromaticAberrationOffset = 1.0f;
+			((BloomPro)GameObject.Find ("MainCamera").GetComponent (typeof(BloomPro))).ChromaticAberrationOffset = 1.0f;
 
-		// Hide the main menu
-		mainMenu.hide();
-		abilityModificationPanelScript.resetPanel ();
-		if(!hideUI)
-			abilityModificationPanelScript.gameObject.SetActive (true);
-		gameStarted = true;
+			// Hide the main menu
+			mainMenu.hide ();
+			abilityModificationPanelScript.resetPanel ();
+			if (!hideUI)
+				abilityModificationPanelScript.gameObject.SetActive (true);
+			gameStarted = true;
+			tutorialStarted = false;
 
-		continueGame ();
+			continueGame ();
+		}
 	}
 
 	public void finishGame()
 	{
 		playerScript.removeAllAbilities ();
 		abilityModificationPanelScript.gameObject.SetActive (false);
+		tutorialUI.SetActive (false);
 
 		playerScript.dead = true;
+		tutorialStarted = false;
 		gameStarted = false;
 		paused = false;
 
@@ -364,10 +361,48 @@ public class gameManager : MonoBehaviour {
 		pauseMenu.hide ();
 	}
 
-	public void startTutorial(ETutorialType tutorialType) 
+	public void startEnvironmentTutorial()
 	{
+		startTutorial (ETutorialType.environmentTutorial);
+	}
+
+	public void startEatTutorial()
+	{
+		startTutorial (ETutorialType.eatTutorial);
+	}
+
+	public void startAbilityTutorial()
+	{
+		startTutorial (ETutorialType.abilityTutorial);
+	}
+
+	private void startTutorial(ETutorialType tutorialType) 
+	{
+		activeTutorialType = tutorialType;
+
+		lootManager.reset ();
+		enemyManager.reset ();
+		abilityManager.reset ();
+		environmentManager.reset ();
+
+		playerScript.removeAllAbilities ();
+		playerScript.dead = false;
+		playerScript.size = 1.0f;
+		playerScript.viewingRangeBoost = 0.0f;
+		playerScript.runVelocityBoost = 0.0f;
+		playerScript.currentViewingRange = playerScript.baseViewingRange;
+		playerScript.gameObject.transform.localScale = new Vector3 (1, 1, 0.5f);
+		((MeshRenderer)playerScript.gameObject.GetComponent<MeshRenderer>()).material = playerScript.defaultMaterial;
+
+		mainMenu.hide ();
+		if(!hideUI)
+			abilityModificationPanelScript.gameObject.SetActive (true);
 		abilityModificationPanelScript.resetPanel ();
 		tutorialManager.activateTutorial (tutorialType);
+
+		tutorialStarted = true;
+
+		continueGame ();
 	}
 
 	public bool isGameRunning() {

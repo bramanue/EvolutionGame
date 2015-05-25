@@ -44,11 +44,15 @@ public class enemyManager : MonoBehaviour {
 
 	public Mesh[] enemyMeshes = new Mesh[4];
 
+	public int nofEnemiesKilled ;
+
 	// 1 is the highest difficulty and 5 the lowest
 	// Defines for each enemy, how many abilities it gets
 	public float difficulty;
 
 	public int maxNofAbilities = 6;
+
+	public float maxEnemySize = 1000;
 
 
 	// Use this for initialization
@@ -94,13 +98,14 @@ public class enemyManager : MonoBehaviour {
 		for (int i = 0; i < nofEnemies; i++) 
 		{
 			float distance = (enemyGameObjects [i].transform.position - playerPosition).magnitude;
-			if (distance > radius)
+			if (distance > radius && !enemyScripts[i].dead)
 			{
 				setRandomInitialValues (i);
 				distance = (enemyGameObjects [i].transform.position - playerPosition).magnitude;
 			}	
 
 			if(enemyScripts[i].dead) {
+
 				highscoreManager.enemyKilled(scores[i]*enemyScripts[i].scoreFraction);
 				enemyScripts[i].scoreFraction = 0.0f;	// Make sure we get the highscore only once
 			}
@@ -138,10 +143,12 @@ public class enemyManager : MonoBehaviour {
 		// ...and put enemy there
 		enemyObject.transform.position = spawnPoint;
 
-		// Set values for this script
+		// Set parameters of this enemy
+		size = Mathf.Min (size, maxEnemySize);
 		enemyScript.size = size;
 		enemyScript.transform.localScale = new Vector3 (size, size, size);
-		enemyScript.viewingRange = (size + Random.Range(7.0f,12.0f));
+		float maxViewingRange = playerScript.currentViewingRange;
+		enemyScript.viewingRange = (size + Random.Range(7.0f,Mathf.Max (12.0f,maxViewingRange)));
 		enemyScript.baseViewingRange = Random.Range(5.0f,8.0f);
 		enemyScript.cosViewingAngle = Random.Range(-0.5f,0.0f) + difficulty*0.1f;
 		enemyScript.baseVelocity = Random.Range(4.0f,6.0f);
@@ -149,6 +156,7 @@ public class enemyManager : MonoBehaviour {
 
 		// Calculate how many abilities this enemy should get
 		int nofAbilities = (int)Mathf.Floor(1.0f/Mathf.Exp(difficulty*Random.value) * maxNofAbilities + 0.8f);
+		Debug.Log (nofAbilities);
 
 		float rndValue = Random.value;
 		float score = 1000;
@@ -297,6 +305,10 @@ public class enemyManager : MonoBehaviour {
 			GameObject.Destroy(enemyGameObjects[i]);
 			enemyScripts[i] = null;
 		}
+		nofEnemiesKilled = 0;
+		maxNofAbilities = 6;
+		maxEnemySize = 1000;
+		respawnEnemies = true;
 	}
 
 	public void setEnemiesHostile(bool hostile)

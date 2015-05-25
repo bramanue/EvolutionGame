@@ -26,6 +26,8 @@ public class mainMenu : MonoBehaviour {
 
 	private pauseMenu pauseMenu;
 
+	private GameObject tutorialUI;
+
 	// Use this for initialization
 	void Start () 
 	{
@@ -41,6 +43,7 @@ public class mainMenu : MonoBehaviour {
 		gameOverToMainMenuButton = GameObject.Find ("GameOverToMainMenuButton");
 
 		pauseMenu = (pauseMenu)GameObject.Find ("PauseMenu").GetComponent(typeof(pauseMenu));
+		tutorialUI = GameObject.Find ("TutorialUI");
 
 		startButton.SetActive (true);
 		tutorialButton.SetActive (true);
@@ -77,6 +80,8 @@ public class mainMenu : MonoBehaviour {
 	public void showMainMenu()
 	{
 		pauseMenu.hide ();
+		tutorialUI.SetActive (false);
+		((gameManager)GameObject.Find ("GameManager").GetComponent (typeof(gameManager))).restartTutorialPending = false;
 
 		startButton.SetActive (true);
 		tutorialButton.SetActive (true);
@@ -98,6 +103,7 @@ public class mainMenu : MonoBehaviour {
 	public void showGameOverScreen()
 	{
 		pauseMenu.hide ();
+		tutorialUI.SetActive (false);
 
 		startButton.SetActive (false);
 		tutorialButton.SetActive (false);

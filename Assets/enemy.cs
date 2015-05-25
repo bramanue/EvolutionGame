@@ -255,6 +255,7 @@ public class enemy : MonoBehaviour {
 			}
 			// Calculate how much damage was inflicted by player
 			scoreFraction = totalDamageByPlayer / originalSize;
+			enemyMngr.nofEnemiesKilled++;
 			dead = true;
 			return;
 		}

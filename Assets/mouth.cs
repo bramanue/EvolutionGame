@@ -100,7 +100,7 @@ public class mouth : MonoBehaviour {
 
 			// If the enemy is hunting the player and collides with a different enemy, then the smaller enemy
 			// gets eaten
-			if (parentEnemyScript.isHuntingPlayer) 
+			if (parentEnemyScript && parentEnemyScript.isHuntingPlayer) 
 			{
 				enemy enemyScript = (enemy)other.gameObject.GetComponent(typeof(enemy));
 				if(enemyScript != null && parentBlob.transform.localScale.x > other.gameObject.transform.localScale.x) {

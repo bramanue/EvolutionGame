@@ -169,7 +169,6 @@ public class iceShieldAbility : ability {
 		int previousLevel = level;
 		level = Mathf.Max (0, Mathf.Min(level + x, maxLevel));
 		int increase = previousLevel - level;
-		timer += increase*30.0f;
 		damagePerSecond = baseDamage + level * 0.1f;
 		maxTimeInIce = 30.0f + 30.0f * level;
 		return increase;
@@ -177,7 +176,7 @@ public class iceShieldAbility : ability {
 	
 	public override bool useAbility() 
 	{
-		if (timer > 0  && cooldownTimer < 0) {
+		if (timer > 0  && cooldownTimer <= 0) {
 			inUse = true;
 			deactivateInNextFrame = false;
 			if(!isPlayer)

@@ -98,7 +98,41 @@ public class abilityManager : MonoBehaviour {
 	
 	}
 
-	private GameObject getPrefab(EAbilityType abilityType)
+	public ability getAbility(EAbilityType abilityType)
+	{
+		// Get the correct prefab
+		switch (abilityType) {
+		// Passive abilities
+		case EAbilityType.ERunAbility:
+			return new runAbility ();
+		case EAbilityType.EViewAbility:
+			return new viewAbility ();
+		// Active abilities
+		case EAbilityType.ERamAbility:
+			return new ramAbility ();
+		case EAbilityType.EBiteAbility:
+			return new biteAbility ();
+		// Shield abilities
+		case EAbilityType.EIceShieldAbility:
+			return new iceShieldAbility ();
+		case EAbilityType.ELavaShieldAbility:
+			return new lavaShieldAbility ();
+		case EAbilityType.EDustShieldAbility:
+			return new dustShieldAbility ();
+		case EAbilityType.EThornShieldAbility:
+			return new thornShieldAbility ();
+		case EAbilityType.EWaterShieldAbility:
+			return new waterShieldAbility ();
+		//	case EAbilityType.EGlowingShieldAbility :
+		//		return (new glowingShieldAbility();
+		case EAbilityType.EElectricityShieldAbility:
+			return new electricityShieldAbility ();
+		default :
+			return null;
+		}
+	}
+
+	public GameObject getPrefab(EAbilityType abilityType)
 	{
 		// Get the correct prefab
 		switch (abilityType) {
@@ -260,6 +294,21 @@ public class abilityManager : MonoBehaviour {
 				break;
 			};
 		}
+	}
+
+	public void addAllAbilitiesToTheGame() 
+	{
+		addAbilityToTheGame(EAbilityType.ERunAbility, EAbilityClass.EPassiveAbility);
+		addAbilityToTheGame(EAbilityType.EViewAbility, EAbilityClass.EPassiveAbility);
+		addAbilityToTheGame(EAbilityType.ERamAbility, EAbilityClass.EActiveAbility);
+		addAbilityToTheGame(EAbilityType.EBiteAbility, EAbilityClass.EActiveAbility);
+		addAbilityToTheGame(EAbilityType.EIceShieldAbility, EAbilityClass.EShieldAbility);
+		addAbilityToTheGame(EAbilityType.ELavaShieldAbility, EAbilityClass.EShieldAbility);
+		addAbilityToTheGame(EAbilityType.EDustShieldAbility, EAbilityClass.EShieldAbility);
+		addAbilityToTheGame(EAbilityType.EThornShieldAbility, EAbilityClass.EShieldAbility);
+		addAbilityToTheGame(EAbilityType.EWaterShieldAbility, EAbilityClass.EShieldAbility);
+		addAbilityToTheGame(EAbilityType.EElectricityShieldAbility, EAbilityClass.EShieldAbility);
+		//	addAbilityToTheGame(EAbilityType.EGlowingShieldAbility, EAbilityClass.EShieldAbility);
 	}
 
 	public void addRandomAbilityToTheGame() {

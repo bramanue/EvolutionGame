@@ -134,7 +134,7 @@ public class environmentManager : MonoBehaviour {
 	public List<EEnvironmentClass> possibleEnvironments = new List<EEnvironmentClass>();
 
 	public int maxNofEnvironmentTypes;
-
+	
 
 	// An array contianing all environmental obstacles on the field
 	private GameObject[] environmentalObstacles = new GameObject[500];
@@ -442,6 +442,10 @@ public class environmentManager : MonoBehaviour {
 					if(environmentalHazardMask[y*(int)mainTextureResolution.x + x] > threshold) 
 					{
 
+						Vector3 position = new Vector3(bottomLeftOfBackground.x + x*worldDistancePerPixel.x + extentToCenterOfPixel.x, 
+						                               bottomLeftOfBackground.y + y*worldDistancePerPixel.y + extentToCenterOfPixel.y, 
+						                               0);
+
 						// Look at neighboring environment spots to figure out which environment should be placed here
 						bool instantiated = false;
 						for(int y2 = -1; y2 <= 1; y2++) {
@@ -454,7 +458,10 @@ public class environmentManager : MonoBehaviour {
 								if(gameObjectIndex != -1) 
 								{
 									EEnvironmentClass targetEnvironment = ((hazardousEnvironment)environmentalObstacles[gameObjectIndex].GetComponent(typeof(hazardousEnvironment))).environmentClass;
-									if(environmentalObstacles[environmentalObstacleIndex] != null && ((hazardousEnvironment)environmentalObstacles[environmentalObstacleIndex].GetComponent(typeof(hazardousEnvironment))).environmentClass == targetEnvironment) {
+
+									addEnvironmentObstacle(targetEnvironment,position,true,0,true,extentToCenterOfPixel,x,y);
+
+								/*	if(environmentalObstacles[environmentalObstacleIndex] != null && ((hazardousEnvironment)environmentalObstacles[environmentalObstacleIndex].GetComponent(typeof(hazardousEnvironment))).environmentClass == targetEnvironment) {
 										// We only need to reposition the old item
 										// But first resize it to default size
 										Vector3 scale = environmentalObstacles[environmentalObstacleIndex].transform.localScale;
@@ -468,7 +475,7 @@ public class environmentManager : MonoBehaviour {
 										// Destroy old environment and replace with new one
 										GameObject.Destroy(environmentalObstacles[environmentalObstacleIndex]);
 										environmentalObstacles[environmentalObstacleIndex] = instantiatePrefab(targetEnvironment);
-									}
+									}*/
 									instantiated = true;
 									break;
 								}
@@ -477,8 +484,11 @@ public class environmentManager : MonoBehaviour {
 								break;
 						}
 						if(!instantiated) {
+							EEnvironmentClass rndEnvironment = getRandomPossibleEnvironmentClass();
+							addEnvironmentObstacle(rndEnvironment,position,true,0,true,extentToCenterOfPixel,x,y);
+
 							// If there were no surrounding obstacles, then take the old one at this array index (if that environment class can still exist) or pick one at random to instantiate
-							if(environmentalObstacles[environmentalObstacleIndex] != null && possibleEnvironments.Contains(((hazardousEnvironment)environmentalObstacles[environmentalObstacleIndex].GetComponent(typeof(hazardousEnvironment))).environmentClass))
+						/*	if(environmentalObstacles[environmentalObstacleIndex] != null && possibleEnvironments.Contains(((hazardousEnvironment)environmentalObstacles[environmentalObstacleIndex].GetComponent(typeof(hazardousEnvironment))).environmentClass))
 							{
 								// Take the old environment and simply reposition it
 								// First resize it to default size
@@ -494,11 +504,11 @@ public class environmentManager : MonoBehaviour {
 									GameObject.Destroy(environmentalObstacles[environmentalObstacleIndex]);
 								}
 								environmentalObstacles[environmentalObstacleIndex] = instantiateRandomPrefab();
-							}
+							}*/
 
 						}
 
-						hazardousEnvironment environmentalHazard = (hazardousEnvironment)environmentalObstacles[environmentalObstacleIndex].GetComponent(typeof(hazardousEnvironment));
+					/*	hazardousEnvironment environmentalHazard = (hazardousEnvironment)environmentalObstacles[environmentalObstacleIndex].GetComponent(typeof(hazardousEnvironment));
 
 						float rndValue = Random.Range(environmentalHazard.minScaleFactor, environmentalHazard.maxScaleFactor);
 						float size = rndValue * extentToCenterOfPixel.x;
@@ -507,9 +517,9 @@ public class environmentManager : MonoBehaviour {
 						Vector2 displacement = Random.insideUnitCircle * 0.5f;
 						displacement.x *= extentToCenterOfPixel.x;
 						displacement.y *= extentToCenterOfPixel.y;
-						Vector3 position = new Vector3(bottomLeftOfBackground.x + x*worldDistancePerPixel.x + extentToCenterOfPixel.x + displacement.x, 
-						                               bottomLeftOfBackground.y + y*worldDistancePerPixel.y + extentToCenterOfPixel.y + displacement.y, 
-						                               0);
+						position += new Vector3(displacement.x, 
+						                        displacement.y, 
+						                        0);
 
 						environmentalObstacles[environmentalObstacleIndex].transform.position = position;
 						environmentalObstacles[environmentalObstacleIndex].SetActive(true);
@@ -517,7 +527,7 @@ public class environmentManager : MonoBehaviour {
 						indexInTexture[environmentalObstacleIndex] = y*(int)mainTextureResolution.x + x;
 
 						environmentalObstacleIndex++;
-						environmentalObstacleIndex %= environmentalObstacles.Length;
+						environmentalObstacleIndex %= environmentalObstacles.Length;*/
 					}
 				}
 				else
@@ -526,6 +536,54 @@ public class environmentManager : MonoBehaviour {
 				}
 			}
 		}
+	}
+
+	public hazardousEnvironment addEnvironmentObstacle(EEnvironmentClass environmentClass, Vector3 position, bool randomSize, float size, bool randomScatter, Vector2 placementRadius, int textureX = 0, int textureY = 0)
+	{
+		if(environmentalObstacles[environmentalObstacleIndex] != null && ((hazardousEnvironment)environmentalObstacles[environmentalObstacleIndex].GetComponent(typeof(hazardousEnvironment))).environmentClass == environmentClass) {
+			// We only need to reposition the old item
+			// But first resize it to default size
+			Vector3 scaleVec3 = environmentalObstacles[environmentalObstacleIndex].transform.localScale;
+			scaleVec3 /= scaleVec3.x;
+			environmentalObstacles[environmentalObstacleIndex].transform.localScale = scaleVec3;
+			// The old position of this gameobject is now free again
+			textureQuadIsOccupiedBy[indexInTexture[environmentalObstacleIndex]] = -1;
+		}
+		else
+		{
+			// Destroy old environment and replace with new one
+			if(environmentalObstacles[environmentalObstacleIndex] != null) {
+				GameObject.Destroy(environmentalObstacles[environmentalObstacleIndex]);
+			}
+			environmentalObstacles[environmentalObstacleIndex] = instantiatePrefab(environmentClass);
+		}
+
+		hazardousEnvironment environmentalHazard = (hazardousEnvironment)environmentalObstacles[environmentalObstacleIndex].GetComponent(typeof(hazardousEnvironment));
+
+		if (randomSize) {
+			float rndValue = Random.Range(environmentalHazard.minScaleFactor, environmentalHazard.maxScaleFactor);
+			size = rndValue * placementRadius.x;
+		}
+
+		if (randomScatter) {
+			Vector2 displacement = Random.insideUnitCircle * 0.5f;
+			displacement.x *= placementRadius.x;
+			displacement.y *= placementRadius.y;
+			position += new Vector3(displacement.x, 
+			                        displacement.y, 
+			                        0);
+		}
+
+		environmentalObstacles[environmentalObstacleIndex].transform.localScale *= size;
+		environmentalObstacles[environmentalObstacleIndex].transform.position = position;
+		environmentalObstacles[environmentalObstacleIndex].SetActive(true);
+		textureQuadIsOccupiedBy[textureY*(int)mainTextureResolution.x + textureX] = environmentalObstacleIndex;
+		indexInTexture[environmentalObstacleIndex] = textureY*(int)mainTextureResolution.x + textureX;
+
+		environmentalObstacleIndex++;
+		environmentalObstacleIndex %= environmentalObstacles.Length;
+
+		return environmentalHazard;
 	}
 
 	private EEnvironmentClass getRandomPossibleEnvironmentClass() 
@@ -612,7 +670,7 @@ public class environmentManager : MonoBehaviour {
 		return EEnvironmentClass.EEmptyEnvironment;
 	}
 
-	private EEnvironmentClass getRandomEnvrionmentClass() 
+	public EEnvironmentClass getRandomEnvrionmentClass() 
 	{
 		int index = Random.Range (0, 6);
 		
