@@ -204,7 +204,7 @@ public class tutorialManager : MonoBehaviour {
 				Vector3 position = playerScript.transform.position + new Vector3(10.0f*Mathf.Cos(theta), 10.0f*Mathf.Sin(theta),0);
 				hazardousEnvironment hazard = environmentManager.addEnvironmentObstacle(environmentClass,position,false,2.0f,false,new Vector2(0,0));
 				hazard.damagePerSecond = 1.0f;
-				hazard.slowDownFactor = 0.5f;
+				hazard.slowDownFactor = 0.4f;
 				abilityType = hazard.requiredAbility;
 			}
 			GameObject shieldAbilityObject = abilityManager.getPrefab(abilityType);
@@ -213,7 +213,6 @@ public class tutorialManager : MonoBehaviour {
 			GameObject.Destroy(shieldAbilityObject);
 
 			environmentManager.environmentOccuranceProbability = 0.0f;
-		//	playerScript.gameObject.transform.position = playerStartPos;
 			highscoreManager.showHighscore(false);
 			playerScript.size = 1.0f;
 			playerScript.baseVelocity = 9.0f;
@@ -227,7 +226,7 @@ public class tutorialManager : MonoBehaviour {
 			enemyManager.setEnemiesHostile (false);
 
 			count = enemyManager.nofEnemies;
-			explanations.text = "Goal of this tutorial is to make you more familiar with the environments and the shield abilities. \nYour prismus is surrounded by a dangerous environment. Touching it will hurt and eventually kill your prismus. For the sake of this tutorial, the environments deal more damage than they would in the game ;) But there is a shield ability lying just in front of you in form of a glowing cube. You can collect it by pressing \"RB\" or \"LB\" when you get near it. Now you only have to press one of the two triggers on the gamepad. The shield ability will then be mapped to that trigger and you can activate it anytime by pressing that trigger again. With the shield activated you can leave the circle of dangerous environments and eat all enemies outside the ring. As you will see, some shields do also damage enemies, when you touch them - no matter their size. \n\nDefeat and eat all 10 enemies to complete this tutorial. \n\n Press \"B\" to start...";
+			explanations.text = "Goal of this tutorial is to make you more familiar with the environments and the shield abilities. \nYour prismus is surrounded by a dangerous environment. Touching it will hurt and eventually kill your prismus. For the sake of this tutorial, the environments deal more damage than they would usually do in the game ;) But there is a shield ability lying just in front of you in form of a glowing cube. You can collect it by pressing \"RB\" or \"LB\" when you get near it. Now you only have to press one of the two triggers on the gamepad, to permanently map the shield ability to that trigger. Now you can activate it anytime by pressing that trigger again. With the shield activated you can leave the circle of dangerous environments and eat all enemies outside the ring. As you will see, some shields do also damage enemies, when you touch them - no matter their size. \n\nDefeat and eat all 10 enemies to complete this tutorial. \n\n Press \"B\" to start...";
 			UIShowing = true;
 			tutorialUI.SetActive (true);
 			break;
