@@ -124,6 +124,7 @@ public class tutorialManager : MonoBehaviour {
 						counter.text = "";
 						explanations.text = "";
 						tutorialUI.SetActive (false);
+						waitForInput = false;
 					}
 				}
 			}
@@ -146,6 +147,7 @@ public class tutorialManager : MonoBehaviour {
 		environmentManager.reset ();
 		abilityManager.reset ();
 		enemyManager.reset ();
+		waitForInput = false;
 
 
 		switch (tutorialType) {
