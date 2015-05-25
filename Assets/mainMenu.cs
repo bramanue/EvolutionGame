@@ -33,6 +33,10 @@ public class mainMenu : MonoBehaviour {
 
 	private GameObject tutorialUI;
 
+	private GameObject postScoreButton;
+
+	private GameObject nameInputField;
+
 
 	// Use this for initialization
 	void Start () 
@@ -53,6 +57,8 @@ public class mainMenu : MonoBehaviour {
 		pauseMenu = (pauseMenu)GameObject.Find ("PauseMenu").GetComponent(typeof(pauseMenu));
 		tutorialUI = GameObject.Find ("TutorialUI");
 
+		postScoreButton = GameObject.Find ("PostHighscoreButton");
+		nameInputField = GameObject.Find ("NameInput");
 		highscoreText = (Text)gameOverHighscoreText.GetComponent<Text> ();
 
 		startButton.SetActive (true);
@@ -68,6 +74,8 @@ public class mainMenu : MonoBehaviour {
 		retryButton.SetActive (false);
 		gameOverHighscoreText.SetActive (false);
 		gameOverToMainMenuButton.SetActive (false);
+		postScoreButton.SetActive (false);
+		nameInputField.SetActive (false);
 		
 		EventSystem.current.SetSelectedGameObject (startButton);
 		
@@ -106,6 +114,8 @@ public class mainMenu : MonoBehaviour {
 		gameOverText.SetActive (false);
 		gameOverHighscoreText.SetActive (false);
 		gameOverToMainMenuButton.SetActive (false);
+		postScoreButton.SetActive (false);
+		nameInputField.SetActive (false);
 
 		EventSystem.current.SetSelectedGameObject (startButton);
 	}
@@ -132,6 +142,8 @@ public class mainMenu : MonoBehaviour {
 		if(showHighscore) {
 			gameOverHighscoreText.SetActive (true);
 			highscoreText.text = "Your Highscore : " + highscore;
+			postScoreButton.SetActive (true);
+			nameInputField.SetActive (true);
 		}
 
 		EventSystem.current.SetSelectedGameObject (retryButton);
@@ -152,6 +164,9 @@ public class mainMenu : MonoBehaviour {
 		gameOverText.SetActive (false);
 		retryButton.SetActive (false);
 		gameOverToMainMenuButton.SetActive (false);
+		gameOverHighscoreText.SetActive (false);
+		postScoreButton.SetActive (false);
+		nameInputField.SetActive (false);
 
 		EventSystem.current.firstSelectedGameObject = null;
 		EventSystem.current.SetSelectedGameObject (null);

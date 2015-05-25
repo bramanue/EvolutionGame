@@ -18,18 +18,23 @@ public class highscoreManager : MonoBehaviour {
 
 	private float scoreUpdateSpeed;
 
+	public Button postHighscoreButton;
+
+	private player playerScript;
+
 
 	// Use this for initialization
 	void Start () 
 	{
 		highscoreDisplayObject = GameObject.Find ("HighscoreCanvas");
+		postHighscoreButton.enabled = true;
 		currentHighscore = 0.0f;
 		visibleHighscore = 0.0f;
+		playerScript = (player)GameObject.Find ("Blob").GetComponent (typeof(player));
 	}
 	
 	// Update is called once per frame
 	void Update () {
-
 
 		if (timer > 0) {
 			timer -= Time.deltaTime;
@@ -57,29 +62,35 @@ public class highscoreManager : MonoBehaviour {
 
 	public void enemyKilled(float score)
 	{
-		if(float.IsInfinity(score))
-			Debug.Log (score * multiplier + " points for killing enemy");
+		if (!playerScript.dead) {
+			if (float.IsInfinity (score))
+				Debug.Log (score * multiplier + " points for killing enemy");
 
-		// TODO Display for what the points are
-		currentHighscore += Mathf.Floor(score*multiplier);
-		scoreUpdateSpeed = 2.0f*(currentHighscore - visibleHighscore);
+			// TODO Display for what the points are
+			currentHighscore += Mathf.Floor (score * multiplier);
+			scoreUpdateSpeed = 2.0f * (currentHighscore - visibleHighscore);
+		}
 	}
 
 	public void lootDropped(float score)
 	{
-		if(float.IsInfinity(score))
-			Debug.Log (score * multiplier + " points for killing enemy");
+		if (!playerScript.dead) {
+			if (float.IsInfinity (score))
+				Debug.Log (score * multiplier + " points for killing enemy");
 
-		// TODO Display for what the points are
-		currentHighscore += Mathf.Floor(score*multiplier);
-		visibleHighscore += Mathf.Floor(score*multiplier);
+			// TODO Display for what the points are
+			currentHighscore += Mathf.Floor (score * multiplier);
+			visibleHighscore += Mathf.Floor (score * multiplier);
+		}
 	}
 
 	public void playerIsGrowing(float score)
 	{
-		// TODO Display for what the points are
-		currentHighscore += Mathf.Floor(score*multiplier);
-		visibleHighscore += Mathf.Floor(score*multiplier);
+		if (!playerScript.dead) {
+			// TODO Display for what the points are
+			currentHighscore += Mathf.Floor (score * multiplier);
+			visibleHighscore += Mathf.Floor (score * multiplier);
+		}
 	}
 
 	public void resetHighscore()
@@ -87,6 +98,8 @@ public class highscoreManager : MonoBehaviour {
 		currentHighscore = 0.0f;
 		visibleHighscore = 0.0f;
 		multiplier = 1.0f;
+		postHighscoreButton.interactable = true;
+		((Text)postHighscoreButton.transform.FindChild("Text").GetComponent<Text>()).text = "Share your Highscore";
 	}
 
 	public void showHighscore(bool active) 
@@ -96,5 +109,15 @@ public class highscoreManager : MonoBehaviour {
 
 	public float getHighscore() {
 		return currentHighscore;
+	}
+
+	public void postScoreOnline()
+	{
+		// Post a new score
+		leaderboardInterface leaderboardInterface = (leaderboardInterface)GameObject.Find ("LeaderboardInterface").GetComponent (typeof(leaderboardInterface));
+		postHighscoreButton.interactable = false;
+		((Text)postHighscoreButton.transform.FindChild("Text").GetComponent<Text>()).text = "Highscore uploaded!";
+		leaderboardInterface.PostScore((long)currentHighscore);
+		((mainMenu)GameObject.Find ("MainMenu").GetComponent (typeof(mainMenu))).showGameOverScreen(true, currentHighscore);
 	}
 }
