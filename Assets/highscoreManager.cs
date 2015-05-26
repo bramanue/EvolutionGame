@@ -22,10 +22,13 @@ public class highscoreManager : MonoBehaviour {
 
 	private player playerScript;
 
+	private leaderboardInterface leaderboardInterface;
+
 
 	// Use this for initialization
 	void Start () 
 	{
+		leaderboardInterface = (leaderboardInterface)GameObject.Find ("LeaderboardInterface").GetComponent (typeof(leaderboardInterface));
 		highscoreDisplayObject = GameObject.Find ("HighscoreCanvas");
 		postHighscoreButton.enabled = true;
 		currentHighscore = 0.0f;
@@ -35,6 +38,9 @@ public class highscoreManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+
+		if (Input.GetKeyDown ("h"))
+			leaderboardInterface.LogScores ();
 
 		if (timer > 0) {
 			timer -= Time.deltaTime;
@@ -114,7 +120,6 @@ public class highscoreManager : MonoBehaviour {
 	public void postScoreOnline()
 	{
 		// Post a new score
-		leaderboardInterface leaderboardInterface = (leaderboardInterface)GameObject.Find ("LeaderboardInterface").GetComponent (typeof(leaderboardInterface));
 		postHighscoreButton.interactable = false;
 		((Text)postHighscoreButton.transform.FindChild("Text").GetComponent<Text>()).text = "Highscore uploaded!";
 		leaderboardInterface.PostScore((long)currentHighscore);

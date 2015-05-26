@@ -391,7 +391,7 @@ public class player : MonoBehaviour
 					damageTimer -= Time.deltaTime;
 				else
 				{
-					videoFilter.ChromaticAberrationOffset = Mathf.Max (1.7f, videoFilter.ChromaticAberrationOffset - 3.0f*Time.deltaTime);
+					videoFilter.ChromaticAberrationOffset = Mathf.Max (1.2f, videoFilter.ChromaticAberrationOffset - 3.0f*Time.deltaTime);
 					videoFilter.BloomParams.BloomIntensity = Mathf.Max (1.5f, videoFilter.BloomParams.BloomIntensity - 3.0f*Time.deltaTime);
 					videoFilter.BloomParams.BloomThreshold = Mathf.Min (0.8f, videoFilter.BloomParams.BloomThreshold + 1.2f*Time.deltaTime);
 				}

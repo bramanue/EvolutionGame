@@ -109,9 +109,9 @@ public class gameManager : MonoBehaviour {
 			gameTimer += Time.deltaTime;
 			stageTimer += Time.deltaTime;
 
-			if(stageTimer > 45)
+			if(stageTimer > 15)
 			{
-				if(stage == 0 && playerScript.size > 1.5f) {
+				if(stage == 0 /*&& playerScript.size > 1.5f*/) {
 					// Add ram ability to the game
 					abilityManager.addAbilityToTheGame(EAbilityType.ERamAbility, EAbilityClass.EActiveAbility);
 					abilityManager.addAbilityToTheGame(EAbilityType.EViewAbility, EAbilityClass.EPassiveAbility);
