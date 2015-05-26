@@ -17,7 +17,7 @@ public class leaderboardInterface : MonoBehaviour
 	public void PostScore(long score)
 	{
 		// Post a new score
-		//leaderboard.PostScore(new Score(nameInput.text, score));
+		leaderboard.PostScore(new Score(nameInput.text, score));
 	}
 	
 	public void LogScores()

@@ -6,7 +6,7 @@ public class Leaderboard
 {
     public string gameID = "gamelab2015_prismus";
 
-    private string uri = "http://130.206.83.3:4567/lb/";
+	private string uri = "http://drz-games.drz.ethz.ch:50100/lb/";
 
     public string PostScore(Score score)
     {
